@@ -24,8 +24,10 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en el fichero .env}
+    # Solo accesible desde el propio host (p.ej. via tunel SSH para SSMS/Azure
+    # Data Studio) - nunca expuesto a internet, ni aunque falle el firewall del VPS.
     ports:
-      - "${SQLSERVER_PORT:-1433}:1433"
+      - "127.0.0.1:${SQLSERVER_PORT:-1433}:1433"
     volumes:
       - mssql-data:/var/opt/mssql
     healthcheck:
@@ -116,6 +118,12 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en el fichero .env}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
       ENABLE_SEED_RESET: ${ENABLE_SEED_RESET:-false}
+      # Si ambos ficheros existen dentro del volumen /certs, server.js arranca en
+      # HTTPS; si no, sirve HTTP normal (comportamiento actual sin cambios).
+      SSL_FULLCHAIN_PATH: /certs/fullchain.pem
+      SSL_PRIVKEY_PATH: /certs/privkey.pem
+    volumes:
+      - ${SSL_CERTS_DIR:-./docker/certs}:/certs:ro
     ports:
       - "${API_PORT:-3000}:3000"
     restart: unless-stopped
@@ -130,8 +138,11 @@ services:
     container_name: rule-engine-web
     depends_on:
       - api
+    volumes:
+      - ${SSL_CERTS_DIR:-./docker/certs}:/certs:ro
     ports:
       - "${WEB_PORT:-8080}:80"
+      - "${WEB_HTTPS_PORT:-443}:443"
     restart: unless-stopped
 
 volumes:

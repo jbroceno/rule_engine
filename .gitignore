@@ -4,6 +4,12 @@ dist/
 
 .env
 
+# Certificados TLS reales si alguien los coloca en la ruta por defecto
+# (SSL_CERTS_DIR=./docker/certs) en vez de un directorio fuera del repo.
+# Recursivo: cubre también layouts anidados tipo certbot (live/<dominio>/*.pem).
+docker/certs/**
+!docker/certs/.gitkeep
+
 *.log
 *.bak
 *.~*

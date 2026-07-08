@@ -57,11 +57,12 @@ docker compose down -v
 | Variable | Por defecto | Descripción |
 |----------|-------------|-------------|
 | `MSSQL_SA_PASSWORD` | `Demo_Rule_Engine_2026!` | Contraseña de `sa`. Debe cumplir la política de SQL Server (8+ caracteres con mayúsculas, minúsculas, números y símbolos). |
-| `MSSQL_PID` | `Developer` | Edición de SQL Server. |
 | `SQL_DB_NAME` | `RULE_ENGINE` | Nombre de la BD. Totalmente configurable: la crea el script de init y los scripts SQL son agnósticos al nombre. |
-| `SQLSERVER_PORT` | `1433` | Puerto de SQL Server en el host. |
+| `SQLSERVER_PORT` | `1433` | Puerto de SQL Server, publicado **solo en 127.0.0.1** (nunca accesible desde fuera del host). |
 | `API_PORT` | `3000` | Puerto de la API en el host. |
-| `WEB_PORT` | `8080` | Puerto del frontend en el host. |
+| `WEB_PORT` | `8080` | Puerto HTTP del frontend en el host. |
+| `WEB_HTTPS_PORT` | `443` | Puerto HTTPS del frontend en el host (activo solo si hay certificados en `SSL_CERTS_DIR`). |
+| `SSL_CERTS_DIR` | `./docker/certs` | Directorio con `fullchain.pem`/`privkey.pem`. Si ambos existen, `api` y `web` arrancan en HTTPS automáticamente; si está vacío, sirven HTTP normal. |
 
 > La API recibe la conexión a SQL Server por variables de entorno inyectadas desde Compose
 > (`SQL_SERVER=sqlserver`, `SQL_DATABASE`, `SQL_USER=sa`, `SQL_PASSWORD`, …), por lo que **no**

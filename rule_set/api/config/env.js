@@ -44,6 +44,10 @@ export const env = {
     jwtSecret: process.env.JWT_SECRET || "",
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || "8h",
   },
+  ssl: {
+    fullchainPath: process.env.SSL_FULLCHAIN_PATH || "",
+    privkeyPath: process.env.SSL_PRIVKEY_PATH || "",
+  },
 };
 
 export function hasSqlCredentials() {
