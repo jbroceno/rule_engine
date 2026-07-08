@@ -161,6 +161,29 @@ docker compose up --build
 El servicio `db-init` crea la base de datos, aplica el esquema y carga la semilla (`rule_set/sql/seed_offers.sql`) automáticamente. Credenciales y puertos se definen en `.env`.
 Detalle completo en [`docker/README.md`](docker/README.md).
 
+### 3.5. Atajos con `make`
+
+El `Makefile` de la raíz envuelve los comandos de Docker anteriores. Ejecutar `make` (o `make help`) lista todos los targets disponibles:
+
+```bash
+make help          # lista de targets con descripción
+make env           # crea .env a partir de env.example (si no existe)
+make build          # construye las imágenes sin arrancar
+make up             # build + arranque en foreground (logs en consola, Ctrl+C para parar)
+make up-d           # build + arranque en segundo plano (detached)
+make ps             # estado de los contenedores
+make logs           # sigue los logs de todos los servicios
+make restart        # down + up-d
+make down           # detiene y elimina los contenedores (conserva los datos de SQL Server)
+make add-user EMAIL=admin@example.com PASSWORD='s3cret'   # da de alta o actualiza un usuario admin
+make reset-db       # borra el volumen de datos y vuelve a levantar el stack desde cero
+make clean          # limpieza total: para el stack y elimina contenedores, volúmenes e imágenes construidas
+```
+
+> `make add-user` requiere el stack ya levantado (`make up`/`make up-d`): ejecuta
+> `docker compose exec api node scripts/seed_user.mjs` con las credenciales indicadas dentro del
+> contenedor `api`. Si el usuario ya existe, se actualiza su contraseña (`--force`).
+
 > **Estado actual de la suite:** `251 tests · 226 pass · 0 fail · 25 skipped`.
 > Los *skipped* son pruebas *live* del servicio de workflow que requieren credenciales reales de
 > SQL Server; se omiten en local por diseño, no son fallos. El motor y los escenarios de negocio
