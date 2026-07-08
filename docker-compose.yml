@@ -13,15 +13,17 @@ name: rule-engine-demo
 
 services:
   # ---------------------------------------------------------------------------
-  # SQL Server (imagen oficial Microsoft, Ubuntu, edición Developer)
+  # SQL Server (Azure SQL Edge — imagen oficial Microsoft, bajo consumo de RAM)
   # ---------------------------------------------------------------------------
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    # Azure SQL Edge, no mssql/server 2022: este último exige 2000MB de RAM física
+    # y no arranca en VPS de bajo coste (p.ej. Linode Nanode 1GB). Edge usa el mismo
+    # motor T-SQL con requisitos de memoria mucho más bajos.
+    image: mcr.microsoft.com/azure-sql-edge:latest
     container_name: rule-engine-sqlserver
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en el fichero .env}
-      MSSQL_PID: ${MSSQL_PID:-Developer}
     ports:
       - "${SQLSERVER_PORT:-1433}:1433"
     volumes:
