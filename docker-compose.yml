@@ -30,6 +30,7 @@ services:
       - "127.0.0.1:${SQLSERVER_PORT:-1433}:1433"
     volumes:
       - mssql-data:/var/opt/mssql
+    restart: unless-stopped
     healthcheck:
       # La imagen 2022 ya no incluye sqlcmd; comprobamos el puerto con bash.
       test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/1433' || exit 1"]
