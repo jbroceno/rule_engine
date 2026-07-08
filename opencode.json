@@ -1,0 +1,52 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "dnf-engine": {
+      "mode": "primary",
+      "model": "openai/gpt-5.5",
+      "description": "Especialista en motores de reglas DNF en Node.js basados en configuración JSON.",
+      "maxSteps": 20,
+      "prompt": "{file:./.opencode/prompts/dnf-engine.md}",
+      "tools": {
+        "read": true,
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "grep": true,
+        "glob": true
+      }
+    },
+    "dnf-review": {
+      "mode": "subagent",
+      "description": "Revisa expresiones DNF, validación de esquema JSON, cobertura de tests y complejidad algorítmica sin introducir cambios innecesarios.",
+      "maxSteps": 12,
+      "prompt": "{file:./.opencode/prompts/dnf-review.md}",
+      "tools": {
+        "read": true,
+        "grep": true,
+        "glob": true,
+        "edit": false,
+        "write": false,
+        "bash": false
+      }
+    },
+    "express-backend": {
+      "description": "Especialista en backend con Express y TypeScript",
+      "prompt": "Eres un ingeniero senior de backend especializado en Express y TypeScript. Diseña APIs REST limpias, seguras y mantenibles. Prioriza separación por capas, validación de entrada, manejo consistente de errores, tests y seguridad. Antes de tocar código, revisa rutas, controladores, servicios, DTOs/schemas, auth y tests relacionados. Si hay una decisión arquitectónica grande, propón primero un plan breve.",
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true
+      }
+    },
+    "angular-frontend": {
+      "description": "Especialista en frontend con Angular",
+      "prompt": "Eres un ingeniero senior de frontend especializado en Angular moderno. Crea componentes y servicios idiomáticos, priorizando standalone components, signals cuando aporte valor, tipado estricto, accesibilidad, rendimiento y tests. Respeta la estructura del proyecto, evita lógica excesiva en componentes y reutiliza servicios, pipes y utilidades existentes.",
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true
+      }
+    }    
+  }
+}

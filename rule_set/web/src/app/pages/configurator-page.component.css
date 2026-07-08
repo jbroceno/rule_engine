@@ -1,0 +1,502 @@
+.page {
+  display: grid;
+  gap: 1rem;
+}
+
+.active-period-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  border: 1px solid #cfe2ff;
+  background: #e7f1ff;
+  color: #0a3c6e;
+}
+
+.active-period-banner--none {
+  background: #fff8e1;
+  border-color: #ffe082;
+  color: #5a4000;
+}
+
+.apb-item {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.apb-active {
+  font-weight: 500;
+  color: #1b5e20;
+}
+
+.apb-none {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.apb-sep {
+  opacity: 0.35;
+}
+
+.apb-link {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.apb-link:hover {
+  text-decoration: underline;
+}
+
+.page-header,
+.filters,
+.panel,
+.crud-form,
+.table-wrapper,
+.validate-result,
+.confirm-modal {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+
+
+.page-header,
+.filters,
+.panel {
+  padding: 1rem;
+}
+
+.eyebrow,
+.page-header p,
+.state,
+.panel-head p {
+  color: var(--ink-soft);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.page-header h1,
+.panel-head h2,
+.crud-form h3 {
+  margin: 0;
+}
+
+.page-header h1 {
+  margin: 0.3rem 0;
+}
+
+.filters,
+.form-grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.filters {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--ink-default);
+  font-weight: 500;
+}
+
+.field-offer {
+  grid-column: span 4;
+}
+
+.field-stage {
+  grid-column: span 1;
+}
+
+.search-field {
+  grid-column: span 3;
+}
+
+.field-page-size {
+  grid-column: span 1;
+}
+
+.filter-actions {
+  grid-column: span 1;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.28rem;
+}
+
+.confirm-form {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.5rem 0;
+}
+
+.confirm-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 500;
+}
+
+.confirm-form textarea,
+.confirm-form input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.required-mark {
+  color: var(--color-danger, #dc2626);
+}
+
+.config-ops-bar {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.config-ops-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.import-banner {
+  padding: 0.5rem 0.75rem;
+  background: var(--color-warning-soft, #fef3c7);
+  border: 1px solid var(--color-warning, #f59e0b);
+  border-radius: var(--radius-sm, 4px);
+  font-size: 0.875rem;
+  color: var(--ink-default);
+}
+
+.panel-offers {
+  padding: 1rem;
+}
+
+.workspace-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel-rules {
+  grid-column: 1 / -1;
+}
+
+.panel,
+.crud-form,
+.validate-result {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(44, 67, 98, 0.12);
+  padding-bottom: 0.45rem;
+}
+
+.panel-head p {
+  margin: 0;
+  font-size: 0.82rem;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.crud-form {
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.form-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.form-grid > label {
+  grid-column: span 2;
+}
+
+.form-grid-params > label {
+  grid-column: span 3;
+}
+
+.check-control {
+  width: auto;
+  margin: 0;
+  justify-self: start;
+}
+
+.crud-actions,
+.row-actions,
+.pager,
+.confirm-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.row-actions-icons {
+  gap: 0.32rem;
+  flex-wrap: nowrap;
+}
+
+
+.row-actions-icons .action-danger {
+  color: var(--danger);
+  border-color: rgba(159, 42, 47, 0.32);
+}
+
+.pager .btn {
+  padding: 0.28rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+.state {
+  margin: 0;
+  font-weight: 500;
+}
+
+.state.error {
+  color: var(--danger);
+}
+
+.state.success,
+.validate-status.valid {
+  color: #0e7f59;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-strong);
+  border-color: var(--line-strong);
+}
+
+.btn-ghost.is-active,
+.btn-ghost.is-active-sort {
+  background: rgba(14, 95, 143, 0.14);
+  border-color: rgba(14, 95, 143, 0.35);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.params-table {
+  width: auto;
+}
+
+th,
+td {
+  border-bottom: 1px solid rgba(46, 70, 104, 0.12);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: rgba(14, 95, 143, 0.1);
+  color: var(--ink-strong);
+}
+
+.stage-chip,
+.param-type {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.74rem;
+}
+
+.stage-chip {
+  border: 1px solid rgba(13, 81, 125, 0.2);
+  color: #0d517d;
+  background: rgba(13, 81, 125, 0.1);
+  padding: 0.1rem 0.5rem;
+  font-weight: 700;
+}
+
+.param-type {
+  background: rgba(21, 48, 83, 0.09);
+  padding: 0.1rem 0.4rem;
+}
+
+textarea {
+  width: 100%;
+  min-height: 5rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.56rem 0.62rem;
+  font: inherit;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.validate-status {
+  margin: 0;
+  font-weight: 600;
+}
+
+.validate-status.invalid {
+  color: var(--danger);
+}
+
+.issue-block ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1rem;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 25, 40, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 30;
+}
+
+.confirm-modal {
+  width: min(480px, 100%);
+  padding: 1rem;
+}
+
+.confirm-modal h3 {
+  margin: 0;
+}
+
+@media (max-width: 980px) {
+  .filters > label,
+  .search-field,
+  .filter-actions,
+  .form-grid > label,
+  .form-grid-params > label {
+    grid-column: 1 / -1;
+  }
+
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    justify-content: flex-start;
+  }
+
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+:host-context(.theme-analitica) .page-header,
+:host-context(.theme-analitica) .filters,
+:host-context(.theme-analitica) .panel,
+:host-context(.theme-analitica) .crud-form,
+:host-context(.theme-analitica) .table-wrapper,
+:host-context(.theme-analitica) .validate-result,
+:host-context(.theme-analitica) .confirm-modal {
+  border-radius: 10px;
+}
+
+:host-context(.theme-analitica) th,
+:host-context(.theme-analitica) td {
+  padding: var(--table-density, 0.5rem);
+  font-size: 0.9rem;
+}
+
+:host-context(.theme-analitica) input,
+:host-context(.theme-analitica) select,
+:host-context(.theme-analitica) textarea {
+  padding: var(--field-density, 0.45rem) 0.55rem;
+}
+
+/* Oferta-ID mapping table (publicar WF dialog + snapshot restore dialog) */
+
+.oferta-mapping-section {
+  margin-top: 0.75rem;
+}
+
+.oferta-mapping-title {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
+.oferta-mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.oferta-mapping-table th,
+.oferta-mapping-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.oferta-mapping-table th {
+  font-weight: 600;
+  background: var(--surface-raised, var(--surface));
+}
+
+.oferta-id-input {
+  width: 100%;
+  max-width: 120px;
+  box-sizing: border-box;
+}
+
+.field-error {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-danger, #c00);
+  margin-top: 0.2rem;
+}
+
+/* Period read-only display inside label (rules form) */
+.readonly-period {
+  display: block;
+  padding: 0.4rem 0.55rem;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+/* Period read-only line above params grid */
+.readonly-period-line {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft, #555);
+}
+
+/* Banner shown when no active period exists for the panel */
+.period-banner {
+  margin: 0.6rem 0;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--warning-border, #e0c46c);
+  background: var(--warning-bg, #fff6da);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.period-banner a {
+  font-weight: 600;
+}

@@ -1,0 +1,342 @@
+.page {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header,
+.table-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+
+.page-header {
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.25rem;
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.btn-wf-snapshot {
+  background: #1565c0;
+  color: #fff;
+  border: 1px solid #1565c0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-wf-snapshot:hover:not(:disabled) {
+  background: #0d47a1;
+  border-color: #0d47a1;
+}
+
+.btn-wf-snapshot:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.filters {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.7rem;
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--ink-default);
+  font-weight: 500;
+}
+
+.field-date {
+  grid-column: span 2;
+}
+
+.search-field {
+  grid-column: span 5;
+}
+
+.filter-actions {
+  grid-column: span 1;
+  display: flex;
+  gap: 0.28rem;
+  align-items: flex-end;
+}
+
+.btn-icon-inline {
+  width: 1.1em;
+  height: 1.1em;
+  fill: currentColor;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.snapshots-table {
+  width: 100%;
+}
+
+.col-id {
+  width: 3rem;
+}
+
+.col-datetime {
+  width: 9rem;
+  white-space: nowrap;
+}
+
+.col-name {
+  width: 16rem;
+}
+
+.col-user {
+  width: 8rem;
+}
+
+.col-comment {
+  /* fills remaining space */
+}
+
+.col-ops {
+  width: 6rem;
+  text-align: center;
+}
+
+.ops-cell {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-delete-snap:not(:disabled):hover {
+  color: var(--danger, #dc3545);
+}
+
+.datetime-cell {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.name-cell,
+.comment-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 25, 40, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 30;
+}
+
+.confirm-modal {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  width: min(480px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.confirm-modal h3 {
+  margin: 0 0 0.25rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.confirm-modal label {
+  margin-top: 0.5rem;
+}
+
+.confirm-modal input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pager {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+/* Oferta-ID mapping table (WF restore dialog) */
+
+.oferta-mapping-section {
+  margin-top: 0.75rem;
+}
+
+.oferta-mapping-title {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
+.oferta-mapping-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+}
+
+.oferta-mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.oferta-mapping-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.oferta-mapping-table th,
+.oferta-mapping-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.oferta-mapping-table th {
+  font-weight: 600;
+  background: var(--surface-raised, var(--surface));
+}
+
+.oferta-id-input {
+  width: 100%;
+  max-width: 120px;
+  box-sizing: border-box;
+}
+
+.field-error {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-danger, #c00);
+  margin-top: 0.2rem;
+}
+
+.wf-range-fields {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* Two fields side by side (e.g. fecha desde | fecha hasta) */
+.field-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.field-row > label {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.required-mark {
+  color: var(--color-danger, #c00);
+}
+
+/* Entorno badge */
+
+.col-env {
+  width: 3.5rem;
+  text-align: center;
+}
+
+.env-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--line-soft);
+  color: var(--ink-soft);
+}
+
+.env-badge.env-wf {
+  background: #1565c0;
+  color: #fff;
+}
+
+.field-entorno {
+  grid-column: span 2;
+}
+
+/* Preview modal */
+
+.preview-backdrop {
+  align-items: flex-start;
+  padding-top: 3vh;
+}
+
+.preview-modal {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  width: min(90vw, 900px);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.preview-header h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.preview-json {
+  flex: 1;
+  overflow: auto;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--surface-raised, #f8f9fa);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm, 4px);
+  white-space: pre;
+  tab-size: 2;
+}

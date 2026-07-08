@@ -1,0 +1,28 @@
+{
+  "name": "rule_test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "offer_rule_engine.js",
+  "scripts": {
+    "api:start": "node api/server.js",
+    "api:dev": "node --watch api/server.js",
+    "web:start": "npm run start --prefix web --",
+    "web:build": "npm run build --prefix web",
+    "web:test": "npm run test --prefix web",
+    "test": "node --test",
+    "test:file": "node --test",
+    "test:name": "node --test --test-name-pattern",
+    "test:scenarios": "node --test test/offer_scenarios.test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
+    "mssql": "^11.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}

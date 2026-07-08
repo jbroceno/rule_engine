@@ -1,0 +1,129 @@
+.payload-layout {
+  display: grid;
+  gap: 0.52rem;
+  font-size: 0.83rem;
+}
+
+.payload-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.payload-head h4 {
+  margin: 0;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.34rem 0.38rem;
+  border-bottom: 1px solid rgba(46, 70, 104, 0.12);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.row-index {
+  text-align: right;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--ink-soft);
+  width: 2.4rem;
+}
+
+.row-invalid td {
+  background: rgba(159, 42, 47, 0.07);
+}
+
+input,
+select {
+  min-height: 1.95rem;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.48rem;
+}
+
+.control-invalid {
+  border-color: rgba(159, 42, 47, 0.62);
+  background: rgba(159, 42, 47, 0.06);
+}
+
+th {
+  background: rgba(14, 95, 143, 0.08);
+}
+
+.btn-small {
+  min-height: 1.85rem;
+  padding: 0.28rem 0.52rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+}
+
+.icon-btn {
+  width: 1.78rem;
+  height: 1.78rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-strong);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.icon-btn svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: currentColor;
+}
+
+.icon-btn.danger {
+  color: var(--danger);
+  border-color: rgba(159, 42, 47, 0.32);
+}
+
+.icon-btn:hover {
+  background: rgba(14, 95, 143, 0.1);
+  border-color: rgba(14, 95, 143, 0.26);
+}
+
+.icon-btn.danger:hover {
+  background: rgba(159, 42, 47, 0.12);
+  border-color: rgba(159, 42, 47, 0.36);
+}
+
+.icon-btn:active {
+  background: rgba(14, 95, 143, 0.16);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.icon-btn:disabled {
+  background: rgba(40, 60, 90, 0.06);
+  border-color: rgba(40, 60, 90, 0.16);
+  color: rgba(47, 64, 89, 0.6);
+  cursor: not-allowed;
+}
+
+.empty {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+@media (max-width: 980px) {
+  .payload-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

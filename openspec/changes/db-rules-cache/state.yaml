@@ -1,0 +1,16 @@
+change: db-rules-cache
+status: verify
+artifact_store: hybrid
+created: 2026-05-28
+phases_done:
+  - proposal
+  - spec
+  - design
+  - tasks
+  - apply
+  - verify
+phases_pending:
+  - archive
+verify_result: PASS-WITH-WARNINGS
+verify_findings: 0 CRITICAL / 2 WARNING / 2 SUGGESTION
+verified_at: 2026-05-29

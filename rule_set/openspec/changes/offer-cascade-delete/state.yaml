@@ -1,0 +1,54 @@
+change: offer-cascade-delete
+title: Borrado en cascada de ofertas con snapshot automático
+status: archived
+created_at: '2026-06-16'
+archived_at: '2026-06-16'
+
+phases_done:
+  - exploration
+  - proposal
+  - spec
+  - design
+  - tasks
+  - apply
+  - verify
+  - archive
+
+phases_pending: []
+
+summary:
+  description: >
+    Reescribe DELETE /api/admin/offers/:offerCode para eliminar en cascada la oferta
+    y TODOS sus recursos asociados (reglas, condiciones, acciones, parámetros) en TODOS
+    los períodos (offer_date_id), en una única transacción atómica, con snapshot automático
+    previo. Sigue el patrón cascade-in-transaction probado en deleteRule. Incluye diálogo
+    de confirmación en español y mensaje de éxito mostrando counts + snapshot_id.
+  verdict: PASS
+  critical_count: 0
+  warning_count: 0
+  suggestion_count: 1
+  tests_passed: 8
+  tests_total: 237
+  regressions: 0
+
+artifacts:
+  api_services: api/services/admin_service.js
+  api_controller: api/controllers/admin_offers_controller.js
+  frontend_models: web/src/app/models/admin.models.ts
+  frontend_service: web/src/app/services/admin-api.service.ts
+  frontend_component: web/src/app/pages/configurator-page.component.ts
+  frontend_component_template: web/src/app/pages/configurator-page.component.html
+  frontend_component_spec: web/src/app/pages/configurator-page.component.spec.ts
+  tests: test/admin_offer_cascade_delete.test.js
+
+engram_references:
+  exploration: '#170'
+  proposal: '#171'
+  spec: '#172'
+  design: '#173'
+  tasks: '#174'
+  apply_progress: '#175'
+  verify_report: '#177'
+  archive_report: '[pending — will update after archive phase completes]'
+
+next_action: Ready for merge into main; no Phase 5 deferral (all tests green)

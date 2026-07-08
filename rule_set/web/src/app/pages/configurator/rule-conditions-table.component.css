@@ -1,0 +1,173 @@
+.conditions-layout {
+  display: grid;
+  gap: 0.52rem;
+  font-size: 0.83rem;
+}
+
+.conditions-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conditions-head h4 {
+  margin: 0;
+}
+
+.logic-caption {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
+.group-card {
+  display: grid;
+  gap: 0.38rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.48rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.group-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(13, 81, 125, 0.2);
+  color: #0d517d;
+  background: rgba(13, 81, 125, 0.1);
+  padding: 0.14rem 0.54rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.34rem 0.38rem;
+  border-bottom: 1px solid rgba(46, 70, 104, 0.12);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.row-index {
+  text-align: right;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--ink-soft);
+  width: 2.4rem;
+}
+
+th {
+  background: rgba(14, 95, 143, 0.08);
+}
+
+input,
+select {
+  min-height: 1.95rem;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.48rem;
+}
+
+.control-invalid {
+  border-color: rgba(159, 42, 47, 0.62);
+  background: rgba(159, 42, 47, 0.06);
+}
+
+.cell-na {
+  display: block;
+  color: var(--ink-soft);
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.or-divider {
+  margin: 0;
+  justify-self: center;
+  border: 1px dashed rgba(14, 95, 143, 0.3);
+  border-radius: 999px;
+  color: #0d517d;
+  padding: 0.12rem 0.58rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.btn-small {
+  min-height: 1.85rem;
+  padding: 0.28rem 0.52rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+}
+
+.icon-btn {
+  width: 1.78rem;
+  height: 1.78rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-strong);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.icon-btn svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: currentColor;
+}
+
+.icon-btn.danger {
+  color: var(--danger);
+  border-color: rgba(159, 42, 47, 0.32);
+}
+
+.icon-btn:hover {
+  background: rgba(14, 95, 143, 0.1);
+  border-color: rgba(14, 95, 143, 0.26);
+}
+
+.icon-btn.danger:hover {
+  background: rgba(159, 42, 47, 0.12);
+  border-color: rgba(159, 42, 47, 0.36);
+}
+
+.icon-btn:active {
+  background: rgba(14, 95, 143, 0.16);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.icon-btn:disabled {
+  background: rgba(40, 60, 90, 0.06);
+  border-color: rgba(40, 60, 90, 0.16);
+  color: rgba(47, 64, 89, 0.6);
+  cursor: not-allowed;
+}
+
+@media (max-width: 980px) {
+  .group-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

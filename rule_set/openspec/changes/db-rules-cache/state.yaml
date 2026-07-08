@@ -1,0 +1,47 @@
+change: db-rules-cache
+title: SQL Server Cache for Rules Resolution SP
+status: archived
+created_at: '2026-05-28'
+archived_at: '2026-05-29'
+
+phases_done:
+  - proposal
+  - spec
+  - design
+  - tasks
+  - apply
+  - verify
+  - archive
+
+phases_pending: []
+
+summary:
+  description: >
+    SQL Server disk-based cache layer for cfg_get_offers_and_params_json SP.
+    Eliminates redundant executions via generic (G, pre-materialized) and historical (H, lazy-populated)
+    row classes. Includes wrapper SPs with stampede prevention and FIFO eviction; Node.js integrations
+    in config_service and admin_service; 14 unit tests, all passing.
+  verdict: PASS-WITH-WARNINGS
+  critical_count: 0
+  warning_count: 2
+  suggestion_count: 2
+  tests_passed: 14
+  tests_total: 145
+  regressions: 0
+
+artifacts:
+  sql_deploy: /rule_set/sql/workflow_deploy/wf_sp_cfg_rules_cache.sql
+  config_service: /rule_set/api/services/config_service.js
+  admin_service: /rule_set/api/services/admin_service.js
+  tests: /rule_set/test/config_cache.test.js
+
+engram_references:
+  proposal: '#62'
+  spec: '#63'
+  design: '#64'
+  tasks: '#65'
+  apply_progress: '#66'
+  verify_report: '#67'
+  archive_report: '#68'
+
+next_action: Phase 5 manual integration testing (non-blocking, deferred)

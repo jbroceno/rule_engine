@@ -1,0 +1,128 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Simulador FINAL</h1>
+    <p>Evalua resultado final y oferta ganadora.</p>
+  </header>
+
+  <app-simulator-form phase="FINAL" [offers]="offers()" (formSubmit)="onFormSubmit($event)" />
+
+  <p class="status error" aria-live="polite" *ngIf="error() as errorMessage">{{ errorMessage }}</p>
+
+  <app-simulation-trace-log
+    *ngIf="initEvaluations().length"
+    title="Log INIT evaluado"
+    [evaluations]="initEvaluations()"
+    eligibilityKey="initEligible"
+  ></app-simulation-trace-log>
+
+  <p class="status error" aria-live="polite" *ngIf="initBlocked()">
+    No elegible en INIT. La evaluacion PRE y FINAL no se han ejecutado.
+  </p>
+
+  <ng-container *ngIf="!initBlocked() && result()">
+    <app-simulation-trace-log
+      *ngIf="result()?.pre?.all?.length"
+      title="Log PRE evaluado"
+      [evaluations]="result()?.pre?.all ?? []"
+      eligibilityKey="preEligible"
+    ></app-simulation-trace-log>
+
+    <p class="status error" aria-live="polite" *ngIf="preBlocked()">
+      No elegible en PRE. La evaluacion FINAL no se ha ejecutado.
+    </p>
+
+    <ng-container *ngIf="!preBlocked()">
+      <article class="winner-card" aria-live="polite" *ngIf="result() as response">
+        <h2>Resultado</h2>
+        <ng-container *ngIf="hasWinner()">
+          <p>Oferta ganadora: <strong>{{ response.final?.winner?.offerCode }}</strong></p>
+          <p>Rank: {{ response.final?.winner?.offer_rank ?? "-" }}</p>
+          <p>Oferta ID: {{ response.final?.winner?.oferta_id ?? "-" }}</p>
+          <p>Dictamen: {{ response.final?.winner?.dictamen | json }}</p>
+        </ng-container>
+        <p *ngIf="!hasWinner()">No hay oferta ganadora para los datos simulados.</p>
+      </article>
+
+      <p class="status" aria-live="polite" *ngIf="!loading()">
+        Final elegibles: {{ finalEligibleDetails().length }}
+      </p>
+
+      <div class="cards" *ngIf="finalEligibleDetails().length" [style.--cards-max-cols]="maxCols">
+        <article class="result-card">
+          <h2>Resumen uiLimits</h2>
+          <p>Hipoteca: {{ numUiLimit('MIN_HIPOTECA') | number }} € — {{ numUiLimit('MAX_HIPOTECA') | number }} €</p>
+          <p>Plazo: {{ finalUiLimits()['MIN_PLAZO'] ?? finalUiLimits()['MIN_PLAZO_MESES'] }} — {{ finalUiLimits()['MAX_PLAZO'] ?? finalUiLimits()['MAX_PLAZO_MESES'] }}
+             {{ finalUiLimits()['MIN_PLAZO'] != null ? "años" : "meses" }}</p>
+          <p>LTV: ({{ ((numUiLimit('MIN_LTV_EXCLUSIVE') ?? numUiLimit('MIN_LTV_RATIO') ?? 0) * 100) | number:'1.0-0' }}%, {{ ((numUiLimit('MAX_LTV') ?? numUiLimit('MAX_LTV_RATIO') ?? 0) * 100) | number:'1.0-0' }}%]</p>
+          <p *ngIf="finalUiLimits()['EDAD_PLAZO'] != null">Edad + plazo max: {{ finalUiLimits()['EDAD_PLAZO'] }} años</p>
+          <p *ngIf="finalUiLimits()['SOLICITAR_DATOS_INTERVINIENTES'] != null">Solicitar datos intervinientes: {{ finalUiLimits()['SOLICITAR_DATOS_INTERVINIENTES'] ? 'Sí' : 'No' }}</p>
+        </article>
+      </div>
+
+      <div class="cards" *ngIf="finalEligibleDetails().length" [style.--cards-max-cols]="maxCols">
+        <article class="result-card" *ngFor="let offer of finalEligibleDetails()">
+          <h2>{{ offer.offerCode }}</h2>
+          <p>Rank: {{ offer.offer_rank ?? '-' }}</p>
+          <p>Hipoteca: {{ limitFromOffer(offer, 'MIN_HIPOTECA') | number }} € — {{ limitFromOffer(offer, 'MAX_HIPOTECA') | number }} €</p>
+          <p>Plazo: {{ limitFromOffer(offer, 'MIN_PLAZO', 'MIN_PLAZO_MESES') }} — {{ limitFromOffer(offer, 'MAX_PLAZO', 'MAX_PLAZO_MESES') }} {{ limitFromOffer(offer, 'MIN_PLAZO', 'MIN_PLAZO_MESES') != null ? 'años' : 'meses' }}</p>
+          <p>LTV: ({{ ((limitFromOffer(offer, 'MIN_LTV_EXCLUSIVE', 'MIN_LTV_RATIO') ?? 0) * 100) | number:'1.0-0' }}%, {{ ((limitFromOffer(offer, 'MAX_LTV', 'MAX_LTV_RATIO') ?? 0) * 100) | number:'1.0-0' }}%]</p>
+          <p *ngIf="limitFromOffer(offer, 'EDAD_PLAZO') != null">Edad + plazo max: {{ limitFromOffer(offer, 'EDAD_PLAZO') }} años</p>
+          <details *ngIf="extraDictamenEntries(offer).length > 0" class="dictamen-extra">
+            <summary>Propiedades adicionales</summary>
+            <dl>
+              <ng-container *ngFor="let entry of extraDictamenEntries(offer)">
+                <dt>{{ entry.key }}</dt>
+                <dd>{{ entry.formatted }}</dd>
+              </ng-container>
+            </dl>
+          </details>
+        </article>
+      </div>
+
+    <ng-container *ngIf="wfCompare() as cmp">
+      <section class="wf-compare">
+        <h2 class="wf-compare-title" [class.wf-match]="!cmp.error && cmp.match" [class.wf-diff]="!cmp.error && !cmp.match">
+          Comparacion WF:
+          <span *ngIf="cmp.error">Error de conexion</span>
+          <span *ngIf="!cmp.error">{{ cmp.match ? "Resultado igual ✓" : "Resultado diferente ✗" }}</span>
+        </h2>
+        <p class="status error" *ngIf="cmp.error">{{ cmp.error }}</p>
+        <ng-container *ngIf="!cmp.error">
+          <div class="wf-section">
+            <h3>Ofertas elegibles {{ cmp.ofertasElegibles?.match ? "✓" : "✗" }}</h3>
+            <p><strong>POC:</strong> {{ (cmp.ofertasElegibles?.poc ?? []).join(", ") || "(ninguna)" }}</p>
+            <p><strong>WF:</strong> {{ (cmp.ofertasElegibles?.wf ?? []).join(", ") || "(ninguna)" }}</p>
+            <p *ngIf="cmp.ofertasElegibles?.soloEnPoc?.length" class="wf-diff-item">Solo en POC: {{ cmp.ofertasElegibles!.soloEnPoc.join(", ") }}</p>
+            <p *ngIf="cmp.ofertasElegibles?.soloEnWf?.length" class="wf-diff-item">Solo en WF: {{ cmp.ofertasElegibles!.soloEnWf.join(", ") }}</p>
+          </div>
+          <div class="wf-section" *ngIf="cmp.ofertaGanadora">
+            <h3>Oferta ganadora {{ cmp.ofertaGanadora.match ? "✓" : "✗" }}</h3>
+            <p><strong>POC:</strong> {{ cmp.ofertaGanadora.poc ?? "(ninguna)" }}</p>
+            <p><strong>WF:</strong> {{ cmp.ofertaGanadora.wf ?? "(ninguna)" }}</p>
+          </div>
+          <div class="wf-section" *ngIf="cmp.limites">
+            <h3>Limites {{ cmp.limites.match ? "✓" : "✗" }}</h3>
+            <p *ngIf="cmp.limites.match" class="wf-ok">Sin diferencias</p>
+            <table *ngIf="!cmp.limites.match" class="wf-diff-table">
+              <thead><tr><th>Campo</th><th>POC</th><th>WF</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let d of cmp.limites.diferencias">
+                  <td>{{ d.campo }}</td><td>{{ d.poc }}</td><td>{{ d.wf }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </section>
+    </ng-container>
+
+      <app-simulation-trace-log
+        *ngIf="result()?.final?.all?.length"
+        title="Log FINAL evaluado"
+        [evaluations]="result()?.final?.all ?? []"
+        eligibilityKey="eligible"
+      ></app-simulation-trace-log>
+    </ng-container>
+  </ng-container>
+
+</section>

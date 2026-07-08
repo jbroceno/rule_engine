@@ -1,0 +1,70 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Node.js 22 (ESM), Express 4, Angular 20, SQL Server (mssql 11)
+  Architecture: Rule engine (pure functions) + REST API + Angular SPA. Three-stage pipeline: INIT -> PRE -> FINAL.
+  Testing: Node built-in test runner (node:test); 11 test files; no Vitest/Jest/Mocha.
+  Style: ES modules, 2-space indent, semicolons, double quotes. Conventional commits, no AI attribution.
+  Docs: Spanish (functional analysis). Markdown.
+
+strict_tdd: true
+
+testing:
+  test_runner:
+    command: "npm test"
+    framework: "node:test (built-in)"
+    cwd: "rule_set"
+  layers:
+    unit:
+      available: true
+      tool: "node:test"
+    integration:
+      available: false
+      note: "No @testing-library or httpx equivalent"
+    e2e:
+      available: false
+      note: "No playwright/cypress/selenium"
+  coverage:
+    available: false
+    note: "No c8/istanbul configured"
+  quality:
+    linter:
+      available: false
+      note: "ESLint not configured per AGENTS.md"
+    type_checker:
+      available: false
+      note: "No tsc --noEmit (pure JS)"
+    formatter:
+      available: true
+      tool: "prettier"
+      command: "npm run format (web only)"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules (rule_engine.js, api/, web/)
+    - Note SQL schema changes if any
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Spanish documentation, English code identifiers
+  design:
+    - Include sequence diagrams for multi-stage pipeline changes
+    - Document rule evaluation semantics (DNF, inversion pattern) when relevant
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns (ESM, 2-space indent, double quotes)
+    - Preserve JSON/SQL contracts — never rename external payload keys
+    - Add tests when changing evaluation logic (node:test)
+    tdd: true
+    test_command: "npm test"
+  verify:
+    test_command: "npm test"
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas (large removals)
+    - Keep behavior docs aligned with implementation

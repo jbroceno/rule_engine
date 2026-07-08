@@ -1,0 +1,305 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Snapshots de configuracion</h1>
+      <p>Historial de configuraciones grabadas. Puedes restaurar cualquier snapshot a la BD.</p>
+    </div>
+    <button type="button" class="btn btn-wf-snapshot" (click)="openSnapshotWfDialog()" [disabled]="takingSnapshot()">
+      <span class="btn-spinner" *ngIf="takingSnapshot()" aria-hidden="true"></span>
+      {{ takingSnapshot() ? 'Generando...' : 'Generar Snapshot WF' }}
+    </button>
+  </header>
+
+  <form class="filters" [formGroup]="filtersForm" (ngSubmit)="applyFilters()">
+    <label class="field-date">
+      Desde
+      <input type="date" formControlName="dateFrom" />
+    </label>
+    <label class="field-date">
+      Hasta
+      <input type="date" formControlName="dateTo" />
+    </label>
+    <label class="search-field">
+      Busqueda
+      <input type="text" formControlName="q" placeholder="Nombre, usuario o comentario" autocomplete="off" />
+    </label>
+    <label class="field-entorno">
+      Entorno
+      <select formControlName="entorno">
+        <option value="">Todos</option>
+        <option value="POC">POC</option>
+        <option value="WF">WF</option>
+      </select>
+    </label>
+    <div class="filter-actions">
+      <button type="submit" class="btn" aria-label="Buscar snapshots" title="Buscar">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="btn-icon-inline">
+          <path d="M10.5 3a7.5 7.5 0 0 1 6.1 11.8l4.3 4.3-1.4 1.4-4.3-4.3A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="btn btn-ghost btn-icon-square btn-icon-md"
+        (click)="resetFilters()"
+        aria-label="Limpiar filtros"
+        title="Limpiar filtros"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+        </svg>
+      </button>
+    </div>
+  </form>
+
+  <p class="state success" *ngIf="actionSuccess() as msg">{{ msg }}</p>
+  <p class="state error" *ngIf="actionError() as msg">{{ msg }}</p>
+
+  <p class="state" *ngIf="loading()">Cargando snapshots...</p>
+  <div class="state error" *ngIf="!loading() && error() as msg">
+    <p>{{ msg }}</p>
+    <button type="button" class="btn btn-ghost" (click)="applyFilters(false)">Reintentar</button>
+  </div>
+  <p class="state" *ngIf="!loading() && !error() && snapshots().length === 0">
+    No hay snapshots para el filtro seleccionado.
+  </p>
+
+  <div class="table-wrapper" *ngIf="!loading() && !error() && snapshots().length > 0">
+    <table class="snapshots-table table-compact">
+      <thead>
+        <tr>
+          <th class="align-right col-id">ID</th>
+          <th class="col-datetime">Fecha y hora</th>
+          <th class="col-env">Env</th>
+          <th class="col-name">Nombre</th>
+          <th class="col-user">Usuario</th>
+          <th class="col-comment">Comentario</th>
+          <th class="ops-col col-ops">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let snap of snapshots(); trackBy: trackSnapshot">
+          <td class="align-right">{{ snap.snapshot_id }}</td>
+          <td class="datetime-cell">{{ snap.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td><span class="env-badge" [class.env-wf]="snap.entorno_cd === 'WF'">{{ snap.entorno_cd }}</span></td>
+          <td class="name-cell" [title]="snap.snapshot_name">{{ snap.snapshot_name }}</td>
+          <td>{{ snap.created_by ?? "-" }}</td>
+          <td class="comment-cell" [title]="snap.comment ?? ''">{{ snap.comment ?? "-" }}</td>
+          <td class="ops-cell">
+            <button
+              type="button"
+              class="btn btn-ghost btn-icon-square btn-icon-sm"
+              [disabled]="loadingPreview()"
+              (click)="openPreview(snap)"
+              aria-label="Previsualizar snapshot"
+              title="Ver contenido del snapshot"
+            >
+              <span class="btn-spinner" *ngIf="loadingPreview()" aria-hidden="true"></span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!loadingPreview()">
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+              </svg>
+              <span class="sr-only">Previsualizar</span>
+            </button>
+            <!-- Restaurar / Desplegar (POC o WF) — incluye publicar POC→WF con mapeo de oferta_id -->
+            <!-- Publicar un snapshot POC en WF se hace con este botón eligiendo destino WF. -->
+            <!-- Cap-4: Restaurar / Desplegar a POC (visible para todos, incluye WF-origin) -->
+            <button
+              type="button"
+              class="btn btn-ghost btn-icon-square btn-icon-sm"
+              [disabled]="restoring()"
+              (click)="confirmRestore(snap)"
+              aria-label="Restaurar snapshot"
+              [title]="snap.entorno_cd === 'WF' ? 'Desplegar snapshot WF en POC' : 'Restaurar esta configuracion'"
+            >
+              <span class="btn-spinner" *ngIf="restoring()" aria-hidden="true"></span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!restoring()">
+                <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" />
+              </svg>
+              <span class="sr-only">{{ snap.entorno_cd === 'WF' ? 'Desplegar en POC' : 'Restaurar' }}</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-icon-square btn-icon-sm btn-delete-snap"
+              [disabled]="restoring() || deleting()"
+              (click)="openDeleteDialog(snap)"
+              aria-label="Eliminar snapshot"
+              title="Eliminar snapshot"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z" />
+              </svg>
+              <span class="sr-only">Eliminar</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager" *ngIf="total() > 0">
+    <button type="button" class="btn btn-ghost" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)">&lt;</button>
+    <button
+      type="button"
+      class="btn btn-ghost"
+      [class.is-active]="page === currentPage()"
+      *ngFor="let page of pageOptions(); trackBy: trackPage"
+      (click)="goToPage(page)"
+    >
+      {{ page }}
+    </button>
+    <button type="button" class="btn btn-ghost" [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)">&gt;</button>
+  </div>
+
+  <div class="confirm-backdrop" *ngIf="snapshotWfDialog()" (click)="closeSnapshotWfDialog()">
+    <article class="confirm-modal" (click)="$event.stopPropagation()">
+      <h3>Generar Snapshot WF</h3>
+      <p>Captura el estado actual de las tablas Workflow (MRO_) y lo guarda como snapshot con entorno <strong>WF</strong>.</p>
+      <label>
+        Fecha inicio período WF (opcional — vacío = todos los períodos)
+        <input type="datetime-local" step="1" [value]="snapshotVigDesde()" (input)="snapshotVigDesde.set($any($event.target).value)" autocomplete="off" />
+      </label>
+      <label>
+        Fecha fin período WF (opcional)
+        <input type="datetime-local" step="1" [value]="snapshotVigHasta()" (input)="snapshotVigHasta.set($any($event.target).value)" autocomplete="off" />
+      </label>
+      <label>
+        Usuario (opcional)
+        <input type="text" [value]="snapshotWfUser()" (input)="snapshotWfUser.set($any($event.target).value)" placeholder="Nombre o identificador" autocomplete="off" />
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeSnapshotWfDialog()">Cancelar</button>
+        <button type="button" class="btn btn-wf-snapshot" [disabled]="takingSnapshot()" (click)="executeSnapshotWf()">
+          Generar Snapshot
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <div class="confirm-backdrop" *ngIf="deleteDialog() as snap" (click)="cancelDelete()">
+    <article class="confirm-modal" (click)="$event.stopPropagation()">
+      <h3>Eliminar snapshot</h3>
+      <p>
+        Se eliminará el snapshot <strong>#{{ snap.snapshot_id }}</strong>
+        &ldquo;{{ snap.snapshot_name }}&rdquo;
+        ({{ snap.created_at | date:'dd/MM/yyyy HH:mm' }}).
+        Esta operación no se puede deshacer.
+      </p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" [disabled]="deleting()" (click)="cancelDelete()">Cancelar</button>
+        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="executeDelete()">
+          <span class="btn-spinner" *ngIf="deleting()" aria-hidden="true"></span>
+          {{ deleting() ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <div class="confirm-backdrop" *ngIf="confirmDialog() as snap" (click)="closeConfirmDialog()">
+    <article class="confirm-modal" (click)="$event.stopPropagation()">
+      <h3>Restaurar snapshot</h3>
+      <p>
+        Se restaurara el snapshot <strong>#{{ snap.snapshot_id }}</strong>
+        &ldquo;{{ snap.snapshot_name }}&rdquo;
+        ({{ snap.created_at | date:'dd/MM/yyyy HH:mm' }}).
+        La configuracion actual sera reemplazada y se guardara un snapshot de seguridad automatico.
+        Esta operacion no se puede deshacer.
+      </p>
+      <label>
+        Destino
+        <select [value]="restoreDestino()" (change)="onRestoreDestinoChange($any($event.target).value)">
+          <option value="POC">POC (base de datos configurador)</option>
+          <option value="WF">WF</option>
+        </select>
+      </label>
+      <div *ngIf="restoreDestino() === 'POC' && snap.entorno_cd === 'WF'" class="wf-range-fields">
+        <label>
+          Fecha destino POC <span class="required-mark">*</span>
+          <input type="datetime-local" step="1" [value]="restorePocFechaDesde()" (input)="restorePocFechaDesde.set($any($event.target).value)" />
+        </label>
+        <span class="field-error" *ngIf="!restorePocFechaDesde()">Requerido — debe coincidir con un período existente en POC</span>
+      </div>
+      <div *ngIf="restoreDestino() === 'WF'" class="field-row">
+        <label>
+          Fecha inicio WF <span class="required-mark">*</span>
+          <input type="datetime-local" step="1" [value]="restoreVigDesde()" (input)="restoreVigDesde.set($any($event.target).value)" />
+        </label>
+        <label>
+          Fecha fin (vacío = abierto)
+          <input type="datetime-local" step="1" [value]="restoreVigHasta()" (input)="restoreVigHasta.set($any($event.target).value)" />
+        </label>
+      </div>
+      <div class="oferta-mapping-section" *ngIf="showOfertaMapping() && wfOffers().length > 0">
+        <p class="oferta-mapping-title">
+          {{ restoreDestino() === 'WF'
+              ? 'Mapeo de oferta_id por oferta (destino WF)'
+              : 'Mapeo de oferta_id del snapshot por oferta (origen WF)' }}
+        </p>
+        <div class="oferta-mapping-scroll">
+          <table class="oferta-mapping-table">
+            <thead>
+              <tr>
+                <th>Oferta</th>
+                <th>oferta_id <span class="required-mark">*</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let offer of wfOffers()">
+                <td>{{ offer.offerCode }}</td>
+                <td>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    [value]="restoreOfertaIdOverrides()[offer.offerCode] ?? ''"
+                    (input)="setRestoreOfertaId(offer.offerCode, $any($event.target).value)"
+                    class="oferta-id-input"
+                  />
+                  <span
+                    class="field-error"
+                    *ngIf="restoreOfertaIdOverrides()[offer.offerCode] === null || (restoreOfertaIdOverrides()[offer.offerCode] !== null && restoreOfertaIdOverrides()[offer.offerCode]! < 1)"
+                  >
+                    Debe ser un entero ≥ 1
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <label>
+        Usuario
+        <input
+          type="text"
+          [value]="restoreUser()"
+          (input)="restoreUser.set($any($event.target).value)"
+          placeholder="Nombre o identificador (opcional)"
+          autocomplete="off"
+        />
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeConfirmDialog()">Cancelar</button>
+        <button type="button" class="btn btn-danger" [disabled]="restoring() || (showOfertaMapping() && !restoreOverridesValid()) || (restoreDestino() === 'POC' && snap.entorno_cd === 'WF' && !restorePocFechaDesde())" (click)="executeRestore()">
+          <span class="btn-spinner" *ngIf="restoring()" aria-hidden="true"></span>
+          {{ restoring() ? (restoreDestino() === 'WF' ? 'Publicando...' : 'Restaurando...') : (restoreDestino() === 'WF' ? 'Publicar en WF' : 'Restaurar') }}
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <div class="confirm-backdrop preview-backdrop" *ngIf="previewDialog() as snap" (click)="closePreview()">
+    <article class="preview-modal" (click)="$event.stopPropagation()">
+      <div class="preview-header">
+        <div>
+          <h3>Snapshot #{{ snap.snapshot_id }} — {{ snap.snapshot_name }}</h3>
+          <span class="env-badge" [class.env-wf]="snap.entorno_cd === 'WF'">{{ snap.entorno_cd }}</span>
+        </div>
+        <button type="button" class="btn btn-ghost btn-icon-square" (click)="closePreview()" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+          </svg>
+        </button>
+      </div>
+      <pre class="preview-json">{{ previewJson(snap) }}</pre>
+    </article>
+  </div>
+
+</section>

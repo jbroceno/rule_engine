@@ -1,0 +1,96 @@
+<section class="trace-log" *ngIf="evaluations.length > 0">
+  <header class="trace-head">
+    <div class="trace-head-titles">
+      <h3>{{ title }}</h3>
+      <p>Jerarquia regla -> condicion con estado de cumplimiento.</p>
+    </div>
+    <label class="trace-toggle-all">
+      <input
+        type="checkbox"
+        [checked]="allExpanded()"
+        (change)="toggleAll($any($event.target).checked)"
+      />
+      Expandir todo
+    </label>
+  </header>
+
+  <div class="trace-offers">
+    <article class="offer-block" *ngFor="let offer of buildViews()" [class.offer-failed]="!offer.eligible">
+      <header class="offer-head"
+        role="button"
+        tabindex="0"
+        [attr.aria-expanded]="isExpanded(offer.offerCode)"
+        (click)="toggle(offer.offerCode)"
+        (keydown.enter)="toggle(offer.offerCode)"
+        (keydown.space)="$event.preventDefault(); toggle(offer.offerCode)">
+        <h4>{{ offer.offerCode }}</h4>
+        <span class="offer-state" [class.offer-state-failed]="!offer.eligible">
+          {{ offer.eligible ? "Elegible" : "No elegible" }}
+        </span>
+        <span class="offer-summary" *ngIf="!isExpanded(offer.offerCode) && offer.summary">
+          {{ offer.summary }}
+        </span>
+        <span class="chevron">{{ isExpanded(offer.offerCode) ? '▾' : '▸' }}</span>
+      </header>
+
+      <ng-container *ngIf="isExpanded(offer.offerCode)">
+        <div class="trace-table-wrapper">
+          <table class="trace-table">
+            <thead>
+              <tr>
+                <th>Regla</th>
+                <th>Condicion</th>
+                <th>Actual</th>
+                <th>Esperado</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let entry of offer.rules">
+                <tr class="rule-row" [class.rule-row-failed]="!entry.rule.matched">
+                  <td>
+                    <div class="rule-cell">
+                      <strong>#{{ entry.rule.rule_id ?? '-' }}</strong>
+                      <span>{{ entry.rule.name ?? "Regla" }}</span>
+                    </div>
+                  </td>
+                  <td class="rule-meta">Prioridad {{ entry.rule.priority ?? "-" }}</td>
+                  <td class="rule-meta">-</td>
+                  <td class="rule-meta">-</td>
+                  <td>
+                    <span class="trace-badge" [class.trace-badge-failed]="!entry.rule.matched">
+                      {{ entry.rule.matched ? "Cumple" : "No cumple" }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngFor="let condition of entry.conditions" class="condition-row" [class.condition-row-failed]="!condition.passed">
+                  <td></td>
+                  <td>{{ summarizeCondition(condition) }}</td>
+                  <td class="trace-value">{{ formatTraceValue(condition.actual) }}</td>
+                  <td class="trace-value">{{ formatExpected(condition) }}</td>
+                  <td>
+                    <span class="trace-badge trace-badge-small" [class.trace-badge-failed]="!condition.passed">
+                      {{ condition.passed ? "OK" : "Fallo" }}
+                    </span>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="dictamen-result" *ngIf="offer.dictamen.length > 0">
+          <h5>Dictamen resultante</h5>
+          <table class="dictamen-table">
+            <tbody>
+              <tr *ngFor="let entry of offer.dictamen">
+                <td class="dictamen-key">{{ entry.key }}</td>
+                <td class="dictamen-value">{{ entry.value }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+    </article>
+  </div>
+</section>

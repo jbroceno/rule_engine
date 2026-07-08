@@ -1,0 +1,69 @@
+import dotenv from "dotenv";
+
+dotenv.config({ path: new URL("../.env", import.meta.url) });
+
+function asNumber(value, defaultValue) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+function asBoolean(value, defaultValue) {
+  if (value === undefined) {
+    return defaultValue;
+  }
+  return String(value).trim().toLowerCase() === "true";
+}
+
+export const env = {
+  nodeEnv: process.env.NODE_ENV || "development",
+  port: asNumber(process.env.PORT, 3000),
+  wfBaseUrl: process.env.WF_BASE_URL || "",
+  sql: {
+    server: process.env.SQL_SERVER || "",
+    port: asNumber(process.env.SQL_PORT, 1433),
+    database: process.env.SQL_DATABASE || "",
+    user: process.env.SQL_USER || "",
+    password: process.env.SQL_PASSWORD || "",
+    encrypt: asBoolean(process.env.SQL_ENCRYPT, false),
+    trustServerCertificate: asBoolean(process.env.SQL_TRUST_SERVER_CERT, true),
+    poolMax: asNumber(process.env.SQL_POOL_MAX, 10),
+    poolMin: asNumber(process.env.SQL_POOL_MIN, 0),
+    idleTimeoutMillis: asNumber(process.env.SQL_IDLE_TIMEOUT_MS, 30000),
+    requestTimeout: asNumber(process.env.SQL_REQUEST_TIMEOUT_MS, 30000),
+  },
+  sqlWf: {
+    server: process.env.WF_SQL_SERVER || "",
+    port: asNumber(process.env.WF_SQL_PORT, 1433),
+    database: process.env.WF_SQL_DATABASE || "",
+    user: process.env.WF_SQL_USER || "",
+    password: process.env.WF_SQL_PASSWORD || "",
+    encrypt: asBoolean(process.env.WF_SQL_ENCRYPT, false),
+    trustServerCertificate: asBoolean(process.env.WF_SQL_TRUST_SERVER_CERT, true),
+  },
+  auth: {
+    jwtSecret: process.env.JWT_SECRET || "",
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || "8h",
+  },
+};
+
+export function hasSqlCredentials() {
+  return Boolean(env.sql.server && env.sql.database && env.sql.user && env.sql.password);
+}
+
+export function hasWfSqlCredentials() {
+  return Boolean(env.sqlWf.server && env.sqlWf.database && env.sqlWf.user && env.sqlWf.password);
+}
+
+/**
+ * Fail-fast guard — call this in server.js before app.listen.
+ * Tests MUST NOT boot server.js; they use createApp() directly with injected DI.
+ * A missing JWT_SECRET means jwt.sign/verify silently misbehave or every token
+ * is forgeable with an empty secret, so we refuse to start.
+ */
+export function assertAuthConfig() {
+  if (!env.auth.jwtSecret) {
+    throw new Error(
+      "JWT_SECRET no configurado. Define JWT_SECRET en rule_set/api/.env antes de arrancar el API."
+    );
+  }
+}

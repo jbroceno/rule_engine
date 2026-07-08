@@ -1,0 +1,1407 @@
+{
+  "TC-A1": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A2": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A3": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A4": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A5": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A6": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A7": {
+    "initEligibles": [
+      "PROMOCION"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A8": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "winner": "PROMOCION_HC",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-A9": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-B1": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-B2": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-C1": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-C2": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "LARGO_PLAZO"
+    ],
+    "winner": "LARGO_PLAZO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 45,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 80,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-C3": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "winner": "ULTRA_ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 40,
+      "MAX_LTV": 0.9,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-C4": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "winner": "PROMOCION_HC",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-C5": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-C6": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "winner": "PROMOCION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-D1": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "winner": "PROMOCION_HC",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-D2": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-D3": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "winner": "PROMOCION_HC",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-D4": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "LARGO_PLAZO"
+    ],
+    "winner": "LARGO_PLAZO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 45,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 80,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-D5": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-D6": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "LARGO_PLAZO"
+    ],
+    "winner": "LARGO_PLAZO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 45,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 80,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-D7": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "winner": "ULTRA_ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 40,
+      "MAX_LTV": 0.9,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-D8": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-E1": {
+    "initEligibles": [
+      "PROMOCION"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-E2": {
+    "initEligibles": [
+      "PROMOCION"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-E3": {
+    "initEligibles": [
+      "PROMOCION"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-E4": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-E5": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X1": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X2": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "FIDELIZACION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-X3": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "FIDELIZACION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-X4": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "winner": "PROMOCION_HC",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X5": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "FIDELIZACION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-X6": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-X7": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "TC-X8": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "winner": "ULTRA_ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 40,
+      "MAX_LTV": 0.9,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X9": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X10": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "LARGO_PLAZO"
+    ],
+    "winner": "LARGO_PLAZO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 45,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 80,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X11": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION",
+      "PROMOCION_HC"
+    ],
+    "winner": "PROMOCION_HC",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X12": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION",
+      "PROMOCION"
+    ],
+    "winner": "PROMOCION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X13": {
+    "initEligibles": [
+      "PROMOCION"
+    ],
+    "preEligibles": [
+      "PROMOCION"
+    ],
+    "finalEligibles": [
+      "PROMOCION"
+    ],
+    "winner": "PROMOCION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 50000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "TC-X14": {
+    "initEligibles": [
+      "PROMOCION"
+    ],
+    "preEligibles": [
+      "PROMOCION"
+    ],
+    "finalEligibles": [],
+    "winner": null,
+    "uiLimits": {}
+  },
+  "TC-X15": {
+    "initEligibles": [
+      "PROMOCION"
+    ],
+    "preEligibles": [
+      "PROMOCION"
+    ],
+    "finalEligibles": [],
+    "winner": null,
+    "uiLimits": {}
+  },
+  "TC-X16": {
+    "initEligibles": [
+      "FIDELIZACION"
+    ],
+    "preEligibles": [
+      "FIDELIZACION"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "SDI-ONLY-FIDELIZACION": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "FIDELIZACION"
+    ],
+    "winner": "FIDELIZACION",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 0.8,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": false
+    }
+  },
+  "SDI-OFERTA-WINS": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  },
+  "SDI-MIXED": {
+    "initEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "preEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION",
+      "LARGO_PLAZO",
+      "PROMOCION",
+      "PROMOCION_HC",
+      "ULTRA_ALTO_RIESGO"
+    ],
+    "finalEligibles": [
+      "ALTO_RIESGO",
+      "FIDELIZACION"
+    ],
+    "winner": "ALTO_RIESGO",
+    "uiLimits": {
+      "MIN_HIPOTECA": 20000,
+      "MIN_PLAZO": 3,
+      "MIN_LTV_EXCLUSIVE": 0.8,
+      "MAX_HIPOTECA": 2000000,
+      "MAX_PLAZO": 35,
+      "MAX_LTV": 1,
+      "EDAD_PLAZO": 75,
+      "SOLICITAR_DATOS_INTERVINIENTES": true
+    }
+  }
+}

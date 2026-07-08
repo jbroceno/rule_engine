@@ -1,0 +1,137 @@
+name: rule-engine-demo
+
+# Demo "todo en uno" del Motor de Reglas de Ofertas Hipotecarias.
+#   sqlserver -> db-init (migraciones + seed) -> admin-seed (usuario admin, opcional) -> api -> web
+# Arranque:  docker compose up --build   (tras copiar .env.example a .env)
+#
+# Las credenciales y puertos se definen en el fichero .env de la raíz.
+#
+# Para que el panel de administración tenga un usuario desde el primer arranque,
+# define ADMIN_EMAIL y ADMIN_PASSWORD en el .env de la raíz. Si se omiten,
+# admin-seed no hace nada y el alta debe hacerse a mano con
+# `node scripts/seed_user.mjs` (ver CLAUDE.md, sección Autenticación y JWT).
+
+services:
+  # ---------------------------------------------------------------------------
+  # SQL Server (imagen oficial Microsoft, Ubuntu, edición Developer)
+  # ---------------------------------------------------------------------------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: rule-engine-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en el fichero .env}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
+    ports:
+      - "${SQLSERVER_PORT:-1433}:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      # La imagen 2022 ya no incluye sqlcmd; comprobamos el puerto con bash.
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/1433' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Migraciones + seed (se ejecuta una vez y termina)
+  #   Crea la BD, aplica el esquema, los SP y carga la semilla.
+  #   Es idempotente: si el esquema ya existe, no hace nada.
+  # ---------------------------------------------------------------------------
+  db-init:
+    image: mcr.microsoft.com/mssql-tools
+    container_name: rule-engine-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en el fichero .env}
+      SQL_DB_NAME: ${SQL_DB_NAME:-RULE_ENGINE}
+    volumes:
+      - ./rule_set/sql:/sql:ro
+      - ./docker/db-init/init.sh:/init.sh:ro
+    entrypoint: ["/bin/bash", "/init.sh"]
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # Alta del usuario admin (se ejecuta una vez y termina; opcional)
+  #   Si ADMIN_EMAIL/ADMIN_PASSWORD no están definidos en .env, no hace nada:
+  #   el alta debe hacerse a mano con `node scripts/seed_user.mjs`.
+  #   Usa --force, así que en reinicios posteriores actualiza el hash si cambia
+  #   la contraseña en el .env.
+  # ---------------------------------------------------------------------------
+  admin-seed:
+    build:
+      context: ./rule_set
+      dockerfile: api/Dockerfile
+    container_name: rule-engine-admin-seed
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      SQL_SERVER: sqlserver
+      SQL_PORT: "1433"
+      SQL_DATABASE: ${SQL_DB_NAME:-RULE_ENGINE}
+      SQL_USER: sa
+      SQL_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en el fichero .env}
+      SQL_ENCRYPT: "false"
+      SQL_TRUST_SERVER_CERT: "true"
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      SEED_PASSWORD: ${ADMIN_PASSWORD:-}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -n "$$ADMIN_EMAIL" ] && [ -n "$$SEED_PASSWORD" ]; then
+          echo "[admin-seed] Sembrando usuario admin '$$ADMIN_EMAIL'...";
+          node scripts/seed_user.mjs --email "$$ADMIN_EMAIL" --force;
+        else
+          echo "[admin-seed] ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env - se omite el alta automatica.";
+        fi
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # API REST (Express + mssql)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ./rule_set
+      dockerfile: api/Dockerfile
+    container_name: rule-engine-api
+    depends_on:
+      admin-seed:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      SQL_SERVER: sqlserver
+      SQL_PORT: "1433"
+      SQL_DATABASE: ${SQL_DB_NAME:-RULE_ENGINE}
+      SQL_USER: sa
+      SQL_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en el fichero .env}
+      SQL_ENCRYPT: "false"
+      SQL_TRUST_SERVER_CERT: "true"
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en el fichero .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      ENABLE_SEED_RESET: ${ENABLE_SEED_RESET:-false}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Frontend Angular (build estático servido por nginx, con proxy /api -> api)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: ./rule_set/web
+      dockerfile: Dockerfile
+    container_name: rule-engine-web
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    restart: unless-stopped
+
+volumes:
+  mssql-data:
+    name: rule-engine-mssql-data

@@ -1,0 +1,5252 @@
+{
+  "exportedAt": "2026-05-04T07:49:12.825Z",
+  "rules": [
+    {
+      "rule_id": 239,
+      "offerCode": "FIDELIZACION",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: neg. Antigüedad/Domiciliación",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"ANTIGUEDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT1",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT2",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT1",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT2",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 244,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: neg. Antigüedad/Domiciliación",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"ANTIGUEDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT1",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT2",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT1",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT2",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 254,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: LTV fuera de rango (MIN_LTV_EXCL, MAX_LTV]",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"LTV\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "ltv",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_LTV_EXCLUSIVE",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "ltv",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_LTV",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 260,
+      "offerCode": "PROMOCION",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: neg. Antigüedad/Domiciliación",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"ANTIGUEDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT1",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT2",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT1",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT2",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 270,
+      "offerCode": "PROMOCION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: LTV fuera de rango (MIN_LTV_EXCL, MAX_LTV]",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"LTV\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "ltv",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_LTV_EXCLUSIVE",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "ltv",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_LTV",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 276,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: neg. Antigüedad/Domiciliación",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"ANTIGUEDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT1",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT2",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT1",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT2",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 286,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: LTV fuera de rango (MIN_LTV_EXCL, MAX_LTV]",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"LTV\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "ltv",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_LTV_EXCLUSIVE",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "ltv",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_LTV",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 292,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: neg. Antigüedad/Domiciliación",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"ANTIGUEDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT1",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT2",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT1",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT2",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 302,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: LTV fuera de rango (MIN_LTV_EXCL, MAX_LTV]",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"LTV\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "ltv",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_LTV_EXCLUSIVE",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "ltv",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_LTV",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 308,
+      "offerCode": "PROMOCION_HC",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: neg. Antigüedad/Domiciliación",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"ANTIGUEDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT1",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "antiguedadT2",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_ANTIGUEDAD",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT1",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "domiciliaNominaT2",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 318,
+      "offerCode": "PROMOCION_HC",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: LTV fuera de rango (MIN_LTV_EXCL, MAX_LTV]",
+      "priority": 1000,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"LTV\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "ltv",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_LTV_EXCLUSIVE",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "ltv",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_LTV",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 255,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: importeHipoteca fuera de rango",
+      "priority": 990,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_HIPOTECA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "importeHipoteca",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_HIPOTECA",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "importeHipoteca",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_HIPOTECA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 271,
+      "offerCode": "PROMOCION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: importeHipoteca fuera de rango",
+      "priority": 990,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_HIPOTECA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "importeHipoteca",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_HIPOTECA",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "importeHipoteca",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_HIPOTECA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 287,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: importeHipoteca fuera de rango",
+      "priority": 990,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_HIPOTECA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "importeHipoteca",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_HIPOTECA",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "importeHipoteca",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_HIPOTECA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 303,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: importeHipoteca fuera de rango",
+      "priority": 990,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_HIPOTECA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "importeHipoteca",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_HIPOTECA",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "importeHipoteca",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_HIPOTECA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 319,
+      "offerCode": "PROMOCION_HC",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: importeHipoteca fuera de rango",
+      "priority": 990,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_HIPOTECA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "importeHipoteca",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_HIPOTECA",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "importeHipoteca",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_HIPOTECA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 256,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: plazo fuera de rango (años)",
+      "priority": 980,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "plazo",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_PLAZO",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "plazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 272,
+      "offerCode": "PROMOCION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: plazo fuera de rango (años)",
+      "priority": 980,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "plazo",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_PLAZO",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "plazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 288,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: plazo fuera de rango (años)",
+      "priority": 980,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "plazo",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_PLAZO",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "plazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 304,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: plazo fuera de rango (años)",
+      "priority": 980,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "plazo",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_PLAZO",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "plazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 320,
+      "offerCode": "PROMOCION_HC",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: plazo fuera de rango (años)",
+      "priority": 980,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 1,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 1,
+          "left_operand": "plazo",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_PLAZO",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 2,
+          "left_operand": "plazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 245,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tipo de alta no admitido",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"TIPO_ALTA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tipoAlta",
+          "operator": "NOT_IN",
+          "value_type": "STRING",
+          "right_operand": "PARAM:TIPO_ALTA_ADMITIDAS",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 257,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: edadMasPlazo > EDAD_PLAZO",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD_PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMasPlazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:EDAD_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 261,
+      "offerCode": "PROMOCION",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tipo de alta no admitido",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"TIPO_ALTA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tipoAlta",
+          "operator": "NOT_IN",
+          "value_type": "STRING",
+          "right_operand": "PARAM:TIPO_ALTA_ADMITIDAS",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 273,
+      "offerCode": "PROMOCION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: edadMasPlazo > EDAD_PLAZO",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD_PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMasPlazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:EDAD_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 277,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tipo de alta no admitido",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"TIPO_ALTA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tipoAlta",
+          "operator": "NOT_IN",
+          "value_type": "STRING",
+          "right_operand": "PARAM:TIPO_ALTA_ADMITIDAS",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 289,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: edadMasPlazo > EDAD_PLAZO",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD_PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMasPlazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:EDAD_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 293,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tipo de alta no admitido",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"TIPO_ALTA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tipoAlta",
+          "operator": "NOT_IN",
+          "value_type": "STRING",
+          "right_operand": "PARAM:TIPO_ALTA_ADMITIDAS",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 305,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: edadMasPlazo > EDAD_PLAZO",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD_PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMasPlazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:EDAD_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 309,
+      "offerCode": "PROMOCION_HC",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tipo de alta no admitido",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"TIPO_ALTA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tipoAlta",
+          "operator": "NOT_IN",
+          "value_type": "STRING",
+          "right_operand": "PARAM:TIPO_ALTA_ADMITIDAS",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 321,
+      "offerCode": "PROMOCION_HC",
+      "stage": "FINAL",
+      "rule_name": "FINAL Rechazo: edadMasPlazo > EDAD_PLAZO",
+      "priority": 970,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "rejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD_PLAZO\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMasPlazo",
+          "operator": "GT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:EDAD_PLAZO",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 246,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Finalidad ≠ 15 (no primera vivienda)",
+      "priority": 960,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"FINALIDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "finalidad",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "15",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 262,
+      "offerCode": "PROMOCION",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Finalidad ≠ 15 (no primera vivienda)",
+      "priority": 960,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"FINALIDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "finalidad",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "15",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 278,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Finalidad ≠ 15 (no primera vivienda)",
+      "priority": 960,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"FINALIDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "finalidad",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "15",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 294,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Finalidad ≠ 15 (no primera vivienda)",
+      "priority": 960,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"FINALIDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "finalidad",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "15",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 310,
+      "offerCode": "PROMOCION_HC",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Finalidad ≠ 15 (no primera vivienda)",
+      "priority": 960,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"FINALIDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "finalidad",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "15",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 247,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tiene otras propiedades",
+      "priority": 950,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"OTRAS_PROPIEDADES\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tieneOtrasPropiedades",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "0",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 263,
+      "offerCode": "PROMOCION",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tiene otras propiedades",
+      "priority": 950,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"OTRAS_PROPIEDADES\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tieneOtrasPropiedades",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "0",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 279,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tiene otras propiedades",
+      "priority": 950,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"OTRAS_PROPIEDADES\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tieneOtrasPropiedades",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "0",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 295,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tiene otras propiedades",
+      "priority": 950,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"OTRAS_PROPIEDADES\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tieneOtrasPropiedades",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "0",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 311,
+      "offerCode": "PROMOCION_HC",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: Tiene otras propiedades",
+      "priority": 950,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"OTRAS_PROPIEDADES\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "tieneOtrasPropiedades",
+          "operator": "NE",
+          "value_type": "NUMBER",
+          "right_operand": "0",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 248,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: edadMax >= MAX_EDAD",
+      "priority": 940,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMax",
+          "operator": "GE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_EDAD",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 264,
+      "offerCode": "PROMOCION",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: edadMax >= MAX_EDAD",
+      "priority": 940,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMax",
+          "operator": "GE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_EDAD",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 280,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: edadMax >= MAX_EDAD",
+      "priority": 940,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMax",
+          "operator": "GE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_EDAD",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 296,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: edadMax >= MAX_EDAD",
+      "priority": 940,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMax",
+          "operator": "GE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_EDAD",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 312,
+      "offerCode": "PROMOCION_HC",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: edadMax >= MAX_EDAD",
+      "priority": 940,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"EDAD\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "edadMax",
+          "operator": "GE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MAX_EDAD",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 249,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: importeVivienda < importeVentaCA (mínimo CCAA)",
+      "priority": 930,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_VIVIENDA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "importeVivienda",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "FIELD:importeVentaCA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 265,
+      "offerCode": "PROMOCION",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: importeVivienda < importeVentaCA (mínimo CCAA)",
+      "priority": 930,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_VIVIENDA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "importeVivienda",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "FIELD:importeVentaCA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 281,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: importeVivienda < importeVentaCA (mínimo CCAA)",
+      "priority": 930,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_VIVIENDA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "importeVivienda",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "FIELD:importeVentaCA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 297,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: importeVivienda < importeVentaCA (mínimo CCAA)",
+      "priority": 930,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_VIVIENDA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "importeVivienda",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "FIELD:importeVentaCA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 313,
+      "offerCode": "PROMOCION_HC",
+      "stage": "INIT",
+      "rule_name": "INIT Rechazo: importeVivienda < importeVentaCA (mínimo CCAA)",
+      "priority": 930,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"IMPORTE_VIVIENDA\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "importeVivienda",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "FIELD:importeVentaCA",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 251,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 1T ingresosT1 < MIN_INGRESOS_1T",
+      "priority": 900,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "1",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosT1",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_1T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 267,
+      "offerCode": "PROMOCION",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 1T ingresosT1 < MIN_INGRESOS_1T",
+      "priority": 900,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "1",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosT1",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_1T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 283,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 1T ingresosT1 < MIN_INGRESOS_1T",
+      "priority": 900,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "1",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosT1",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_1T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 299,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 1T ingresosT1 < MIN_INGRESOS_1T",
+      "priority": 900,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "1",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosT1",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_1T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 315,
+      "offerCode": "PROMOCION_HC",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 1T ingresosT1 < MIN_INGRESOS_1T",
+      "priority": 900,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "1",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosT1",
+          "operator": "LT",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_1T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 252,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 2T ingresosTotales ≤ MIN_INGRESOS_2T",
+      "priority": 890,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "2",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosTotales",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_2T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 268,
+      "offerCode": "PROMOCION",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 2T ingresosTotales ≤ MIN_INGRESOS_2T",
+      "priority": 890,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "2",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosTotales",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_2T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 284,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 2T ingresosTotales ≤ MIN_INGRESOS_2T",
+      "priority": 890,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "2",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosTotales",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_2T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 300,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 2T ingresosTotales ≤ MIN_INGRESOS_2T",
+      "priority": 890,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "2",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosTotales",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_2T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 316,
+      "offerCode": "PROMOCION_HC",
+      "stage": "PRE",
+      "rule_name": "PRE Rechazo: 2T ingresosTotales ≤ MIN_INGRESOS_2T",
+      "priority": 890,
+      "enabled": true,
+      "stop_processing": false,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preRejected",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "APPEND",
+          "action_payload": {
+            "field": "motivos",
+            "value": "{\"code\":\"INGRESOS\"}",
+            "value_type": "JSON"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "numTitulares",
+          "operator": "EQ",
+          "value_type": "NUMBER",
+          "right_operand": "2",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "ingresosTotales",
+          "operator": "LE",
+          "value_type": "NUMBER",
+          "right_operand": "PARAM:MIN_INGRESOS_2T",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 240,
+      "offerCode": "FIDELIZACION",
+      "stage": "INIT",
+      "rule_name": "INIT Decisión: initEligible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "initRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 241,
+      "offerCode": "FIDELIZACION",
+      "stage": "PRE",
+      "rule_name": "PRE Decisión: preEligible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "offerCode",
+            "value": "FIDELIZACION",
+            "value_type": "STRING"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "30000",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "3000000",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "5",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "30",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtvRatio",
+            "value": "80",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "80",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "preRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 242,
+      "offerCode": "FIDELIZACION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: NO elegible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "false",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "FIDELIZACION",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_TRUE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 250,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Decisión: initEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "initRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 253,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "PRE",
+      "rule_name": "PRE Decisión: preEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "offerCode",
+            "value": "ALTO_RIESGO",
+            "value_type": "STRING"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "preRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 258,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: NO elegible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "false",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "ALTO_RIESGO",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_TRUE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 266,
+      "offerCode": "PROMOCION",
+      "stage": "INIT",
+      "rule_name": "INIT Decisión: initEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "initRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 269,
+      "offerCode": "PROMOCION",
+      "stage": "PRE",
+      "rule_name": "PRE Decisión: preEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "offerCode",
+            "value": "PROMOCION",
+            "value_type": "STRING"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "preRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 274,
+      "offerCode": "PROMOCION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: NO elegible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "false",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "PROMOCION",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_TRUE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 282,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "INIT",
+      "rule_name": "INIT Decisión: initEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "initRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 285,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "PRE",
+      "rule_name": "PRE Decisión: preEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "offerCode",
+            "value": "LARGO_PLAZO",
+            "value_type": "STRING"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "preRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 290,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: NO elegible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "false",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "LARGO_PLAZO",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_TRUE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 298,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "INIT",
+      "rule_name": "INIT Decisión: initEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "initRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 301,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "PRE",
+      "rule_name": "PRE Decisión: preEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "offerCode",
+            "value": "ULTRA_ALTO_RIESGO",
+            "value_type": "STRING"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "preRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 306,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: NO elegible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "false",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "ULTRA_ALTO_RIESGO",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_TRUE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 314,
+      "offerCode": "PROMOCION_HC",
+      "stage": "INIT",
+      "rule_name": "INIT Decisión: initEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "initEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "INIT",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "initRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 317,
+      "offerCode": "PROMOCION_HC",
+      "stage": "PRE",
+      "rule_name": "PRE Decisión: preEligible + límites",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "preEligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "offerCode",
+            "value": "PROMOCION_HC",
+            "value_type": "STRING"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minHipoteca",
+            "value": "PARAM:MIN_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxHipoteca",
+            "value": "PARAM:MAX_HIPOTECA",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minPlazo",
+            "value": "PARAM:MIN_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxPlazo",
+            "value": "PARAM:MAX_PLAZO",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "minLtvExclusive",
+            "value": "PARAM:MIN_LTV_EXCLUSIVE",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "maxLtv",
+            "value": "PARAM:MAX_LTV",
+            "value_type": "NUMBER"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "edadPlazo",
+            "value": "PARAM:EDAD_PLAZO",
+            "value_type": "NUMBER"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "PRE",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "preRejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 322,
+      "offerCode": "PROMOCION_HC",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: NO elegible",
+      "priority": 10,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "false",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "PROMOCION_HC",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_TRUE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 243,
+      "offerCode": "FIDELIZACION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: ELEGIBLE",
+      "priority": 1,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "FIDELIZACION",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 259,
+      "offerCode": "ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: ELEGIBLE",
+      "priority": 1,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "ALTO_RIESGO",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 275,
+      "offerCode": "PROMOCION",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: ELEGIBLE",
+      "priority": 1,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "PROMOCION",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 291,
+      "offerCode": "LARGO_PLAZO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: ELEGIBLE",
+      "priority": 1,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "LARGO_PLAZO",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 307,
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: ELEGIBLE",
+      "priority": 1,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "ULTRA_ALTO_RIESGO",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    },
+    {
+      "rule_id": 323,
+      "offerCode": "PROMOCION_HC",
+      "stage": "FINAL",
+      "rule_name": "FINAL Decisión: ELEGIBLE",
+      "priority": 1,
+      "enabled": true,
+      "stop_processing": true,
+      "actions": [
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "eligible",
+            "value": "true",
+            "value_type": "BOOL"
+          }
+        },
+        {
+          "action_type": "SET",
+          "action_payload": {
+            "field": "selectedOffer",
+            "value": "PROMOCION_HC",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "group_id": 0,
+          "left_operand": "stage",
+          "operator": "EQ",
+          "value_type": "STRING",
+          "right_operand": "FINAL",
+          "value2": null
+        },
+        {
+          "group_id": 0,
+          "left_operand": "rejected",
+          "operator": "IS_FALSE",
+          "value_type": "BOOL",
+          "right_operand": "",
+          "value2": null
+        }
+      ]
+    }
+  ],
+  "params": [
+    {
+      "offerCode": "FIDELIZACION",
+      "paramValues": [
+        {
+          "param_id": 304,
+          "key": "MIN_ANTIGUEDAD",
+          "value": "6",
+          "value_type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "offerCode": "ALTO_RIESGO",
+      "paramValues": [
+        {
+          "param_id": 315,
+          "key": "EDAD_PLAZO",
+          "value": "80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 306,
+          "key": "MAX_EDAD",
+          "value": "40",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 312,
+          "key": "MAX_HIPOTECA",
+          "value": "1000000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 310,
+          "key": "MAX_LTV",
+          "value": "0.95",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 308,
+          "key": "MAX_PLAZO",
+          "value": "30",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 305,
+          "key": "MIN_ANTIGUEDAD",
+          "value": "12",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 311,
+          "key": "MIN_HIPOTECA",
+          "value": "30000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 313,
+          "key": "MIN_INGRESOS_1T",
+          "value": "2300",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 314,
+          "key": "MIN_INGRESOS_2T",
+          "value": "3400",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 309,
+          "key": "MIN_LTV_EXCLUSIVE",
+          "value": "0.80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 307,
+          "key": "MIN_PLAZO",
+          "value": "5",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 316,
+          "key": "TIPO_ALTA_ADMITIDAS",
+          "value": "[\"NUEVA\",\"NOVACION\"]",
+          "value_type": "JSON"
+        }
+      ]
+    },
+    {
+      "offerCode": "LARGO_PLAZO",
+      "paramValues": [
+        {
+          "param_id": 339,
+          "key": "EDAD_PLAZO",
+          "value": "75",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 330,
+          "key": "MAX_EDAD",
+          "value": "40",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 336,
+          "key": "MAX_HIPOTECA",
+          "value": "1000000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 334,
+          "key": "MAX_LTV",
+          "value": "0.80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 332,
+          "key": "MAX_PLAZO",
+          "value": "40",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 329,
+          "key": "MIN_ANTIGUEDAD",
+          "value": "12",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 335,
+          "key": "MIN_HIPOTECA",
+          "value": "30000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 337,
+          "key": "MIN_INGRESOS_1T",
+          "value": "2300",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 338,
+          "key": "MIN_INGRESOS_2T",
+          "value": "3400",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 333,
+          "key": "MIN_LTV_EXCLUSIVE",
+          "value": "0",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 331,
+          "key": "MIN_PLAZO",
+          "value": "31",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 340,
+          "key": "TIPO_ALTA_ADMITIDAS",
+          "value": "[\"NUEVA\",\"NOVACION\"]",
+          "value_type": "JSON"
+        }
+      ]
+    },
+    {
+      "offerCode": "ULTRA_ALTO_RIESGO",
+      "paramValues": [
+        {
+          "param_id": 351,
+          "key": "EDAD_PLAZO",
+          "value": "75",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 342,
+          "key": "MAX_EDAD",
+          "value": "40",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 348,
+          "key": "MAX_HIPOTECA",
+          "value": "1000000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 346,
+          "key": "MAX_LTV",
+          "value": "0.95",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 344,
+          "key": "MAX_PLAZO",
+          "value": "40",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 341,
+          "key": "MIN_ANTIGUEDAD",
+          "value": "12",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 347,
+          "key": "MIN_HIPOTECA",
+          "value": "30000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 349,
+          "key": "MIN_INGRESOS_1T",
+          "value": "2300",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 350,
+          "key": "MIN_INGRESOS_2T",
+          "value": "3400",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 345,
+          "key": "MIN_LTV_EXCLUSIVE",
+          "value": "0.80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 343,
+          "key": "MIN_PLAZO",
+          "value": "31",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 352,
+          "key": "TIPO_ALTA_ADMITIDAS",
+          "value": "[\"NUEVA\",\"NOVACION\"]",
+          "value_type": "JSON"
+        }
+      ]
+    },
+    {
+      "offerCode": "PROMOCION",
+      "paramValues": [
+        {
+          "param_id": 327,
+          "key": "EDAD_PLAZO",
+          "value": "80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 318,
+          "key": "MAX_EDAD",
+          "value": "45",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 324,
+          "key": "MAX_HIPOTECA",
+          "value": "3000000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 322,
+          "key": "MAX_LTV",
+          "value": "0.80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 320,
+          "key": "MAX_PLAZO",
+          "value": "30",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 317,
+          "key": "MIN_ANTIGUEDAD",
+          "value": "0",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 323,
+          "key": "MIN_HIPOTECA",
+          "value": "30000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 325,
+          "key": "MIN_INGRESOS_1T",
+          "value": "0",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 326,
+          "key": "MIN_INGRESOS_2T",
+          "value": "0",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 321,
+          "key": "MIN_LTV_EXCLUSIVE",
+          "value": "0",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 319,
+          "key": "MIN_PLAZO",
+          "value": "5",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 328,
+          "key": "TIPO_ALTA_ADMITIDAS",
+          "value": "[\"NUEVA\",\"NOVACION\"]",
+          "value_type": "JSON"
+        }
+      ]
+    },
+    {
+      "offerCode": "PROMOCION_HC",
+      "paramValues": [
+        {
+          "param_id": 363,
+          "key": "EDAD_PLAZO",
+          "value": "80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 354,
+          "key": "MAX_EDAD",
+          "value": "45",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 360,
+          "key": "MAX_HIPOTECA",
+          "value": "3000000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 358,
+          "key": "MAX_LTV",
+          "value": "0.80",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 356,
+          "key": "MAX_PLAZO",
+          "value": "30",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 353,
+          "key": "MIN_ANTIGUEDAD",
+          "value": "12",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 359,
+          "key": "MIN_HIPOTECA",
+          "value": "30000",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 361,
+          "key": "MIN_INGRESOS_1T",
+          "value": "2300",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 362,
+          "key": "MIN_INGRESOS_2T",
+          "value": "3400",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 357,
+          "key": "MIN_LTV_EXCLUSIVE",
+          "value": "0",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 355,
+          "key": "MIN_PLAZO",
+          "value": "5",
+          "value_type": "NUMBER"
+        },
+        {
+          "param_id": 364,
+          "key": "TIPO_ALTA_ADMITIDAS",
+          "value": "[\"NUEVA\",\"NOVACION\"]",
+          "value_type": "JSON"
+        }
+      ]
+    }
+  ]
+}

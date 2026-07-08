@@ -1,0 +1,386 @@
+{
+  "info": {
+    "name": "Ofertas Hipotecarias - Admin CRUD API",
+    "description": "Coleccion para smoke/regresion de endpoints admin CRUD del motor de reglas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "offerCode",
+      "value": "OFERTA_RESTRICTIVA"
+    },
+    {
+      "key": "stage",
+      "value": "PRE"
+    },
+    {
+      "key": "ruleId",
+      "value": "1"
+    },
+    {
+      "key": "paramId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Rules",
+      "item": [
+        {
+          "name": "GET /api/admin/rules",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rules?offerCode={{offerCode}}&stage={{stage}}&page=1&pageSize=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "rules"
+              ],
+              "query": [
+                {
+                  "key": "offerCode",
+                  "value": "{{offerCode}}"
+                },
+                {
+                  "key": "stage",
+                  "value": "{{stage}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/admin/rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerCode\": \"{{offerCode}}\",\n  \"stage\": \"{{stage}}\",\n  \"rule_name\": \"PRE TMP POSTMAN RULE\",\n  \"priority\": 15,\n  \"enabled\": false,\n  \"action\": {\n    \"action_type\": \"SET\",\n    \"action_payload\": {\n      \"field\": \"tmpPostmanFlag\",\n      \"value\": \"on\",\n      \"value_type\": \"STRING\"\n    },\n    \"stop_processing\": false\n  },\n  \"conditions\": [\n    {\n      \"group_id\": 0,\n      \"left_operand\": \"stage\",\n      \"operator\": \"EQ\",\n      \"right_operand\": \"PRE\",\n      \"value_type\": \"STRING\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "rules"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /api/admin/rules/:ruleId",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerCode\": \"{{offerCode}}\",\n  \"stage\": \"{{stage}}\",\n  \"rule_name\": \"PRE TMP POSTMAN RULE UPDATED\",\n  \"priority\": 16,\n  \"enabled\": true,\n  \"action\": {\n    \"action_type\": \"SET\",\n    \"action_payload\": {\n      \"field\": \"tmpPostmanFlag\",\n      \"value\": \"updated\",\n      \"value_type\": \"STRING\"\n    },\n    \"stop_processing\": false\n  },\n  \"conditions\": [\n    {\n      \"group_id\": 0,\n      \"left_operand\": \"stage\",\n      \"operator\": \"EQ\",\n      \"right_operand\": \"PRE\",\n      \"value_type\": \"STRING\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rules/{{ruleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "rules",
+                "{{ruleId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /api/admin/rules/:ruleId/enabled",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rules/{{ruleId}}/enabled",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "rules",
+                "{{ruleId}}",
+                "enabled"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /api/admin/rules/reorder",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerCode\": \"{{offerCode}}\",\n  \"stage\": \"{{stage}}\",\n  \"items\": [\n    { \"rule_id\": 1, \"priority\": 1000 },\n    { \"rule_id\": 2, \"priority\": 980 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rules/reorder",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "rules",
+                "reorder"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/admin/rules/:ruleId",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rules/{{ruleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "rules",
+                "{{ruleId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Params",
+      "item": [
+        {
+          "name": "GET /api/admin/params",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/params?offerCode={{offerCode}}&stage={{stage}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "params"
+              ],
+              "query": [
+                {
+                  "key": "offerCode",
+                  "value": "{{offerCode}}"
+                },
+                {
+                  "key": "stage",
+                  "value": "{{stage}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/admin/params",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerCode\": \"{{offerCode}}\",\n  \"stage\": \"{{stage}}\",\n  \"key\": \"TMP_POSTMAN_PARAM\",\n  \"value\": \"123\",\n  \"value_type\": \"NUMBER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/params",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "params"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /api/admin/params/:paramId",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": \"124\",\n  \"value_type\": \"NUMBER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/params/{{paramId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "params",
+                "{{paramId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/admin/params/:paramId",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/params/{{paramId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "params",
+                "{{paramId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Validate",
+      "item": [
+        {
+          "name": "POST /api/admin/validate (rule valido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entity\": \"rule\",\n  \"payload\": {\n    \"offerCode\": \"{{offerCode}}\",\n    \"stage\": \"{{stage}}\",\n    \"rule_name\": \"PRE validate ok\",\n    \"priority\": 901,\n    \"enabled\": true,\n    \"action\": {\n      \"action_type\": \"SET\",\n      \"action_payload\": {\n        \"field\": \"preRejected\",\n        \"value_type\": \"BOOL\",\n        \"value\": \"false\"\n      },\n      \"stop_processing\": false\n    },\n    \"conditions\": [\n      {\n        \"group_id\": 0,\n        \"left_operand\": \"stage\",\n        \"operator\": \"EQ\",\n        \"right_operand\": \"PRE\",\n        \"value_type\": \"STRING\"\n      }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "validate"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/admin/validate (rule invalido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entity\": \"rule\",\n  \"payload\": {\n    \"offerCode\": \"\",\n    \"stage\": \"BAD\",\n    \"rule_name\": \"\",\n    \"priority\": \"x\",\n    \"enabled\": \"yes\",\n    \"action\": {},\n    \"conditions\": []\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "validate"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

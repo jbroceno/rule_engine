@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.angular/
+
+.env
+
+*.log
+*.bak
+*.~*
+
+.vscode/
+
+.atl/
+
+debug.txt
+
+rule_set/docs/evidencias/

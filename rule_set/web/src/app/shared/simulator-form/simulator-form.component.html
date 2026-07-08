@@ -1,0 +1,198 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+  <fieldset *ngIf="phase !== 'INIT'">
+    <legend>Titulares</legend>
+    <div class="grid">
+      <label>
+        Num. titulares
+        <select formControlName="numTitulares">
+          <option [value]="1">1 titular</option>
+          <option [value]="2">2 titulares</option>
+        </select>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Titular 1</legend>
+    <div class="grid grid-sm">
+      <label *ngIf="validateWf()">
+        Num. persona
+        <input type="text" [value]="numPersonaT1()" (input)="numPersonaT1.set($any($event.target).value)" maxlength="10" placeholder="NUM_PERSONA" />
+        <small>&nbsp;</small>
+      </label>
+      <label>
+        Edad T1 (años)
+        <input type="number" formControlName="edadT1" min="18" max="99" />
+        <small>&nbsp;</small>
+      </label>
+      <label class="span2">
+        Antigüedad T1 (meses)
+        <input type="number" formControlName="antiguedadT1" min="0" />
+        <small>&nbsp;</small>
+      </label>
+      <label *ngIf="phase !== 'INIT'">
+        Ingresos T1 (€/mes)
+        <input type="number" formControlName="ingresosT1" min="0" />
+        <small>&nbsp;</small>
+      </label>
+      <label *ngIf="phase !== 'INIT'">
+        Num. pagas T1
+        <input type="number" formControlName="pagasT1" min="1" max="20" />
+        <small>× pagas / 14 al enviar</small>
+      </label>
+      <label class="check span2">
+        <input type="checkbox" formControlName="domiciliaNominaT1" />
+        Domicilia nomina T1
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset *ngIf="phase !== 'INIT' && isTwoTitulares()">
+    <legend>Titular 2</legend>
+    <div class="grid grid-sm">
+      <label *ngIf="validateWf()">
+        Num. persona
+        <input type="text" [value]="numPersonaT2()" (input)="numPersonaT2.set($any($event.target).value)" maxlength="10" placeholder="NUM_PERSONA" />
+        <small>&nbsp;</small>
+      </label>
+      <label>Edad T2 (años)<input type="number" formControlName="edadT2" min="0" max="99" /><small>&nbsp;</small></label>
+      <label class="span2">Antigüedad T2 (meses)<input type="number" formControlName="antiguedadT2" min="0" /><small>&nbsp;</small></label>
+      <label>Ingresos T2 (€/mes)<input type="number" formControlName="ingresosT2" min="0" /><small>&nbsp;</small></label>
+      <label>Num. pagas T2<input type="number" formControlName="pagasT2" min="1" max="20" /><small>× pagas / 14 al enviar</small></label>
+      <label class="check span2">
+        <input type="checkbox" formControlName="domiciliaNominaT2" />
+        Domicilia nomina T2
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Solicitud</legend>
+    <div class="grid">
+      <label>
+        Finalidad
+        <select formControlName="finalidad">
+          <option [value]="1">1 — Vivienda habitual</option>
+          <option [value]="15">15 — Segunda vivienda</option>
+        </select>
+      </label>
+      <label>
+        Tipo de alta
+        <select formControlName="tipoAlta">
+          <option value="CAPTACION">CAPTACION</option>
+          <option value="NOVACION">NOVACION</option>
+        </select>
+      </label>
+      <label class="check">
+        <input type="checkbox" formControlName="primeraViviendaHabitual" />
+        Primera vivienda habitual
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Prestamo</legend>
+    <div class="grid grid-row">
+      <label>
+        Importe vivienda (€)
+        <input type="number" formControlName="importeVivienda" min="1" />
+        <small>&nbsp;</small>
+      </label>
+      <label>
+        Importe venta CCAA (€)
+        <input type="number" formControlName="importeVentaCA" min="0" />
+        <small>Valor del lookup de precio minimo de compraventa por CCAA</small>
+      </label>
+      <ng-container *ngIf="phase === 'FINAL'">
+        <label>
+          Importe hipoteca (€)
+          <input type="number" formControlName="importeHipoteca" min="1" />
+          <small>&nbsp;</small>
+        </label>
+        <label>
+          Plazo (años)
+          <input type="number" formControlName="plazo" min="1" max="50" />
+          <small>LTV y edadMasPlazo los calcula el servidor</small>
+        </label>
+      </ng-container>
+    </div>
+  </fieldset>
+
+  <fieldset *ngIf="phase === 'FINAL'">
+    <legend>Ofertas a evaluar</legend>
+    <div class="offers-toolbar" *ngIf="offersList().length">
+      <button type="button" class="offers-btn" (click)="selectAllOffers()">Todas</button>
+      <button type="button" class="offers-btn" (click)="selectNoOffers()">Ninguna</button>
+      <button type="button" class="offers-btn" (click)="invertOfferSelection()">Invertir</button>
+    </div>
+    <div class="grid offers-grid" *ngIf="offersList().length; else offersEmpty">
+      <label class="check" *ngFor="let offer of offersList()">
+        <input type="checkbox" [checked]="isOfferSelected(offer.offerCode)" (change)="toggleOffer(offer.offerCode)" />
+        {{ offer.offerCode }}
+      </label>
+    </div>
+    <ng-template #offersEmpty><small>Cargando ofertas…</small></ng-template>
+    <small class="offers-error" *ngIf="offerSelectionEmpty()">Selecciona al menos una oferta.</small>
+  </fieldset>
+
+  <div class="fieldset-row">
+  <fieldset class="fs-opciones" *ngIf="phase !== 'INIT'">
+    <legend>Opciones de evaluacion</legend>
+    <div class="grid">
+      <label class="check">
+        <input type="checkbox" formControlName="chained" />
+        Ejecución encadenada
+      </label>
+    </div>
+    <small>Propaga fallos de fases anteriores por oferta.</small>
+  </fieldset>
+
+  <fieldset class="fs-wf">
+    <legend>Validacion WF</legend>
+    <div class="grid">
+      <label class="check">
+        <input type="checkbox" [checked]="validateWf()" (change)="validateWf.set(!validateWf())" />
+        Validar contra motor WF
+      </label>
+    </div>
+    <div class="wf-fields" *ngIf="validateWf()">
+      <label>Token<input type="text" [value]="wfToken()" (input)="wfToken.set($any($event.target).value)" placeholder="Token de seguridad WF" /></label>
+      <label>Token expediente<input type="text" [value]="wfTokenExpCd()" (input)="wfTokenExpCd.set($any($event.target).value)" placeholder="UUID del expediente" /></label>
+      <label>
+        Comunidad autónoma
+        <select [value]="comunidadAutonoma()" (change)="comunidadAutonoma.set($any($event.target).value)">
+          <option value="">— seleccionar —</option>
+          <option value="01">Andalucía</option>
+          <option value="02">Aragón</option>
+          <option value="03">Asturias, Principado de</option>
+          <option value="04">Balears, Illes</option>
+          <option value="05">Canarias</option>
+          <option value="06">Cantabria</option>
+          <option value="07">Castilla y León</option>
+          <option value="08">Castilla-La Mancha</option>
+          <option value="09">Cataluña</option>
+          <option value="10">Comunitat Valenciana</option>
+          <option value="11">Extremadura</option>
+          <option value="12">Galicia</option>
+          <option value="13">Madrid, Comunidad de</option>
+          <option value="14">Murcia, Región de</option>
+          <option value="15">Navarra, Comunidad Foral de</option>
+          <option value="16">País Vasco</option>
+          <option value="17">Rioja, La</option>
+          <option value="18">Ceuta</option>
+          <option value="19">Melilla</option>
+        </select>
+      </label>
+    </div>
+  </fieldset>
+  </div>
+
+  <button class="btn" type="submit">
+    <ng-container [ngSwitch]="phase">
+      <span *ngSwitchCase="'INIT'">Ejecutar INIT</span>
+      <span *ngSwitchCase="'PRE'">Ejecutar PRE</span>
+      <span *ngSwitchCase="'FINAL'">Ejecutar FINAL</span>
+    </ng-container>
+  </button>
+</form>

@@ -1,0 +1,184 @@
+form {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+fieldset {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0.65rem 0.85rem 0.85rem;
+  margin: 0;
+}
+
+legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 0.35rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.65rem;
+}
+
+.grid-sm {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.span2 {
+  grid-column: span 2;
+}
+
+/* Una sola fila: tantas columnas como campos visibles (colapsa en pantallas estrechas). */
+.grid-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  align-items: start;
+}
+
+/* Todas las leyendas reservan la misma altura (2 lineas) para que la fila quede alineada. */
+.grid-row label small,
+.grid-sm label small {
+  min-height: 2.1em;
+}
+
+/* Fieldsets lado a lado: Opciones estrecho, Validacion WF toma el resto. */
+.fieldset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.fs-opciones {
+  flex: 0 1 240px;
+}
+
+.fs-wf {
+  flex: 1 1 380px;
+  min-width: 0;
+}
+
+/* Campos WF en linea: tokens al ancho de un GUID, combo al valor mas largo. */
+.wf-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+}
+
+.wf-fields input[type="text"] {
+  width: 38ch;
+  max-width: 100%;
+}
+
+.wf-fields select {
+  width: auto;
+}
+
+.offers-toolbar {
+  display: flex;
+  gap: 0.45rem;
+  margin-bottom: 0.6rem;
+}
+
+.offers-toolbar .offers-btn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--ink-default);
+  cursor: pointer;
+}
+
+.offers-toolbar .offers-btn:hover {
+  background: var(--surface-soft, rgba(0, 0, 0, 0.04));
+}
+
+/* Columnas anchas: los codigos de oferta son largos y no deben solaparse. */
+.offers-grid {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.offers-grid .check {
+  padding-top: 0;
+  align-items: flex-start;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.offers-error {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--danger, #c0392b);
+  font-size: 0.75rem;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink-default);
+}
+
+label input,
+label select {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.45rem;
+}
+
+label small {
+  font-size: 0.73rem;
+  color: var(--ink-soft);
+  margin-top: -0.15rem;
+}
+
+.check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  padding-top: 1.4rem;
+}
+
+.check input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+:host-context(.theme-analitica) form {
+  border-radius: 10px;
+}
+
+:host-context(.theme-analitica) .grid {
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 0.55rem;
+}
+
+:host-context(.theme-analitica) .grid-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+:host-context(.theme-analitica) .offers-grid {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+:host-context(.theme-analitica) label {
+  font-size: 0.8rem;
+}
+
+:host-context(.theme-analitica) label input,
+:host-context(.theme-analitica) label select {
+  padding: var(--field-density, 0.35rem) 0.45rem;
+}

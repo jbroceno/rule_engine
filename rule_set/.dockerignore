@@ -1,0 +1,11 @@
+node_modules
+web
+test
+fixtures
+docs
+openspec
+.claude
+sql
+pnpm-lock.yaml
+**/.env
+**/*.log

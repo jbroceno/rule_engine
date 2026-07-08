@@ -1,0 +1,75 @@
+<section class="payload-layout" aria-label="Parametros de accion">
+  <header class="payload-head">
+    <h4>Acciones de la regla</h4>
+    <button type="button" class="btn btn-ghost btn-small" (click)="addEntry()">+ Campo de accion</button>
+  </header>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Clave</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="entries.length === 0">
+          <td colspan="5" class="empty">No hay parametros definidos.</td>
+        </tr>
+        <tr *ngFor="let entry of entries; trackBy: trackEntry; let index = index" [class.row-invalid]="isInvalidEntry(entry)">
+          <td class="row-index">{{ index + 1 }}</td>
+          <td>
+            <select
+              [class.control-invalid]="isInvalidEntry(entry)"
+              [ngModel]="selectValue(entry)"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onSelectChange(index, $event)"
+            >
+              <option *ngFor="let option of resolvedKeyOptions()" [value]="option">{{ option }}</option>
+              <option [value]="OTHER_SENTINEL">— otro —</option>
+            </select>
+            <input
+              *ngIf="isCustomKey(entry)"
+              type="text"
+              placeholder="Nombre del campo"
+              [class.control-invalid]="isInvalidEntry(entry)"
+              [value]="entry.key"
+              (input)="updateEntry(index, { key: $any($event.target).value })"
+              autocomplete="off"
+              style="margin-top: 0.28rem; width: 100%;"
+            />
+          </td>
+          <td>
+            <select
+              [class.control-invalid]="isInvalidEntry(entry)"
+              [ngModel]="entry.value_type"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="updateEntry(index, { value_type: $event })"
+            >
+              <option *ngFor="let option of valueTypeOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </td>
+          <td>
+            <input
+              type="text"
+              [class.control-invalid]="isInvalidEntry(entry)"
+              [value]="entry.value"
+              (input)="updateEntry(index, { value: $any($event.target).value })"
+              autocomplete="off"
+            />
+          </td>
+          <td>
+            <button type="button" class="icon-btn danger" aria-label="Eliminar parametro" title="Eliminar parametro" (click)="removeEntry(index)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

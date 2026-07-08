@@ -1,0 +1,103 @@
+<section class="conditions-layout" aria-label="Condiciones de regla">
+  <header class="conditions-head">
+    <h4>Condiciones</h4>
+    <button type="button" class="btn btn-ghost btn-small" (click)="addOrGroup()">+ Grupo OR</button>
+  </header>
+
+  <p class="logic-caption">AND dentro de cada grupo. OR entre grupos.</p>
+
+  <ng-container *ngFor="let group of groupedConditions(); trackBy: trackGroup; let isLast = last">
+    <article class="group-card">
+      <div class="group-head">
+        <span class="group-chip">Grupo {{ group.groupId }}</span>
+        <button type="button" class="btn btn-ghost btn-small" (click)="addConditionToGroup(group.groupId)">+ Condicion AND</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Left operand</th>
+              <th>Operacion</th>
+              <th>Right operand</th>
+              <th>Tipo</th>
+              <th>Value2</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of group.rows; trackBy: trackCondition">
+              <td class="row-index">{{ row.index + 1 }}</td>
+              <td>
+                <input
+                  type="text"
+                  [class.control-invalid]="isInvalidField(row.index, 'left_operand')"
+                  [value]="row.condition.left_operand"
+                  (input)="updateConditionText(row.index, 'left_operand', $any($event.target).value)"
+                  autocomplete="off"
+                />
+              </td>
+              <td>
+                <select
+                  [class.control-invalid]="isInvalidField(row.index, 'operator')"
+                  [ngModel]="normalizeOperatorForSelect(row.condition.operator)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="updateConditionText(row.index, 'operator', $event)"
+                >
+                  <option *ngFor="let option of operatorOptions" [value]="option.value">{{ option.label }}</option>
+                </select>
+              </td>
+              <td>
+                <ng-container *ngIf="!isUnaryOperator(row.condition.operator); else unaryCell">
+                  <input
+                    type="text"
+                    [class.control-invalid]="isInvalidField(row.index, 'right_operand')"
+                    [value]="displayOperand(row.condition.right_operand)"
+                    (input)="updateConditionOperand(row.index, 'right_operand', $any($event.target).value)"
+                    autocomplete="off"
+                  />
+                </ng-container>
+                <ng-template #unaryCell><span class="cell-na">—</span></ng-template>
+              </td>
+              <td>
+                <ng-container *ngIf="!isUnaryOperator(row.condition.operator)">
+                  <select
+                    [class.control-invalid]="isInvalidField(row.index, 'value_type')"
+                    [ngModel]="row.condition.value_type"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="updateConditionValueType(row.index, $event)"
+                  >
+                    <option *ngFor="let option of valueTypeOptions" [value]="option.value">{{ option.label }}</option>
+                  </select>
+                </ng-container>
+                <ng-container *ngIf="isUnaryOperator(row.condition.operator)"><span class="cell-na">—</span></ng-container>
+              </td>
+              <td>
+                <ng-container *ngIf="!isUnaryOperator(row.condition.operator)">
+                  <input
+                    type="text"
+                    [class.control-invalid]="isInvalidField(row.index, 'value2')"
+                    [value]="displayOperand(row.condition.value2)"
+                    (input)="updateConditionOperand(row.index, 'value2', $any($event.target).value)"
+                    autocomplete="off"
+                  />
+                </ng-container>
+                <ng-container *ngIf="isUnaryOperator(row.condition.operator)"><span class="cell-na">—</span></ng-container>
+              </td>
+              <td>
+                <button type="button" class="icon-btn danger" aria-label="Eliminar condicion" title="Eliminar condicion" (click)="removeCondition(row.index)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <p class="or-divider" *ngIf="!isLast">OR</p>
+  </ng-container>
+</section>

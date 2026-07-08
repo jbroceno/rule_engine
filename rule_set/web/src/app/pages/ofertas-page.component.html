@@ -1,0 +1,149 @@
+<section class="page">
+  <div class="page-header">
+    <h2>Ofertas</h2>
+    <p>Gestión del ciclo de vida de las ofertas: crear, editar, habilitar/deshabilitar y eliminar (borrado en cascada de todos los períodos).</p>
+  </div>
+
+  <article class="panel panel-offers" aria-labelledby="offers-title">
+    <div class="panel-head">
+      <div class="panel-title-wrap">
+        <h2 id="offers-title">Ofertas</h2>
+        <span class="count-badge" [attr.aria-label]="offers().length + ' ofertas'">{{ offers().length }}</span>
+      </div>
+      <button type="button" class="btn btn-success btn-create" (click)="openCreateOfferEditor()">Crear</button>
+    </div>
+
+    <form class="crud-form" [formGroup]="offerForm" (ngSubmit)="saveOffer()" *ngIf="isOfferEditorOpen()">
+      <h3>{{ offerEditorTitle() }}</h3>
+      <div class="form-grid">
+        <label>
+          Código
+          <input type="text" formControlName="code" autocomplete="off" style="text-transform:uppercase" />
+        </label>
+        <label>
+          Nombre
+          <input type="text" formControlName="name" autocomplete="off" />
+        </label>
+        <label>
+          Rank
+          <input type="number" formControlName="offer_rank" />
+        </label>
+        <label>
+          ID Oferta externa
+          <input type="number" formControlName="oferta_id" />
+        </label>
+        <label>
+          <span>Habilitada</span>
+          <input type="checkbox" formControlName="enabled" class="check-control" />
+        </label>
+      </div>
+      <div class="crud-actions">
+        <button type="submit" class="btn btn-success" [disabled]="offerSaving()">
+          {{ offerSaving() ? "Guardando..." : offerSubmitLabel() }}
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="cancelOfferEdit()">Cancelar</button>
+      </div>
+      <p class="state error" *ngIf="offerActionError() as message">{{ message }}</p>
+    </form>
+
+    <p class="state success" *ngIf="offerActionSuccess() as message">{{ message }}</p>
+    <p class="state error" *ngIf="!isOfferEditorOpen() && offerActionError() as message">{{ message }}</p>
+    <p class="state" *ngIf="offersLoading()">Cargando ofertas...</p>
+    <p class="state error" *ngIf="!offersLoading() && offersError() as message">{{ message }}</p>
+
+    <div class="table-wrapper" *ngIf="!isOfferEditorOpen() && !offersLoading() && !offersError() && offers().length > 0">
+      <table class="rules-table table-compact">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th class="align-right">Rank</th>
+            <th class="align-right">ID externo</th>
+            <th class="align-center">Habilitada</th>
+            <th class="ops-col">Operaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let offer of offers()">
+            <td><strong>{{ offer.offerCode }}</strong></td>
+            <td>{{ offer.name }}</td>
+            <td class="align-right">{{ offer.offer_rank }}</td>
+            <td class="align-right">{{ offer.oferta_id }}</td>
+            <td class="align-center">
+              <span aria-hidden="true">{{ offer.enabled ? "✓" : "" }}</span>
+              <span class="sr-only">{{ offer.enabled ? "Si" : "No" }}</span>
+            </td>
+            <td class="ops-cell">
+              <div class="row-actions row-actions-icons">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-icon-square btn-icon-sm"
+                  [disabled]="isOfferPending(offer.offerCode)"
+                  (click)="editOffer(offer)"
+                  aria-label="Editar oferta"
+                  title="Editar"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m4 16 10-10 4 4-10 10H4v-4Zm11.4-11.4 1.4-1.4a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-1.4 1.4-3-3Z" />
+                  </svg>
+                  <span class="sr-only">Editar</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-icon-square btn-icon-sm"
+                  [disabled]="isOfferPending(offer.offerCode)"
+                  (click)="toggleOffer(offer)"
+                  [attr.aria-label]="offer.enabled ? 'Deshabilitar oferta' : 'Habilitar oferta'"
+                  [attr.title]="offer.enabled ? 'Deshabilitar' : 'Habilitar'"
+                >
+                  <span class="btn-spinner" *ngIf="isOfferPending(offer.offerCode)" aria-hidden="true"></span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isOfferPending(offer.offerCode) && offer.enabled">
+                    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 5.7 13.6L6.4 6.3A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .8-3.5l10.7 10.7A8 8 0 0 1 4 12Z" />
+                  </svg>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isOfferPending(offer.offerCode) && !offer.enabled">
+                    <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
+                  </svg>
+                  <span class="sr-only">{{ offer.enabled ? "Deshabilitar" : "Habilitar" }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-icon-square btn-icon-sm action-danger"
+                  [disabled]="isOfferPending(offer.offerCode)"
+                  (click)="deleteOffer(offer)"
+                  aria-label="Eliminar oferta"
+                  title="Eliminar"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+                  </svg>
+                  <span class="sr-only">Eliminar</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="state" *ngIf="!offersLoading() && !offersError() && offers().length === 0">No hay ofertas configuradas.</p>
+  </article>
+
+  <!-- Confirm delete dialog -->
+  <div class="confirm-backdrop" *ngIf="confirmDialog() as dialog" (click)="closeConfirmDialog()">
+    <article class="confirm-modal" (click)="$event.stopPropagation()">
+      <h3>{{ dialog.title }}</h3>
+      <p>{{ dialog.message }}</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeConfirmDialog()">Cancelar</button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="isConfirmActionPending()"
+          (click)="confirmDialogAction()"
+        >
+          <span class="btn-spinner" *ngIf="isConfirmActionPending()" aria-hidden="true"></span>
+          {{ isConfirmActionPending() ? "Procesando..." : "Confirmar" }}
+        </button>
+      </div>
+    </article>
+  </div>
+</section>

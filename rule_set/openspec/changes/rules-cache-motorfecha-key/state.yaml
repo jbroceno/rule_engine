@@ -1,0 +1,87 @@
+change: rules-cache-motorfecha-key
+title: Fingerprint-Keyed Cache for Rules Resolution (MRO_MOTORFECHA Winners)
+status: archived
+created_at: '2026-05-30'
+archived_at: '2026-06-15'
+
+phases_done:
+  - proposal
+  - spec
+  - design
+  - tasks
+  - apply
+  - verify
+  - archive
+
+phases_pending: []
+
+summary:
+  description: >
+    Evolution of db-rules-cache: SQL Server cache layer with fingerprint-of-winners key (rules + params period IDs)
+    instead of literal-date key. Eliminates defects D1 (historical churn), D2 (staleness on future activation),
+    D3 (POC timestamp bypass). Includes TVF inline cfg_resolve_mf_winners; wrapper rewritten with STRING_AGG
+    deterministic fingerprint; sp_getapplock on all misses (no G/H distinction); TTL via created_at filter +
+    opportunistic delete; FIFO eviction by offer_codes_key; cfg_refresh_rules_cache eliminated. Node.js wiring
+    simplified: no refresh call post-applyConfig. 25 unit tests (carry-forward + 6 FP-new), all passing.
+  verdict: PASS-WITH-WARNINGS
+  critical_count: 0
+  warning_count: 2
+  suggestion_count: 2
+  tests_passed: 221
+  tests_total: 223
+  regressions: 0
+
+artifacts:
+  sql_deploy: /rule_set/sql/workflow_deploy/wf_sp_cfg_rules_cache.sql
+  admin_service: /rule_set/api/services/admin_service.js
+  config_service: /rule_set/api/services/config_service.js (no change)
+  tests: /rule_set/test/config_cache.test.js
+
+warnings:
+  W-01:
+    title: CSV order not normalized in offer_codes_key
+    impact: Permuted CSV (PRO,RES vs RES,PRO) produces different cache_keys despite identical fingerprints. Redundant entries in cap.
+    production_impact: Null (WF dominant profile sends NULL → __ALL__, no CSV permutation possible).
+    regression: No (db-rules-cache had identical behavior).
+    mitigation: S-01 applied — comment added to wrapper SP documenting limitation and escalation path (normalize CSV on-demand if cap pollution detected).
+    status: DEFERRED (user decision; data-correct; non-blocking)
+
+  W-02:
+    title: Phase 5 (live-DB verification) pending
+    impact: Tasks 5.1-5.5 require SQL Server instance with MRO_MOTORFECHA populated. Full integration chain not validated with real data.
+    scope: 5.1 cache key sharing, 5.2 future period miss, 5.3 TVF plan validation, 5.4 no refresh call, 5.5 full suite green.
+    criticality: High for ops confidence; non-blocking for code merge.
+    status: PENDING (must run before production promotion)
+
+suggestions:
+  S-01:
+    title: Escalation path for CSV normalization visible to maintainers
+    status: IMPLEMENTED (comment added to wrapper SP near SET @offer_codes_key)
+
+  S-02:
+    title: Prioritize Phase 5.3 (TVF execution plan) in live-DB session
+    rationale: Validates structural assumption (resolution cheap, FOR JSON dominates). If disproved, design pivots.
+    status: RECOMMENDED (for Phase 5 planning)
+
+adrs_confirmed:
+  - ADR-001 (fingerprint = winners, not date)
+  - ADR-002 (TVF inline, not SP)
+  - ADR-003 (drop+recreate table, not ALTER)
+  - ADR-004 (eliminate cfg_refresh_rules_cache)
+  - ADR-005 (sp_getapplock on all misses, no G/H)
+  - ADR-006 (TTL via created_at filter + opportunistic delete)
+  - ADR-007 (conserve @max_history_size name)
+
+supersedes:
+  - db-rules-cache (ADR-2, ADR-3, ADR-5 from db-rules-cache; new fingerprint key scheme)
+  - proposal: D1 (churn), D2 (staleness), D3 (POC bypass) all addressed
+
+next_action: Phase 5 manual integration testing (non-blocking, pre-production gate)
+
+openspec_references:
+  proposal: rule_set/openspec/changes/rules-cache-motorfecha-key/proposal.md
+  spec: rule_set/openspec/changes/rules-cache-motorfecha-key/specs/rules-cache-motorfecha-key.spec.md
+  design: rule_set/openspec/changes/rules-cache-motorfecha-key/design.md
+  tasks: rule_set/openspec/changes/rules-cache-motorfecha-key/tasks.md
+  verify_report: rule_set/openspec/changes/rules-cache-motorfecha-key/verify-report.md
+  archive_report: rule_set/openspec/changes/rules-cache-motorfecha-key/archive-report.md

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Casos de prueba — Ofertas Hipotecarias (offer_scenarios.test.js)</title>
+  <style>
+    :root {
+      --c-bg:        #f8f9fa;
+      --c-surface:   #ffffff;
+      --c-border:    #dee2e6;
+      --c-header-bg: #212529;
+      --c-header-fg: #ffffff;
+      --c-group-a:   #0d6efd;
+      --c-group-b:   #6610f2;
+      --c-group-c:   #198754;
+      --c-group-d:   #fd7e14;
+      --c-group-e:   #0dcaf0;
+      --c-group-x:   #dc3545;
+      --c-group-sdi: #6f42c1;
+      --c-row-odd:   #f8f9fa;
+      --c-row-even:  #ffffff;
+      --c-ok:        #d1e7dd;
+      --c-ko:        #f8d7da;
+      --c-warn:      #fff3cd;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      background: var(--c-bg);
+      color: #212529;
+      padding: 24px;
+    }
+
+    h1 { font-size: 1.4rem; margin-bottom: 6px; }
+
+    .subtitle { color: #6c757d; margin-bottom: 20px; font-size: 0.9rem; }
+
+    .base-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      display: inline-block;
+      min-width: 420px;
+    }
+
+    .base-card h2 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #495057;
+      margin-bottom: 10px;
+    }
+
+    .base-grid { display: grid; grid-template-columns: repeat(4, auto); gap: 4px 24px; }
+    .base-grid dt { color: #6c757d; font-size: 0.82rem; }
+    .base-grid dd { font-weight: 600; font-size: 0.85rem; }
+
+    .section { margin-bottom: 32px; }
+
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+    .group-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .group-a   { background: var(--c-group-a); }
+    .group-b   { background: var(--c-group-b); }
+    .group-c   { background: var(--c-group-c); }
+    .group-d   { background: var(--c-group-d); }
+    .group-e   { background: var(--c-group-e); color: #212529; }
+    .group-x   { background: var(--c-group-x); }
+    .group-sdi { background: var(--c-group-sdi); }
+
+    .section-title { font-size: 1rem; font-weight: 600; }
+    .section-count { color: #6c757d; font-size: 0.85rem; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--c-border);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    table { width: 100%; border-collapse: collapse; background: var(--c-surface); }
+
+    thead th {
+      background: var(--c-header-bg);
+      color: var(--c-header-fg);
+      text-align: left;
+      padding: 9px 12px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(odd)  { background: var(--c-row-odd); }
+    tbody tr:nth-child(even) { background: var(--c-row-even); }
+    tbody tr:hover { background: #e9f0ff; }
+
+    td { padding: 8px 12px; border-top: 1px solid var(--c-border); vertical-align: top; line-height: 1.45; }
+
+    .tc { font-weight: 700; font-size: 0.82rem; white-space: nowrap; }
+
+    .delta {
+      display: inline-block;
+      background: #e9ecef;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.78rem;
+      font-family: ui-monospace, monospace;
+      white-space: nowrap;
+      margin: 1px 2px 1px 0;
+    }
+
+    .ok-base { color: #6c757d; font-style: italic; font-size: 0.82rem; }
+
+    .pill {
+      display: inline-block;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin: 1px 2px 1px 0;
+      white-space: nowrap;
+    }
+
+    .pill-win  { background: #d1e7dd; color: #0f5132; }
+    .pill-rej  { background: #f8d7da; color: #842029; }
+    .pill-pass { background: #cfe2ff; color: #084298; }
+    .pill-only { background: #fff3cd; color: #664d03; }
+
+    footer {
+      margin-top: 32px;
+      font-size: 0.78rem;
+      color: #adb5bd;
+      border-top: 1px solid var(--c-border);
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Casos de prueba — Ofertas Hipotecarias</h1>
+<p class="subtitle">
+  Fichero: <code>rule_set/test/offer_scenarios.test.js</code> &nbsp;·&nbsp;
+  49 casos &nbsp;·&nbsp; Motor: 6 ofertas (ALTO_RIESGO · FIDELIZACION · LARGO_PLAZO · PROMOCION · PROMOCION_HC · ULTRA_ALTO_RIESGO)
+  &nbsp;·&nbsp; Generado automáticamente por <code>scripts/gen_test_cases_html.mjs</code> desde
+  <code>fixtures/business_scenarios.js</code> + <code>fixtures/business_scenarios.golden.json</code>
+</p>
+
+<div class="base-card">
+  <h2>Objeto base <code>OK</code> (compartido por todos los tests)</h2>
+  <dl class="base-grid">
+    <dt>TIPO_ALTA_CD</dt>              <dd>"NOVACION"</dd>
+    <dt>FINALIDAD_CD</dt>              <dd>1</dd>
+    <dt>PRIMERA_VIVIENDA_HABITUAL_FL</dt><dd>1</dd>
+    <dt>EDAD_MAX_NM</dt>               <dd>35</dd>
+    <dt>IMPORTE_VIVIENDA_NM</dt>       <dd>250.000 €</dd>
+    <dt>IMPORTE_VIVIENDA_CA_NM</dt>    <dd>200.000 €</dd>
+    <dt>ANTIGUEDAD_T1/T2_NM</dt>       <dd>15 meses</dd>
+    <dt>DOMICILIA_NOMINA_T1/T2_FL</dt> <dd>false</dd>
+    <dt>NUM_TITULARES_NM</dt>          <dd>1</dd>
+    <dt>INGRESO_T1/TOTAL_NM</dt>       <dd>3000 €</dd>
+  </dl>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <span class="group-badge group-a">A</span>
+    <span class="section-title">Filtros INIT</span>
+    <span class="section-count">9 casos</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TC</th><th>Descripción</th><th>Modo</th><th>Overrides (entrada)</th>
+          <th>INIT elegibles</th><th>PRE elegibles</th><th>FINAL elegibles</th>
+          <th>Ganadora</th><th>SDI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tc">TC-A1</td>
+          <td>solicitante OK → 6/6 ofertas elegibles INIT</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A2</td>
+          <td>FINALIDAD_CD=20 (no primera vivienda) → solo FIDELIZACION pasa INIT</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">FINALIDAD_CD=20</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A3</td>
+          <td>PRIMERA_VIVIENDA_HABITUAL_FL=0 → 5 rechazadas INIT; FIDELIZACION pasa</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">PRIMERA_VIVIENDA_HABITUAL_FL=0</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A4</td>
+          <td>TIPO_ALTA_CD=SUBROGACION (no admitido) → solo FIDELIZACION pasa INIT</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">TIPO_ALTA_CD="SUBROGACION"</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A5</td>
+          <td>EDAD_MAX_NM=40 → LARGO_PLAZO/ULTRA_ALTO_RIESGO rechazadas (MAX_EDAD=40); resto pasa (MAX_EDAD=45); ALTO_RIESGO gana por LTV/plazo</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">EDAD_MAX_NM=40</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A6</td>
+          <td>EDAD_MAX_NM=45 → todas las distintas a FIDELIZACION rechazadas (GE dispara); solo FIDELIZACION</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">EDAD_MAX_NM=45</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A7</td>
+          <td>ant=7 dom=false → 5 rechazadas INIT (MIN_ANT=12, incl. FIDELIZACION); solo PROMOCION (MIN_ANT=0) pasa</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=7</span><span class="delta">ANTIGUEDAD_T2_NM=7</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A8</td>
+          <td>IMPORTE_VIVIENDA_NM(150k) &lt; mínimo CCAA(200k) → 5 rechazadas INIT; FIDELIZACION pasa</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_VIVIENDA_NM=150.000</span><span class="delta">IMPORTE_VIVIENDA_CA_NM=200.000</span> <span class="delta">IMPORTE_HIPOTECA_NM=100.000</span><span class="delta">IMPORTE_VIVIENDA_NM=150.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-win">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-A9</td>
+          <td>domiciliación T1=true compensa antigüedad=0 → 6/6 pasan INIT</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=0</span><span class="delta">ANTIGUEDAD_T2_NM=0</span><span class="delta">DOMICILIA_NOMINA_T1_FL=true</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <span class="group-badge group-b">B</span>
+    <span class="section-title">Filtros PRE</span>
+    <span class="section-count">2 casos</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TC</th><th>Descripción</th><th>Modo</th><th>Overrides (entrada)</th>
+          <th>INIT elegibles</th><th>PRE elegibles</th><th>FINAL elegibles</th>
+          <th>Ganadora</th><th>SDI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tc">TC-B1</td>
+          <td>1T ingresos=2000 (&lt;2500) → 4 rechazadas PRE; PROMOCION+FIDELIZACION pasan</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">NUM_TITULARES_NM=1</span><span class="delta">INGRESO_T1_NM=2000</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-B2</td>
+          <td>2T ingresos totales=3000 (&lt;3500) → 4 rechazadas PRE; PROMOCION+FIDELIZACION pasan</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">NUM_TITULARES_NM=2</span><span class="delta">INGRESO_TOTAL_NM=3000</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <span class="group-badge group-c">C</span>
+    <span class="section-title">Matriz de decisión FINAL (ganadora por LTV × plazo)</span>
+    <span class="section-count">6 casos</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TC</th><th>Descripción</th><th>Modo</th><th>Overrides (entrada)</th>
+          <th>INIT elegibles</th><th>PRE elegibles</th><th>FINAL elegibles</th>
+          <th>Ganadora</th><th>SDI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tc">TC-C1</td>
+          <td>LTV=88% plazo=20a → ALTO_RIESGO (rank 90)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-C2</td>
+          <td>LTV=72% plazo=38a → LARGO_PLAZO (rank 80)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=38</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-win">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-C3</td>
+          <td>LTV=88% plazo=38a → ULTRA_ALTO_RIESGO (rank 100) — dentro de (0.80,0.90]</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=38</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-win">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-C4</td>
+          <td>LTV=72% plazo=20a → PROMOCION_HC (rank 70)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-win">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-C5</td>
+          <td>LTV=105% plazo=35a → FIDELIZACION (LTV fuera de rango en todas las Joven, incl. ALTO_RIESGO ≤100%)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=262.500</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=35</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-C6</td>
+          <td>1T ingresos=2000 + LTV=72% plazo=20a → PROMOCION (rank 60)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">NUM_TITULARES_NM=1</span><span class="delta">INGRESO_T1_NM=2000</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-win">PROMOCION</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <span class="group-badge group-d">D</span>
+    <span class="section-title">Valores límite FINAL</span>
+    <span class="section-count">8 casos</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TC</th><th>Descripción</th><th>Modo</th><th>Overrides (entrada)</th>
+          <th>INIT elegibles</th><th>PRE elegibles</th><th>FINAL elegibles</th>
+          <th>Ganadora</th><th>SDI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tc">TC-D1</td>
+          <td>LTV=80% exacto plazo=20a → PROMOCION_HC; ALTO_RIESGO rechazada (límite inferior exclusivo)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=200.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-win">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-D2</td>
+          <td>LTV=80.4% plazo=20a → ALTO_RIESGO (PROMOCION_HC supera 0.80; ULTRA_ALTO_RIESGO plazo&lt;36)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=201.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-D3</td>
+          <td>plazo=35a exacto LTV=72% → PROMOCION_HC (35≤MAX_PLAZO); LARGO_PLAZO fuera (35&lt;MIN_PLAZO=36)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=35</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-win">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-D4</td>
+          <td>plazo=36a exacto LTV=72% → LARGO_PLAZO (36≥MIN_PLAZO); PROMOCION_HC fuera (36&gt;MAX_PLAZO=35)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=36</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-win">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-D5</td>
+          <td>EDAD_MAS_PLAZO=81 (&gt;EDAD_PLAZO LARGO_PLAZO=80) → LARGO_PLAZO rechazada; FIDELIZACION gana</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">EDAD_MAX_NM=39</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=42</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-D6</td>
+          <td>EDAD_MAS_PLAZO=80 (=EDAD_PLAZO LARGO_PLAZO=80) → LARGO_PLAZO elegible (GT no dispara en límite exacto)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">EDAD_MAX_NM=38</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=42</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-win">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-D7</td>
+          <td>LTV=90% exacto plazo=38a → ULTRA_ALTO_RIESGO (límite superior inclusivo MAX_LTV=0.90)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=225.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=38</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-win">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-D8</td>
+          <td>LTV=92% plazo=38a → FIDELIZACION (REGRESIÓN: MAX_LTV ULTRA_ALTO_RIESGO=0.90 se rechaza)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=230.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=38</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <span class="group-badge group-e">E</span>
+    <span class="section-title">Oferta FIDELIZACION — condiciones INIT (antigüedad y domiciliación); sin reglas PRE/FINAL propias</span>
+    <span class="section-count">5 casos</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TC</th><th>Descripción</th><th>Modo</th><th>Overrides (entrada)</th>
+          <th>INIT elegibles</th><th>PRE elegibles</th><th>FINAL elegibles</th>
+          <th>Ganadora</th><th>SDI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tc">TC-E1</td>
+          <td>ant=7 dom=false → FIDELIZACION pasa INIT (7&gt;MIN_ANT=6); gana FINAL</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=7</span><span class="delta">ANTIGUEDAD_T2_NM=7</span><span class="delta">INGRESO_T1_NM=500</span> <span class="delta">IMPORTE_HIPOTECA_NM=242.500</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-E2</td>
+          <td>ant=3 dom=false → FIDELIZACION falla INIT (3≤6) pero gana FINAL (etapas independientes)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=3</span><span class="delta">ANTIGUEDAD_T2_NM=3</span><span class="delta">INGRESO_T1_NM=500</span> <span class="delta">IMPORTE_HIPOTECA_NM=242.500</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-E3</td>
+          <td>ant=6 dom=false → FIDELIZACION falla INIT (límite exacto 6≤6) pero gana FINAL</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=6</span><span class="delta">ANTIGUEDAD_T2_NM=6</span><span class="delta">INGRESO_T1_NM=500</span> <span class="delta">IMPORTE_HIPOTECA_NM=242.500</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-E4</td>
+          <td>ant=0 dom=true → FIDELIZACION pasa INIT (domiciliación compensa); gana FINAL</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=0</span><span class="delta">ANTIGUEDAD_T2_NM=0</span><span class="delta">DOMICILIA_NOMINA_T1_FL=true</span><span class="delta">INGRESO_T1_NM=500</span> <span class="delta">IMPORTE_HIPOTECA_NM=242.500</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-E5</td>
+          <td>FIDELIZACION informa límites en dictamen INIT/PRE (MIN/MAX_HIPOTECA, MIN/MAX_PLAZO, MAX_LTV=0.80, EDAD_PLAZO=75)</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <span class="group-badge group-x">X</span>
+    <span class="section-title">Modo encadenado <code>{ chained: true }</code> — fallos de INIT se propagan a PRE y FINAL por oferta</span>
+    <span class="section-count">16 casos</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TC</th><th>Descripción</th><th>Modo</th><th>Overrides (entrada)</th>
+          <th>INIT elegibles</th><th>PRE elegibles</th><th>FINAL elegibles</th>
+          <th>Ganadora</th><th>SDI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tc">TC-X1</td>
+          <td>solicitante OK → idéntico al modo independiente (ALTO_RIESGO)</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X2</td>
+          <td>FINALIDAD_CD=20 → 5 Joven bloqueadas PRE; FIDELIZACION gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">FINALIDAD_CD=20</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X3</td>
+          <td>TIPO_ALTA_CD=SUBROGACION → 5 Joven bloqueadas PRE; FIDELIZACION gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">TIPO_ALTA_CD="SUBROGACION"</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X4</td>
+          <td>EDAD_MAX=40 + LTV=72% plazo=20a → PROMOCION_HC gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">EDAD_MAX_NM=40</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-win">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X5</td>
+          <td>PRIMERA_VIVIENDA=0 → todas las Joven bloqueadas PRE; FIDELIZACION gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">PRIMERA_VIVIENDA_HABITUAL_FL=0</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X6</td>
+          <td>EDAD_MAX=40 + LTV=72% plazo=36a → LARGO_PLAZO bloqueada (MAX_EDAD=40); FIDELIZACION gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">EDAD_MAX_NM=40</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=36</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X7</td>
+          <td>EDAD_MAX=40 + LTV=88% plazo=36a → ULTRA_ALTO_RIESGO bloqueada (MAX_EDAD=40); resto fuera de rango; FIDELIZACION gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">EDAD_MAX_NM=40</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=36</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X8</td>
+          <td>INIT OK · LTV=88% plazo=38a → ULTRA_ALTO_RIESGO gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=38</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-win">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X9</td>
+          <td>INIT OK · LTV=88% plazo=20a → ALTO_RIESGO gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X10</td>
+          <td>INIT OK · LTV=72% plazo=38a → LARGO_PLAZO gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=38</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-win">LARGO_PLAZO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X11</td>
+          <td>INIT OK · LTV=72% plazo=20a → PROMOCION_HC gana</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span></td>
+          <td><span class="pill pill-win">PROMOCION_HC</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X12</td>
+          <td>1T ingresos=2000 + LTV=72% plazo=20a → PROMOCION gana (exclusión PRE de ingresos)</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">NUM_TITULARES_NM=1</span><span class="delta">INGRESO_T1_NM=2000</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-win">PROMOCION</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X13</td>
+          <td>ant=3 dom=false → FIDELIZACION bloqueada por cadena; PROMOCION gana (contraste con TC-E2)</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=3</span><span class="delta">ANTIGUEDAD_T2_NM=3</span><span class="delta">INGRESO_T1_NM=500</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-win">PROMOCION</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X14</td>
+          <td>ant=3 dom=false + LTV=88% plazo=20a → winner=null (resultado válido)</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=3</span><span class="delta">ANTIGUEDAD_T2_NM=3</span><span class="delta">INGRESO_T1_NM=500</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="ok-base">—</span></td>
+          <td><span class="pill pill-rej">null</span></td>
+          <td><span class="ok-base">ausente</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X15</td>
+          <td>ant=6 dom=false → FIDELIZACION falla INIT (límite exacto); winner=null</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=6</span><span class="delta">ANTIGUEDAD_T2_NM=6</span><span class="delta">INGRESO_T1_NM=500</span> <span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="pill pill-pass">PROMOCION</span></td>
+          <td><span class="ok-base">—</span></td>
+          <td><span class="pill pill-rej">null</span></td>
+          <td><span class="ok-base">ausente</span></td>
+        </tr>
+        <tr>
+          <td class="tc">TC-X16</td>
+          <td>ant=3 dom=true + FINALIDAD=20 → FIDELIZACION pasa INIT (domiciliación); gana FINAL</td>
+          <td><span class="pill pill-only">chained</span></td>
+          <td><span class="delta">ANTIGUEDAD_T1_NM=3</span><span class="delta">ANTIGUEDAD_T2_NM=3</span><span class="delta">DOMICILIA_NOMINA_T1_FL=true</span><span class="delta">FINALIDAD_CD=20</span> <span class="delta">IMPORTE_HIPOTECA_NM=180.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <span class="group-badge group-sdi">SDI</span>
+    <span class="section-title">Frontera SOLICITAR_DATOS_INTERVINIENTES (agregación OR booleana)</span>
+    <span class="section-count">3 casos</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TC</th><th>Descripción</th><th>Modo</th><th>Overrides (entrada)</th>
+          <th>INIT elegibles</th><th>PRE elegibles</th><th>FINAL elegibles</th>
+          <th>Ganadora</th><th>SDI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tc">SDI-ONLY-FIDELIZACION</td>
+          <td>LTV=105% → solo FIDELIZACION elegible FINAL → SOLICITAR_DATOS_INTERVINIENTES=false</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=262.500</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=35</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">FIDELIZACION</span></td>
+          <td><span class="pill pill-only">false</span></td>
+        </tr>
+        <tr>
+          <td class="tc">SDI-OFERTA-WINS</td>
+          <td>LTV=88% plazo=20a → ALTO_RIESGO gana → SOLICITAR_DATOS_INTERVINIENTES=true</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+        <tr>
+          <td class="tc">SDI-MIXED</td>
+          <td>6/6 ofertas eligibles FINAL → ALTO_RIESGO gana (rank 90); mix ofertas+FIDELIZACION → true</td>
+          <td><span class="ok-base">ind</span></td>
+          <td><span class="delta">IMPORTE_HIPOTECA_NM=220.000</span><span class="delta">IMPORTE_VIVIENDA_NM=250.000</span><span class="delta">PLAZO_NM=20</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span><span class="pill pill-pass">LARGO_PLAZO</span><span class="pill pill-pass">PROMOCION</span><span class="pill pill-pass">PROMOCION_HC</span><span class="pill pill-pass">ULTRA_ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">ALTO_RIESGO</span><span class="pill pill-pass">FIDELIZACION</span></td>
+          <td><span class="pill pill-win">ALTO_RIESGO</span></td>
+          <td><span class="pill pill-pass">true</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  Página de referencia visual, no ejecutada por <code>node --test</code> (extensión <code>.html</code>,
+  fuera del glob de test/). Regenerar tras cualquier cambio en los escenarios o el golden con:
+  <code>node scripts/gen_test_cases_html.mjs</code>.
+</footer>
+
+</body>
+</html>

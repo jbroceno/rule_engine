@@ -1,0 +1,166 @@
+.page {
+  display: grid;
+  gap: 1rem;
+  animation: page-enter 280ms ease;
+}
+
+.page-header h1 {
+  margin-bottom: 0.4rem;
+}
+
+.page-header p {
+  color: var(--ink-soft);
+}
+
+form {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.85rem;
+}
+
+.grid-sm {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 500;
+  color: var(--ink-default);
+}
+
+.check {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.55rem;
+  padding-top: 1.55rem;
+}
+
+.check input {
+  width: auto;
+  margin: 0;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(var(--cards-max-cols, 4), minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 0.95rem;
+  position: relative;
+}
+
+.result-card::before {
+  content: "";
+  position: absolute;
+  top: 0.95rem;
+  right: 0.95rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #0f9a7f;
+  box-shadow: 0 0 0 4px rgba(15, 154, 127, 0.13);
+}
+
+.result-card h2 {
+  margin-top: 0;
+  margin-bottom: 0.55rem;
+}
+
+.result-card p {
+  margin: 0.35rem 0;
+  color: var(--ink-default);
+}
+
+.status {
+  margin: 0;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:host-context(.theme-analitica) form,
+:host-context(.theme-analitica) .result-card {
+  border-radius: 10px;
+}
+
+:host-context(.theme-analitica) .grid {
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 0.7rem;
+}
+
+:host-context(.theme-analitica) label {
+  font-size: 0.9rem;
+}
+
+:host-context(.theme-analitica) input,
+:host-context(.theme-analitica) select {
+  padding: var(--field-density, 0.45rem) 0.55rem;
+}
+
+:host-context(.theme-analitica) .result-card p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.wf-compare {
+  border: 2px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.wf-compare-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--line-soft);
+}
+
+.wf-compare-title.wf-match { background: #d4edda; color: #155724; }
+.wf-compare-title.wf-diff  { background: #f8d7da; color: #721c24; }
+
+.wf-section {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.wf-section h3 { margin: 0 0 0.4rem; font-size: 0.9rem; font-weight: 600; }
+.wf-section p  { margin: 0.25rem 0; }
+.wf-diff-item  { color: var(--danger, #dc3545); font-weight: 500; }
+.wf-ok         { color: #155724; }
+
+.wf-diff-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-top: 0.4rem; }
+.wf-diff-table th,
+.wf-diff-table td { border: 1px solid var(--line-soft); padding: 0.35rem 0.5rem; text-align: left; }
+.wf-diff-table th { background: var(--line-soft); font-weight: 600; }

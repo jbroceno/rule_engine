@@ -1,0 +1,227 @@
+.page-container {
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+/* Active periods indicator bar */
+.active-periods-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.active-badge {
+  flex: 1;
+  min-width: 260px;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  font-size: 0.85rem;
+  color: #555;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  align-items: center;
+}
+
+.active-badge--set {
+  background: #e8f5e9;
+  border-color: #81c784;
+  color: #1b5e20;
+}
+
+.active-badge-label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.active-badge-dates {
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+
+/* Row highlights */
+.row-active-rules td {
+  background: #f0fdf4;
+}
+
+.row-active-params td {
+  background: #eff6ff;
+}
+
+.row-active-rules.row-active-params td {
+  background: #f5f0ff;
+}
+
+/* Activate buttons */
+.activate-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn-activate-off {
+  background: #f1f3f4;
+  color: #444;
+  border: 1px solid #ccc;
+  font-size: 0.78rem;
+  padding: 3px 10px;
+}
+
+.btn-activate-off:hover {
+  background: #e2e6ea;
+}
+
+.btn-activate-on {
+  background: #2e7d32;
+  color: #fff;
+  border: 1px solid #1b5e20;
+  font-size: 0.78rem;
+  padding: 3px 10px;
+  font-weight: 600;
+}
+
+.na-label {
+  color: #bbb;
+  font-size: 0.85rem;
+}
+
+.btn-duplicate {
+  background: #1565c0;
+  color: #fff;
+  border-color: #1565c0;
+}
+
+.btn-duplicate:hover {
+  background: #0d47a1;
+  border-color: #0d47a1;
+}
+
+.duplicate-info {
+  font-size: 0.88rem;
+  color: #444;
+  margin: 0 0 0.5rem;
+}
+
+.duplicate-hint {
+  font-size: 0.82rem;
+  color: #5a4000;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 4px;
+  padding: 0.45rem 0.7rem;
+  margin: 0 0 0.75rem;
+}
+
+.page-header h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.loading-text {
+  color: #888;
+  text-align: center;
+  padding: 2rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+.actions-cell {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.empty-row {
+  text-align: center;
+  color: #aaa;
+  padding: 2rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: flex-start;
+}
+
+.form-row .form-field {
+  margin-bottom: 0;
+}
+
+.form-row input[type="date"] {
+  width: 140px;
+}
+
+.form-row select {
+  width: 105px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 1rem;
+}
+
+.form-field label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-field input,
+.form-field select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.field-error {
+  font-size: 0.78rem;
+  color: #c62828;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.alert {
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+}
+
+.alert-success {
+  background: #e6f4ea;
+  color: #1e7e34;
+  border: 1px solid #a8d5b5;
+}
+
+.alert-error {
+  background: #fdecea;
+  color: #c62828;
+  border: 1px solid #f5aca6;
+}

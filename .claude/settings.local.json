@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\jesus\\\\cursos\\\\IA\\\\BigSchool-Master dev IA\\\\tfm\\\\rule_engine\\\\rule_set\" && timeout 5 node api/server.js 2>&1 || true)",
+      "Bash(cd \"C:\\\\jesus\\\\cursos\\\\IA\\\\BigSchool-Master dev IA\\\\tfm\\\\rule_engine\\\\rule_set\\\\web\" && node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('angular.json','utf8'\\)\\); const proj=Object.values\\(j.projects\\)[0]; console.log\\(JSON.stringify\\(proj.architect.serve, null, 2\\)\\)\")",
+      "Bash(cd \"C:\\\\jesus\\\\cursos\\\\IA\\\\BigSchool-Master dev IA\\\\tfm\\\\rule_engine\\\\rule_set\\\\web\" && npx tsc --noEmit 2>&1 | head -50)",
+      "Bash(cd:*)",
+      "Bash(grep -v \"^.*//.*TC-X\")",
+      "Bash(npm test *)"
+    ]
+  }
+}

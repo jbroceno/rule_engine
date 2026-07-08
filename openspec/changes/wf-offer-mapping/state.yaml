@@ -1,0 +1,10 @@
+change_name: wf-offer-mapping
+archived_at: 2026-05-26
+status: archived
+artifact_store: openspec
+observation_ids:
+  proposal: 31
+  spec: 32
+  design: 33
+  tasks: 34
+  verify_report: 36

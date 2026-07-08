@@ -1,0 +1,98 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Simulador PRE</h1>
+    <p>Evalua elegibilidad preliminar e ingresos por oferta.</p>
+  </header>
+
+  <app-simulator-form phase="PRE" (formSubmit)="onFormSubmit($event)" />
+
+  <p class="status error" aria-live="polite" *ngIf="error() as errorMessage">{{ errorMessage }}</p>
+
+  <app-simulation-trace-log
+    *ngIf="initEvaluations().length"
+    title="Log INIT evaluado"
+    [evaluations]="initEvaluations()"
+    eligibilityKey="initEligible"
+  ></app-simulation-trace-log>
+
+  <p class="status error" aria-live="polite" *ngIf="initBlocked()">
+    No elegible en INIT. La evaluacion PRE no se ha ejecutado.
+  </p>
+
+  <ng-container *ngIf="!initBlocked() && envelope()">
+    <p class="status" aria-live="polite" *ngIf="!loading()">
+      Pre elegibles: {{ preEligibleDetails().length }}
+    </p>
+
+    <div class="cards" *ngIf="preEligibleDetails().length" [style.--cards-max-cols]="maxCols">
+      <article class="result-card">
+        <h2>Resumen uiLimits</h2>
+        <p>Hipoteca: {{ numUiLimit("MIN_HIPOTECA") | number }} € — {{ numUiLimit("MAX_HIPOTECA") | number }} €</p>
+        <p>Plazo: {{ preUiLimits()["MIN_PLAZO"] ?? preUiLimits()["MIN_PLAZO_MESES"] }} — {{ preUiLimits()["MAX_PLAZO"] ?? preUiLimits()["MAX_PLAZO_MESES"] }}
+           {{ preUiLimits()["MIN_PLAZO"] != null ? "años" : "meses" }}</p>
+        <p>LTV: ({{ ((numUiLimit("MIN_LTV_EXCLUSIVE") ?? numUiLimit("MIN_LTV_RATIO") ?? 0) * 100) | number:'1.0-0' }}%, {{ ((numUiLimit("MAX_LTV") ?? numUiLimit("MAX_LTV_RATIO") ?? 0) * 100) | number:'1.0-0' }}%]</p>
+        <p *ngIf="preUiLimits()['EDAD_PLAZO'] != null">Edad + plazo max: {{ preUiLimits()['EDAD_PLAZO'] }} años</p>
+        <p *ngIf="preUiLimits()['SOLICITAR_DATOS_INTERVINIENTES'] != null">Solicitar datos intervinientes: {{ preUiLimits()['SOLICITAR_DATOS_INTERVINIENTES'] ? 'Sí' : 'No' }}</p>
+      </article>
+    </div>
+
+    <div class="cards" *ngIf="preEligibleDetails().length" [style.--cards-max-cols]="maxCols">
+      <article class="result-card" *ngFor="let offer of preEligibleDetails()">
+        <h2>{{ offer.offerCode }}</h2>
+        <p>Hipoteca: {{ minHipoteca(offer) | number }} € — {{ maxHipoteca(offer) | number }} €</p>
+        <p>Plazo: {{ minPlazo(offer) }} — {{ maxPlazo(offer) }} {{ minPlazo(offer) != null ? "años" : "meses" }}</p>
+        <p>LTV: ({{ ((minLtv(offer) ?? 0) * 100) | number:'1.0-0' }}%, {{ ((maxLtv(offer) ?? 0) * 100) | number:'1.0-0' }}%]</p>
+        <p *ngIf="edadPlazo(offer) != null">Edad + plazo max: {{ edadPlazo(offer) }} años</p>
+        <details *ngIf="extraDictamenEntries(offer).length > 0" class="dictamen-extra">
+          <summary>Propiedades adicionales</summary>
+          <dl>
+            <ng-container *ngFor="let entry of extraDictamenEntries(offer)">
+              <dt>{{ entry.key }}</dt>
+              <dd>{{ entry.formatted }}</dd>
+            </ng-container>
+          </dl>
+        </details>
+      </article>
+    </div>
+
+    <ng-container *ngIf="wfCompare() as cmp">
+      <section class="wf-compare">
+        <h2 class="wf-compare-title" [class.wf-match]="!cmp.error && cmp.match" [class.wf-diff]="!cmp.error && !cmp.match">
+          Comparacion WF:
+          <span *ngIf="cmp.error">Error de conexion</span>
+          <span *ngIf="!cmp.error">{{ cmp.match ? "Resultado igual ✓" : "Resultado diferente ✗" }}</span>
+        </h2>
+        <p class="status error" *ngIf="cmp.error">{{ cmp.error }}</p>
+        <ng-container *ngIf="!cmp.error">
+          <div class="wf-section">
+            <h3>Ofertas elegibles {{ cmp.ofertasElegibles?.match ? "✓" : "✗" }}</h3>
+            <p><strong>POC:</strong> {{ (cmp.ofertasElegibles?.poc ?? []).join(", ") || "(ninguna)" }}</p>
+            <p><strong>WF:</strong> {{ (cmp.ofertasElegibles?.wf ?? []).join(", ") || "(ninguna)" }}</p>
+            <p *ngIf="cmp.ofertasElegibles?.soloEnPoc?.length" class="wf-diff-item">Solo en POC: {{ cmp.ofertasElegibles!.soloEnPoc.join(", ") }}</p>
+            <p *ngIf="cmp.ofertasElegibles?.soloEnWf?.length" class="wf-diff-item">Solo en WF: {{ cmp.ofertasElegibles!.soloEnWf.join(", ") }}</p>
+          </div>
+          <div class="wf-section" *ngIf="cmp.limites">
+            <h3>Limites {{ cmp.limites.match ? "✓" : "✗" }}</h3>
+            <p *ngIf="cmp.limites.match" class="wf-ok">Sin diferencias</p>
+            <table *ngIf="!cmp.limites.match" class="wf-diff-table">
+              <thead><tr><th>Campo</th><th>POC</th><th>WF</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let d of cmp.limites.diferencias">
+                  <td>{{ d.campo }}</td><td>{{ d.poc }}</td><td>{{ d.wf }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </section>
+    </ng-container>
+
+    <app-simulation-trace-log
+      *ngIf="preEvaluations().length"
+      title="Log PRE evaluado"
+      [evaluations]="preEvaluations()"
+      eligibilityKey="preEligible"
+    ></app-simulation-trace-log>
+  </ng-container>
+
+</section>

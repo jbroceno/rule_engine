@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm test *)",
+      "Bash(node -e \"const d = JSON.parse\\(require\\('fs'\\).readFileSync\\('rules.json','utf8'\\)\\); const offers = d.offers; offers.forEach\\(o => { const initDecision = \\(o.rules||[]\\).find\\(r => r.name && r.name.includes\\('INIT Decisión'\\)\\); if \\(initDecision\\) console.log\\(o.offerCode, JSON.stringify\\(initDecision, null, 2\\)\\); }\\);\")",
+      "Bash(node -e \"const d = JSON.parse\\(require\\('fs'\\).readFileSync\\('rules.json','utf8'\\)\\); let maxId = 0; d.offers.forEach\\(o => \\(o.rules||[]\\).forEach\\(r => \\(r.actions||[]\\).forEach\\(a => { if \\(a.action_id > maxId\\) maxId = a.action_id; }\\)\\)\\); console.log\\('max action_id:', maxId\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(node offer_rule_engine.js)",
+      "Bash(findstr /n \".\")",
+      "Bash(findstr /r \"^[0-9]*:FINAL\\\\|eligibleOffers\\\\|minHipoteca\\\\|maxHipoteca\\\\|undefined\\\\|winner\\\\|offerCode\\\\|offer_rank\\\\|motivos\")"
+    ]
+  }
+}

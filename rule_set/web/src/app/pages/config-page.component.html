@@ -1,0 +1,79 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Configuracion</h1>
+    <p>Vista de lectura de ofertas, reglas y parametros activos.</p>
+  </header>
+
+  <button type="button" class="btn" (click)="loadConfig()" [disabled]="loading()">
+    {{ loading() ? "Cargando..." : "Recargar configuracion" }}
+  </button>
+
+  <p class="status error" aria-live="polite" *ngIf="error() as errorMessage">{{ errorMessage }}</p>
+
+  <div *ngIf="config() as cfg" class="summary-grid">
+    <article class="summary-card">
+      <h2>Ofertas</h2>
+      <p>{{ offerCount() }}</p>
+    </article>
+    <article class="summary-card">
+      <h2>Reglas</h2>
+      <p>{{ ruleCount() }}</p>
+    </article>
+    <article class="summary-card">
+      <h2>Parametros</h2>
+      <p>{{ paramCount() }}</p>
+    </article>
+  </div>
+
+  <div class="card" *ngIf="config() as cfg">
+    <h2>Ofertas y reglas</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Codigo</th>
+            <th>Oferta ID</th>
+            <th>Rank</th>
+            <th>Reglas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let offer of cfg.offers">
+            <td>{{ offer.offerCode }}</td>
+            <td>{{ offer.oferta_id ?? "-" }}</td>
+            <td>{{ offer.offer_rank ?? "-" }}</td>
+            <td>{{ offer.rules?.length ?? 0 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" *ngIf="config() as cfg">
+    <h2>Parametros por oferta/stage</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Codigo</th>
+            <th>Stage</th>
+            <th>Parametros</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of cfg.params">
+            <td>{{ row.offerCode }}</td>
+            <td>{{ row.stage }}</td>
+            <td>
+              <ul>
+                <li *ngFor="let param of row.paramValues">
+                  {{ param.key }} ({{ param.value_type ?? "-" }}): {{ param.value }}
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

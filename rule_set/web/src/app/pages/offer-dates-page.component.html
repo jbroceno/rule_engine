@@ -1,0 +1,224 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Motor de Fechas</h1>
+    <button class="btn btn-primary" (click)="openCreate()">+ Nuevo período</button>
+  </div>
+
+  <div class="active-periods-bar">
+    <div class="active-badge" [class.active-badge--set]="activeRulesId() !== null">
+      <span class="active-badge-label">Reglas activas:</span>
+      @if (activePeriodService.activePeriodRules(); as r) {
+        <strong>#{{ r.offer_date_id }}</strong> {{ r.descripcion }}
+        <span class="active-badge-dates">{{ r.valid_from | date:'dd/MM/yyyy HH:mm:ss' }} – {{ r.valid_to ? (r.valid_to | date:'dd/MM/yyyy HH:mm:ss') : '∞' }}</span>
+      } @else {
+        <em>Sin período seleccionado</em>
+      }
+    </div>
+    <div class="active-badge" [class.active-badge--set]="activeParamsId() !== null">
+      <span class="active-badge-label">Parámetros activos:</span>
+      @if (activePeriodService.activePeriodParams(); as p) {
+        <strong>#{{ p.offer_date_id }}</strong> {{ p.descripcion }}
+        <span class="active-badge-dates">{{ p.valid_from | date:'dd/MM/yyyy HH:mm:ss' }} – {{ p.valid_to ? (p.valid_to | date:'dd/MM/yyyy HH:mm:ss') : '∞' }}</span>
+      } @else {
+        <em>Sin período seleccionado</em>
+      }
+    </div>
+  </div>
+
+  @if (successMsg()) {
+    <div class="alert alert-success">{{ successMsg() }}</div>
+  }
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">Cargando períodos…</p>
+  } @else {
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Desde</th>
+          <th>Hasta</th>
+          <th>Tipo</th>
+          <th>Descripción</th>
+          <th>Alta usr</th>
+          <th>Alta dt</th>
+          <th>Activar Reglas</th>
+          <th>Activar Params</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (f of sortedFechas(); track f.offer_date_id) {
+          <tr [class.row-active-rules]="activeRulesId() === f.offer_date_id"
+              [class.row-active-params]="activeParamsId() === f.offer_date_id">
+            <td>{{ f.offer_date_id }}</td>
+            <td>{{ f.valid_from | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>{{ f.valid_to ? (f.valid_to | date: 'dd/MM/yyyy HH:mm:ss') : '—' }}</td>
+            <td><span class="badge">{{ f.tipo_cd }}</span></td>
+            <td>{{ f.descripcion }}</td>
+            <td>{{ f.alta_usr ?? '—' }}</td>
+            <td>{{ f.alta_dt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td class="activate-cell">
+              @if (canActivateReglas(f)) {
+                <button
+                  class="btn btn-sm"
+                  [class.btn-activate-on]="activeRulesId() === f.offer_date_id"
+                  [class.btn-activate-off]="activeRulesId() !== f.offer_date_id"
+                  (click)="activarReglas(f)"
+                  [title]="activeRulesId() === f.offer_date_id ? 'Desactivar reglas' : 'Activar reglas'"
+                >
+                  {{ activeRulesId() === f.offer_date_id ? '✓ Activo' : 'Activar' }}
+                </button>
+              } @else {
+                <span class="na-label">—</span>
+              }
+            </td>
+            <td class="activate-cell">
+              @if (canActivateParams(f)) {
+                <button
+                  class="btn btn-sm"
+                  [class.btn-activate-on]="activeParamsId() === f.offer_date_id"
+                  [class.btn-activate-off]="activeParamsId() !== f.offer_date_id"
+                  (click)="activarParams(f)"
+                  [title]="activeParamsId() === f.offer_date_id ? 'Desactivar parámetros' : 'Activar parámetros'"
+                >
+                  {{ activeParamsId() === f.offer_date_id ? '✓ Activo' : 'Activar' }}
+                </button>
+              } @else {
+                <span class="na-label">—</span>
+              }
+            </td>
+            <td class="actions-cell">
+              <button class="btn btn-ghost btn-sm" (click)="openEdit(f)" title="Editar">✏️</button>
+              <button class="btn btn-ghost btn-sm btn-duplicate" (click)="openDuplicate(f)" title="Duplicar período">⧉</button>
+              <button class="btn btn-ghost btn-sm btn-danger" (click)="openDeleteConfirm(f)" title="Eliminar">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="10" class="empty-row">No hay períodos definidos.</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<!-- Dialog: crear / editar -->
+@if (dialogOpen()) {
+  <div class="confirm-backdrop" (click)="closeDialog()"></div>
+  <div class="confirm-modal">
+    <h3>{{ dialogMode() === 'create' ? 'Nuevo período' : 'Editar período' }}</h3>
+
+    <form [formGroup]="form" (ngSubmit)="saveDialog()">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Desde *</label>
+          <input type="datetime-local" step="1" formControlName="valid_from" />
+          @if (form.controls.valid_from.invalid && form.controls.valid_from.touched) {
+            <span class="field-error">Requerido</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label>Hasta (vacío = abierto)</label>
+          <input type="datetime-local" step="1" formControlName="valid_to" />
+        </div>
+
+        <div class="form-field">
+          <label>Tipo *</label>
+          <select formControlName="tipo_cd">
+            <option value="REGLAS">REGLAS</option>
+            <option value="PARAMS">PARAMS</option>
+            <option value="AMBOS">AMBOS</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>Descripción *</label>
+        <input type="text" formControlName="descripcion" />
+        @if (form.controls.descripcion.invalid && form.controls.descripcion.touched) {
+          <span class="field-error">Requerido</span>
+        }
+      </div>
+
+      @if (dialogError()) {
+        <div class="alert alert-error">{{ dialogError() }}</div>
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeDialog()">Cancelar</button>
+        <button type="submit" class="btn btn-success" [disabled]="dialogSaving()">
+          {{ dialogSaving() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<!-- Dialog: duplicar período -->
+@if (duplicateDialogOpen()) {
+  <div class="confirm-backdrop" (click)="cancelDuplicate()"></div>
+  <div class="confirm-modal">
+    <h3>Duplicar período</h3>
+    @if (duplicateSource(); as src) {
+      <p class="duplicate-info">
+        Origen: <strong>#{{ src.offer_date_id }}</strong> — {{ src.descripcion }}
+        ({{ src.valid_from | date:'dd/MM/yyyy HH:mm:ss' }} – {{ src.valid_to ? (src.valid_to | date:'dd/MM/yyyy HH:mm:ss') : '∞' }})
+      </p>
+      @if (src.valid_to === null) {
+        <p class="duplicate-hint">
+          El período origen (hasta abierto) se cerrará automáticamente el día anterior a la nueva fecha de inicio.
+        </p>
+      }
+    }
+
+    <div class="form-field">
+      <label>Fecha de inicio del nuevo período *</label>
+      <input
+        type="datetime-local"
+        step="1"
+        [value]="duplicateNewFrom()"
+        (input)="duplicateNewFrom.set($any($event.target).value)"
+      />
+    </div>
+
+    @if (duplicateError()) {
+      <div class="alert alert-error">{{ duplicateError() }}</div>
+    }
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" (click)="cancelDuplicate()">Cancelar</button>
+      <button class="btn btn-primary" [disabled]="duplicateSaving()" (click)="confirmDuplicate()">
+        {{ duplicateSaving() ? 'Duplicando…' : 'Duplicar' }}
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Dialog: confirmar borrado -->
+@if (deleteTarget(); as f) {
+  <div class="confirm-backdrop" (click)="cancelDelete()"></div>
+  <div class="confirm-modal">
+    <h3>Eliminar período</h3>
+    <p>
+      Se eliminará el período <strong>#{{ f.offer_date_id }}</strong>
+      &ldquo;{{ f.descripcion }}&rdquo;
+      ({{ f.valid_from | date:'dd/MM/yyyy HH:mm:ss' }} – {{ f.valid_to ? (f.valid_to | date:'dd/MM/yyyy HH:mm:ss') : 'abierto' }}).
+    </p>
+    <p class="alert alert-warn">También se eliminarán todas las reglas y parámetros asociados a este período. Esta operación no se puede deshacer.</p>
+
+    @if (deleteError()) {
+      <div class="alert alert-error">{{ deleteError() }}</div>
+    }
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" [disabled]="deleteInProgress()" (click)="cancelDelete()">Cancelar</button>
+      <button class="btn btn-danger" [disabled]="deleteInProgress()" (click)="confirmDelete()">
+        {{ deleteInProgress() ? 'Eliminando…' : 'Eliminar' }}
+      </button>
+    </div>
+  </div>
+}

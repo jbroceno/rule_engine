@@ -1,0 +1,3 @@
+# Los scripts de shell deben mantener finales de línea LF aunque se clonen en
+# Windows: se ejecutan dentro de contenedores Linux (docker/db-init/init.sh).
+*.sh text eol=lf

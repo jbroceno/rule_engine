@@ -1,0 +1,844 @@
+<section class="page">
+  <div class="active-period-banner"
+       [class.active-period-banner--partial]="activePeriodService.activePeriodRules() || activePeriodService.activePeriodParams()"
+       [class.active-period-banner--none]="!activePeriodService.activePeriodRules() && !activePeriodService.activePeriodParams()">
+    <span class="apb-item">
+      <strong>Reglas:</strong>
+      @if (activePeriodService.activePeriodRules(); as r) {
+        <span class="apb-active">#{{ r.offer_date_id }} — {{ r.descripcion }}</span>
+      } @else {
+        <span class="apb-none">sin período activo (mostrando todas)</span>
+      }
+    </span>
+    <span class="apb-sep">·</span>
+    <span class="apb-item">
+      <strong>Parámetros:</strong>
+      @if (activePeriodService.activePeriodParams(); as p) {
+        <span class="apb-active">#{{ p.offer_date_id }} — {{ p.descripcion }}</span>
+      } @else {
+        <span class="apb-none">sin período activo (mostrando todos)</span>
+      }
+    </span>
+    <a routerLink="/offer-dates" class="apb-link">Cambiar períodos</a>
+  </div>
+
+  <form class="filters" [formGroup]="filtersForm" (ngSubmit)="applyFilters()">
+    <div class="filters-head">
+      <h2>Configurador</h2>
+    </div>
+
+    <label class="field-offer">
+      Oferta
+      <select formControlName="offerCode">
+        <option value="">Todas</option>
+        <option *ngFor="let offer of offers()" [value]="offer.offerCode">{{ offer.offerCode }} — {{ offer.name }}</option>
+      </select>
+    </label>
+
+    <label class="field-stage">
+      Stage
+      <select formControlName="stage">
+        <option value="">Todos</option>
+        <option value="INIT">INIT</option>
+        <option value="PRE">PRE</option>
+        <option value="FINAL">FINAL</option>
+      </select>
+    </label>
+
+    <label class="search-field">
+      Busqueda
+      <input type="text" formControlName="q" placeholder="Nombre de regla o texto" autocomplete="off" />
+    </label>
+
+    <label class="field-page-size">
+      Filas
+      <select formControlName="pageSize" (change)="applyFilters()">
+        <option [value]="10">10</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+      </select>
+    </label>
+
+    <div class="filter-actions">
+      <button
+        type="submit"
+        class="btn btn-ghost btn-icon-square btn-icon-md"
+        aria-label="Buscar reglas"
+        title="Buscar reglas"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.5 3a7.5 7.5 0 0 1 6.1 11.8l4.3 4.3-1.4 1.4-4.3-4.3A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="btn btn-ghost btn-icon-square btn-icon-md"
+        (click)="resetFilters()"
+        aria-label="Limpiar filtros"
+        title="Limpiar filtros"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+        </svg>
+      </button>
+    </div>
+  </form>
+
+  <div class="config-ops-bar">
+    <div class="config-ops-actions">
+      <button
+        type="button"
+        class="btn"
+        [disabled]="configOpLoading()"
+        (click)="exportConfig()"
+        title="Descargar configuracion actual de BD como fichero JSON"
+      >
+        <span class="btn-spinner" *ngIf="configOpLoading() && !importedConfig()" aria-hidden="true"></span>
+        Exportar configuracion
+      </button>
+      <button
+        type="button"
+        class="btn"
+        [disabled]="configOpLoading()"
+        (click)="triggerImportFile()"
+        title="Cargar configuracion desde un fichero JSON"
+      >
+        Importar configuracion
+      </button>
+      <button
+        type="button"
+        class="btn btn-warning"
+        *ngIf="importedConfig()"
+        [disabled]="configOpLoading()"
+        (click)="openApplyConfigDialog()"
+        title="Guardar la configuracion importada en la base de datos"
+      >
+        <span class="btn-spinner" *ngIf="configOpLoading()" aria-hidden="true"></span>
+        {{ configOpLoading() ? "Grabando..." : "Grabar configuracion" }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-ghost"
+        *ngIf="importedConfig()"
+        [disabled]="configOpLoading()"
+        (click)="clearImportedConfig()"
+        title="Descartar importacion y recargar datos de BD"
+      >
+        Descartar importacion
+      </button>
+      <button
+        type="button"
+        class="btn"
+        [disabled]="configOpLoading() || pocSnapshotLoading()"
+        (click)="openPocSnapshotDialog()"
+        title="Guardar snapshot del estado actual de la POC"
+      >
+        <span class="btn-spinner" *ngIf="pocSnapshotLoading()" aria-hidden="true"></span>
+        {{ pocSnapshotLoading() ? 'Guardando...' : 'Snapshot POC' }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="configOpLoading() || publicarLoading()"
+        (click)="openPublicarDialog()"
+        title="Publicar configuración POC en Workflow"
+      >
+        <span class="btn-spinner" *ngIf="publicarLoading()" aria-hidden="true"></span>
+        Publicar en Workflow
+      </button>
+    </div>
+    <div class="import-banner" *ngIf="importedConfigSummary() as summary">
+      Configuracion importada: {{ summary }}. Pendiente de grabar en BD.
+    </div>
+    <p class="state success" *ngIf="configOpSuccess() as msg">{{ msg }}</p>
+    <p class="state error" *ngIf="configOpError() as msg">{{ msg }}</p>
+  </div>
+
+  <!-- =========================================================
+       Panel: Ofertas en este período (FR-101 to FR-104)
+       ========================================================= -->
+  <article class="panel panel-period-offers" aria-labelledby="period-offers-title">
+    <div class="panel-head">
+      <div class="panel-title-wrap">
+        <h2 id="period-offers-title">Ofertas en este período</h2>
+        @if (activePeriodService.activePeriodRules(); as p) {
+          <span class="apb-active">#{{ p.offer_date_id }} — {{ p.descripcion }}</span>
+        }
+      </div>
+      <div class="row-actions">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [disabled]="!activePeriodService.activePeriodRules() || periodOffersLoading()"
+          (click)="loadPeriodOffers()"
+          title="Recargar lista de ofertas del período activo"
+        >Recargar</button>
+      </div>
+    </div>
+
+    @if (offerActionSuccess()) {
+      <p class="state success">{{ offerActionSuccess() }}</p>
+    }
+    @if (offerActionError()) {
+      <p class="state error">{{ offerActionError() }}</p>
+    }
+
+    @if (!activePeriodService.activePeriodRules()) {
+      <p class="period-offers-notice">
+        Seleccioná un período activo en <a routerLink="/offer-dates">Fechas de oferta</a> para ver las ofertas de este período.
+      </p>
+    } @else {
+      @if (isOfferEditorOpen()) {
+        <div class="crud-form offer-edit-form">
+          <h3>{{ offerEditorTitle() }}</h3>
+          <form [formGroup]="offerForm" (ngSubmit)="saveOffer()">
+            <label>
+              Código
+              <input type="text" formControlName="code" autocomplete="off" />
+            </label>
+            <label>
+              Nombre
+              <input type="text" formControlName="name" autocomplete="off" />
+            </label>
+            <label>
+              Rank
+              <input type="number" formControlName="offer_rank" />
+            </label>
+            <label>
+              oferta_id
+              <input type="number" formControlName="oferta_id" />
+            </label>
+            <label>
+              Habilitada
+              <input type="checkbox" formControlName="enabled" />
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-success" [disabled]="offerSaving()">
+                {{ offerSaving() ? "Guardando..." : "Guardar oferta" }}
+              </button>
+              <button type="button" class="btn btn-ghost" (click)="cancelOfferEdit()">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      }
+
+      @if (periodOffersLoading()) {
+        <p class="loading-msg">Cargando...</p>
+      } @else if (periodOffersError()) {
+        <p class="state error">{{ periodOffersError() }}</p>
+      } @else if (periodOffers().length === 0) {
+        <p class="empty-msg">Sin ofertas con reglas en este período.</p>
+      } @else {
+        <table class="period-offers-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Rank</th>
+              <th>oferta_id</th>
+              <th>Habilitada</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (offer of periodOffers(); track offer.offerCode) {
+              <tr [class.is-pending]="isOfferCodePending(offer.offerCode)">
+                <td>{{ offer.offerCode }}</td>
+                <td>{{ offer.name }}</td>
+                <td>{{ offer.offer_rank }}</td>
+                <td>{{ offer.oferta_id ?? "—" }}</td>
+                <td>{{ offer.enabled ? "Sí" : "No" }}</td>
+                <td class="row-actions">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-edit-offer"
+                    [disabled]="isOfferCodePending(offer.offerCode)"
+                    (click)="editOffer(offer)"
+                    title="Editar entidad oferta"
+                  >Editar</button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-delete-offer-period"
+                    [disabled]="isOfferCodePending(offer.offerCode)"
+                    (click)="deleteOfferInPeriod(offer)"
+                    title="Eliminar reglas y parámetros de esta oferta SOLO en el período activo"
+                  >Borrar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    }
+  </article>
+
+  <div class="workspace-grid">
+    <article class="panel panel-rules" aria-labelledby="rules-title">
+      <div class="panel-head">
+        <div class="panel-title-wrap">
+          <h2 id="rules-title">Reglas</h2>
+          <span class="count-badge" [attr.aria-label]="rulesTotal() + ' reglas'">{{ rulesTotal() }}</span>
+        </div>
+        <div class="row-actions">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            [class.is-active-sort]="ruleSortKey() === 'execution'"
+            (click)="resetRulesSort()"
+            title="Ordenar por oferta, stage (INIT→PRE→FINAL) y prioridad descendente"
+          >Orden ejecucion</button>
+          <button type="button" class="btn btn-success btn-create" [disabled]="!canCreateRule()" (click)="openCreateRuleEditor()">Crear</button>
+        </div>
+      </div>
+
+      <div class="period-banner" *ngIf="!canCreateRule()">
+        No hay un período de vigencia activo para reglas. Activá uno en
+        <a routerLink="/offer-dates">Fechas de oferta</a> para poder crear reglas.
+      </div>
+
+      <form class="crud-form" [formGroup]="ruleForm" (ngSubmit)="saveRule()" *ngIf="isRuleEditorOpen()">
+        <h3>{{ ruleEditorTitle() }}</h3>
+        <div class="form-grid">
+          <label>
+            Oferta
+            <select formControlName="offerCode">
+              <option *ngFor="let offer of offers()" [value]="offer.offerCode">{{ offer.offerCode }} — {{ offer.name }}</option>
+            </select>
+          </label>
+          <label>
+            Stage
+            <select formControlName="stage">
+              <option value="INIT">INIT</option>
+              <option value="PRE">PRE</option>
+              <option value="FINAL">FINAL</option>
+            </select>
+          </label>
+          <label>
+            Prioridad
+            <input type="number" formControlName="priority" />
+          </label>
+          <label>
+            Tipo accion
+            <select formControlName="action_type">
+              <option *ngFor="let actionType of actionTypeOptions" [value]="actionType.value">{{ actionType.label }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Habilitada</span>
+            <input type="checkbox" formControlName="enabled" class="check-control" />
+          </label>
+          <label>
+            <span>stop_processing</span>
+            <input type="checkbox" formControlName="stop_processing" class="check-control" />
+          </label>
+          <label>
+            Período de vigencia
+            <span class="readonly-period" *ngIf="isRuleCreateMode()">{{ activeRulesPeriodLabel() }}</span>
+            <span class="readonly-period" *ngIf="!isRuleCreateMode()">{{ formatPeriodById(ruleForm.controls['offer_date_id'].value) }}</span>
+          </label>
+        </div>
+
+        <label>
+          Nombre de regla
+          <input type="text" formControlName="rule_name" autocomplete="off" />
+        </label>
+
+        <app-rule-conditions-table
+          [conditions]="draftConditions()"
+          [invalidConditionFields]="invalidConditionFields()"
+          (conditionsChange)="updateDraftConditions($event)"
+        ></app-rule-conditions-table>
+
+        <app-rule-action-payload-table
+          [entries]="draftActionPayloadEntries()"
+          [keyOptions]="actionPayloadKeyOptions"
+          [invalidFields]="invalidActionPayloadFields()"
+          (entriesChange)="updateDraftActionPayloadEntries($event)"
+        ></app-rule-action-payload-table>
+
+        <div class="crud-actions">
+          <button type="submit" class="btn btn-success" [disabled]="ruleSaving()">
+            {{ ruleSaving() ? "Guardando..." : ruleSubmitLabel() }}
+          </button>
+          <button type="button" class="btn btn-warning" [disabled]="rulePreviewLoading()" (click)="validateRuleDraft()">
+            {{ rulePreviewLoading() ? "Validando..." : "Validar regla" }}
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="cancelRuleEdit()">Cancelar</button>
+        </div>
+
+        <p class="state error" *ngIf="rulePreviewError() as message">{{ message }}</p>
+
+        <div class="validate-result" *ngIf="rulePreviewResult() as result">
+          <p class="validate-status" [class.valid]="result.valid" [class.invalid]="!result.valid">
+            {{ result.valid ? "Payload valido" : "Payload con errores" }}
+          </p>
+
+          <div class="issue-block" *ngIf="result.errors.length > 0">
+            <h3>Errores</h3>
+            <ul>
+              <li *ngFor="let issue of result.errors">{{ issue.field }}: {{ issue.message }}</li>
+            </ul>
+          </div>
+
+          <div class="issue-block" *ngIf="result.warnings.length > 0">
+            <h3>Warnings</h3>
+            <ul>
+              <li *ngFor="let issue of result.warnings">{{ issue.field }}: {{ issue.message }}</li>
+            </ul>
+          </div>
+        </div>
+      </form>
+
+      <p class="state success" *ngIf="ruleActionSuccess() as message">{{ message }}</p>
+      <p class="state error" *ngIf="ruleActionError() as message">{{ message }}</p>
+
+      <p class="state" *ngIf="rulesLoading()">Cargando reglas...</p>
+      <div class="state error" *ngIf="rulesError() as message">
+        <p>{{ message }}</p>
+        <button type="button" class="btn btn-ghost" (click)="applyFilters(false)">Reintentar</button>
+      </div>
+      <p class="state" *ngIf="!rulesLoading() && !rulesError() && rules().length === 0">
+        No hay reglas para el filtro seleccionado.
+      </p>
+
+      <div class="table-wrapper" *ngIf="!rulesLoading() && !rulesError() && rules().length > 0">
+        <table class="rules-table table-compact">
+          <thead>
+            <tr>
+              <th class="align-right"><button type="button" class="sort-btn" (click)="sortRulesBy('rule_id')">ID {{ ruleSortIndicator("rule_id") }}</button></th>
+              <th><button type="button" class="sort-btn" (click)="sortRulesBy('offerCode')">Offer {{ ruleSortIndicator("offerCode") }}</button></th>
+              <th class="align-center"><button type="button" class="sort-btn" (click)="sortRulesBy('stage')">Stage {{ ruleSortIndicator("stage") }}</button></th>
+              <th class="rule-name-col"><button type="button" class="sort-btn" (click)="sortRulesBy('rule_name')">Nombre {{ ruleSortIndicator("rule_name") }}</button></th>
+              <th class="rule-summary-col">Resumen</th>
+              <th class="align-right"><button type="button" class="sort-btn" (click)="sortRulesBy('priority')">Prioridad {{ ruleSortIndicator("priority") }}</button></th>
+              <th class="align-center"><button type="button" class="sort-btn" (click)="sortRulesBy('enabled')">Enabled {{ ruleSortIndicator("enabled") }}</button></th>
+              <th class="align-right"><button type="button" class="sort-btn" (click)="sortRulesBy('conditions')">Cond. {{ ruleSortIndicator("conditions") }}</button></th>
+              <th class="align-center"><button type="button" class="sort-btn" (click)="sortRulesBy('action_type')">Accion {{ ruleSortIndicator("action_type") }}</button></th>
+              <th class="ops-col rules-ops-col">Operaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let rule of sortedRules(); trackBy: trackRule">
+              <td class="align-right">{{ rule.rule_id }}</td>
+              <td>{{ rule.offerCode }}</td>
+              <td class="align-center"><span class="stage-chip">{{ rule.stage }}</span></td>
+              <td class="rule-name-cell">{{ rule.rule_name }}</td>
+              <td class="rule-summary" [title]="summarizeRuleConditions(rule)">{{ summarizeRuleConditions(rule) }}</td>
+              <td class="align-right">{{ rule.priority }}</td>
+              <td class="align-center">
+                <span aria-hidden="true">{{ rule.enabled ? "✓" : "" }}</span>
+                <span class="sr-only">{{ rule.enabled ? "Si" : "No" }}</span>
+              </td>
+              <td class="align-right">{{ rule.conditions.length }}</td>
+              <td class="align-center">{{ rule.actions[0]?.action_type }}</td>
+              <td class="ops-cell rules-ops-cell">
+                <div class="row-actions row-actions-icons">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm"
+                    [disabled]="isRulePending(rule.rule_id)"
+                    (click)="editRule(rule)"
+                    aria-label="Editar regla"
+                    title="Editar"
+                  >
+                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                      <path d="m4 16 10-10 4 4-10 10H4v-4Zm11.4-11.4 1.4-1.4a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-1.4 1.4-3-3Z" />
+                    </svg>
+                    <span class="sr-only">Editar</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm"
+                    [disabled]="isRulePending(rule.rule_id)"
+                    (click)="duplicateRule(rule)"
+                    aria-label="Duplicar regla"
+                    title="Duplicar"
+                  >
+                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                      <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" />
+                    </svg>
+                    <span class="sr-only">Duplicar</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm"
+                    [disabled]="isRulePending(rule.rule_id)"
+                    (click)="toggleRule(rule)"
+                    [attr.aria-label]="rule.enabled ? 'Deshabilitar regla' : 'Habilitar regla'"
+                    [attr.title]="rule.enabled ? 'Deshabilitar' : 'Habilitar'"
+                  >
+                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id) && rule.enabled">
+                      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 5.7 13.6L6.4 6.3A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .8-3.5l10.7 10.7A8 8 0 0 1 4 12Z" />
+                    </svg>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id) && !rule.enabled">
+                      <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
+                    </svg>
+                    <span class="sr-only">{{ rule.enabled ? "Deshabilitar" : "Habilitar" }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm"
+                    [disabled]="isRulePending(rule.rule_id)"
+                    (click)="moveRule(rule, -1)"
+                    aria-label="Subir prioridad"
+                    title="Subir"
+                  >
+                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                      <path d="M12 5 5 12h4v7h6v-7h4l-7-7Z" />
+                    </svg>
+                    <span class="sr-only">Subir</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm"
+                    [disabled]="isRulePending(rule.rule_id)"
+                    (click)="moveRule(rule, 1)"
+                    aria-label="Bajar prioridad"
+                    title="Bajar"
+                  >
+                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                      <path d="m12 19 7-7h-4V5H9v7H5l7 7Z" />
+                    </svg>
+                    <span class="sr-only">Bajar</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm action-danger"
+                    [disabled]="isRulePending(rule.rule_id)"
+                    (click)="deleteRule(rule)"
+                    aria-label="Eliminar regla"
+                    title="Eliminar"
+                  >
+                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                      <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+                    </svg>
+                    <span class="sr-only">Eliminar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager" *ngIf="rulesTotal() > 0">
+        <button type="button" class="btn btn-ghost" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)">&lt;</button>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [class.is-active]="page === currentPage()"
+          *ngFor="let page of pageOptions(); trackBy: trackPage"
+          (click)="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+        <button type="button" class="btn btn-ghost" [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)">&gt;</button>
+      </div>
+    </article>
+
+    <article class="panel panel-params" aria-labelledby="params-title">
+      <div class="panel-head">
+        <div class="panel-title-wrap">
+          <h2 id="params-title">Parametros globales</h2>
+          <span class="count-badge" [attr.aria-label]="paramCount() + ' parametros'">{{ paramCount() }}</span>
+        </div>
+        <div class="row-actions">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            [class.is-active-sort]="paramSortKey() === 'execution'"
+            (click)="resetParamsSort()"
+            title="Ordenar por oferta y clave"
+          >Orden ejecucion</button>
+          <button type="button" class="btn btn-success btn-create" [disabled]="!canCreateParam()" (click)="openCreateParamEditor()">Crear</button>
+        </div>
+      </div>
+
+      <div class="period-banner" *ngIf="!canCreateParam()">
+        No hay un período de vigencia activo para parámetros. Activá uno en
+        <a routerLink="/offer-dates">Fechas de oferta</a> para poder crear parámetros.
+      </div>
+
+      <label class="inline-search panel-search" aria-label="Buscar parametro">
+        <span class="sr-only">Buscar parametro</span>
+        <input
+          type="text"
+          [value]="paramSearchTerm()"
+          (input)="setParamSearchTerm($any($event.target).value)"
+          placeholder="Buscar por clave, valor u oferta"
+          autocomplete="off"
+        />
+      </label>
+
+      <form class="crud-form" [formGroup]="paramForm" (ngSubmit)="saveParam()" *ngIf="isParamEditorOpen()">
+        <h3>{{ paramEditorTitle() }}</h3>
+        <p class="readonly-period-line">
+          <span *ngIf="isParamCreateMode()">Período: {{ activeParamsPeriodLabel() }}</span>
+          <span *ngIf="!isParamCreateMode()">Período: {{ formatPeriodById(paramForm.controls['offer_date_id'].value) }}</span>
+        </p>
+        <div class="form-grid form-grid-params">
+          <label>
+            Oferta
+            <select formControlName="offerCode">
+              <option *ngFor="let offer of offers()" [value]="offer.offerCode">{{ offer.offerCode }} — {{ offer.name }}</option>
+            </select>
+          </label>
+          <label>
+            Key
+            <input type="text" formControlName="key" autocomplete="off" />
+          </label>
+          <label>
+            Value type
+            <select formControlName="value_type">
+              <option *ngFor="let valueType of valueTypeOptions" [value]="valueType.value">{{ valueType.label }}</option>
+            </select>
+          </label>
+          <label>
+            Value
+            <input type="text" formControlName="value" autocomplete="off" />
+          </label>
+        </div>
+        <div class="crud-actions">
+          <button type="submit" class="btn btn-success" [disabled]="paramSaving()">
+            {{ paramSaving() ? "Guardando..." : paramSubmitLabel() }}
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="cancelParamEdit()">Cancelar</button>
+        </div>
+      </form>
+
+      <p class="state success" *ngIf="paramActionSuccess() as message">{{ message }}</p>
+      <p class="state error" *ngIf="paramActionError() as message">{{ message }}</p>
+
+      <p class="state" *ngIf="paramsLoading()">Cargando parametros...</p>
+      <div class="state error" *ngIf="paramsError() as message">
+        <p>{{ message }}</p>
+        <button type="button" class="btn btn-ghost" (click)="refreshParams()">Reintentar</button>
+      </div>
+      <p class="state" *ngIf="!paramsLoading() && !paramsError() && filteredSortedParams().length === 0">
+        No hay parametros para el filtro seleccionado.
+      </p>
+
+      <div class="table-wrapper" *ngIf="!paramsLoading() && !paramsError() && filteredSortedParams().length > 0">
+        <table class="params-table table-compact">
+          <thead>
+            <tr>
+              <th class="align-right">
+                <button type="button" class="sort-btn" (click)="sortParamsBy('param_id')">ID {{ paramSortIndicator("param_id") }}</button>
+              </th>
+              <th>
+                <button type="button" class="sort-btn" (click)="sortParamsBy('offerCode')">Offer {{ paramSortIndicator("offerCode") }}</button>
+              </th>
+              <th>
+                <button type="button" class="sort-btn" (click)="sortParamsBy('key')">Key {{ paramSortIndicator("key") }}</button>
+              </th>
+              <th>
+                <button type="button" class="sort-btn" (click)="sortParamsBy('value_type')">Type {{ paramSortIndicator("value_type") }}</button>
+              </th>
+              <th>
+                <button type="button" class="sort-btn" (click)="sortParamsBy('value')">Value {{ paramSortIndicator("value") }}</button>
+              </th>
+              <th class="ops-col params-ops-col">Operaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of pagedParams(); trackBy: trackParam">
+              <td class="align-right">{{ row.param.param_id ?? "-" }}</td>
+              <td>{{ row.offerCode }}</td>
+              <td>{{ row.param.key }}</td>
+              <td class="align-center"><span class="param-type">{{ row.param.value_type }}</span></td>
+              <td class="param-value">{{ row.param.value }}</td>
+              <td class="ops-cell">
+                <div class="row-actions row-actions-icons">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm"
+                    [disabled]="isParamPending(row.param.param_id)"
+                    (click)="editParam(row)"
+                    aria-label="Editar parametro"
+                    title="Editar"
+                  >
+                    <span class="btn-spinner" *ngIf="isParamPending(row.param.param_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isParamPending(row.param.param_id)">
+                      <path d="m4 16 10-10 4 4-10 10H4v-4Zm11.4-11.4 1.4-1.4a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-1.4 1.4-3-3Z" />
+                    </svg>
+                    <span class="sr-only">Editar</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon-square btn-icon-sm action-danger"
+                    [disabled]="isParamPending(row.param.param_id)"
+                    (click)="deleteParam(row.param.param_id)"
+                    aria-label="Eliminar parametro"
+                    title="Eliminar"
+                  >
+                    <span class="btn-spinner" *ngIf="isParamPending(row.param.param_id)" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isParamPending(row.param.param_id)">
+                      <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+                    </svg>
+                    <span class="sr-only">Eliminar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager" *ngIf="filteredSortedParams().length > 0">
+        <button type="button" class="btn btn-ghost" [disabled]="safeParamCurrentPage() <= 1" (click)="goToParamPage(safeParamCurrentPage() - 1)">&lt;</button>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [class.is-active]="page === safeParamCurrentPage()"
+          *ngFor="let page of paramPageOptions(); trackBy: trackPage"
+          (click)="goToParamPage(page)"
+        >
+          {{ page }}
+        </button>
+        <button type="button" class="btn btn-ghost" [disabled]="safeParamCurrentPage() >= paramTotalPages()" (click)="goToParamPage(safeParamCurrentPage() + 1)">&gt;</button>
+      </div>
+    </article>
+  </div>
+
+  <div class="confirm-backdrop" *ngIf="confirmDialog() as dialog" (click)="closeConfirmDialog()">
+    <article class="confirm-modal" (click)="$event.stopPropagation()">
+      <h3>{{ dialog.title }}</h3>
+      <p>{{ dialog.message }}</p>
+      <div class="confirm-form" *ngIf="dialog.type === 'apply-config'">
+        <label>
+          Motivo <span class="required-mark">*</span>
+          <textarea
+            rows="3"
+            [value]="applyConfigComment()"
+            (input)="applyConfigComment.set($any($event.target).value)"
+            placeholder="Describe el motivo de este cambio de configuracion"
+            autocomplete="off"
+          ></textarea>
+        </label>
+        <label>
+          Usuario
+          <input
+            type="text"
+            [value]="applyConfigUser()"
+            (input)="applyConfigUser.set($any($event.target).value)"
+            placeholder="Nombre o identificador (opcional)"
+            autocomplete="off"
+          />
+        </label>
+        <p class="state error" *ngIf="applyConfigCommentError() as msg">{{ msg }}</p>
+      </div>
+      <div class="confirm-form" *ngIf="dialog.type === 'publicar-wf'">
+        <label>
+          Período origen <span class="required-mark">*</span>
+          <select [value]="publicarOfferDateId()" (change)="publicarOfferDateId.set(+$any($event.target).value || null)">
+            <option [value]="null">— Selecciona período —</option>
+            <option *ngFor="let f of fechas()" [value]="f.offer_date_id">
+              #{{ f.offer_date_id }} ({{ f.tipo_cd }}) {{ f.valid_from | date:'dd/MM/yyyy HH:mm:ss' }} – {{ f.valid_to ? (f.valid_to | date:'dd/MM/yyyy HH:mm:ss') : '∞' }} · {{ f.descripcion }}
+            </option>
+          </select>
+        </label>
+        <label>
+          Fecha inicio destino WF <span class="required-mark">*</span>
+          <input type="datetime-local" step="1" [value]="publicarVigDesde()" (input)="publicarVigDesde.set($any($event.target).value)" />
+        </label>
+        <label>
+          Fecha fin destino WF (vacío = abierto)
+          <input type="datetime-local" step="1" [value]="publicarVigHasta()" (input)="publicarVigHasta.set($any($event.target).value)" />
+        </label>
+        <label>
+          Tipo de datos (TIPO_DS)
+          <select [value]="publicarTipoDs()" (change)="publicarTipoDs.set($any($event.target).value)">
+            <option value="AMBOS">AMBOS (reglas y parámetros)</option>
+            <option value="REGLAS">REGLAS (solo reglas)</option>
+            <option value="PARAMS">PARAMS (solo parámetros)</option>
+          </select>
+        </label>
+        <label>
+          Usuario
+          <input type="text" [value]="publicarUser()" (input)="publicarUser.set($any($event.target).value)" placeholder="Nombre o identificador (opcional)" autocomplete="off" />
+        </label>
+        <div class="oferta-mapping-section">
+          <p class="oferta-mapping-title">Mapeo de oferta_id por oferta</p>
+          <table class="oferta-mapping-table">
+            <thead>
+              <tr>
+                <th>Oferta</th>
+                <th>oferta_id destino <span class="required-mark">*</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let offer of offers()">
+                <td>{{ offer.offerCode }}</td>
+                <td>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    [value]="publicarOfertaIdOverrides()[offer.offerCode] ?? ''"
+                    (input)="setPublicarOfertaId(offer.offerCode, $any($event.target).value)"
+                    class="oferta-id-input"
+                  />
+                  <span
+                    class="field-error"
+                    *ngIf="publicarOfertaIdOverrides()[offer.offerCode] === null || (publicarOfertaIdOverrides()[offer.offerCode] !== null && publicarOfertaIdOverrides()[offer.offerCode]! < 1)"
+                  >
+                    Debe ser un entero ≥ 1
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="state error" *ngIf="publicarError() as msg">{{ msg }}</p>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeConfirmDialog()">Cancelar</button>
+        <button type="button" class="btn btn-danger" [disabled]="isConfirmActionPending() || publicarLoading() || !publicarOverridesValid()" (click)="confirmDialogAction()">
+          <span class="btn-spinner" *ngIf="isConfirmActionPending() || publicarLoading()" aria-hidden="true"></span>
+          {{ (isConfirmActionPending() || publicarLoading()) ? "Procesando..." : "Confirmar" }}
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <!-- Diálogo Snapshot POC -->
+  <div class="confirm-backdrop" *ngIf="pocSnapshotDialog()" (click)="closePocSnapshotDialog()">
+    <article class="confirm-modal" (click)="$event.stopPropagation()">
+      <h3>Snapshot POC</h3>
+      <p>Guarda el estado actual de las reglas y parámetros de la base de datos como un snapshot de seguridad.</p>
+      <label>
+        Motivo <span class="required-mark">*</span>
+        <input
+          type="text"
+          [value]="pocSnapshotComment()"
+          (input)="pocSnapshotComment.set($any($event.target).value)"
+          placeholder="Ej: Antes de pruebas de carga"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        Usuario (opcional)
+        <input
+          type="text"
+          [value]="pocSnapshotUser()"
+          (input)="pocSnapshotUser.set($any($event.target).value)"
+          placeholder="Nombre o identificador"
+          autocomplete="off"
+        />
+      </label>
+      <p class="state error" *ngIf="pocSnapshotError() as msg">{{ msg }}</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" (click)="closePocSnapshotDialog()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="pocSnapshotLoading()" (click)="executePocSnapshot()">
+          Guardar snapshot
+        </button>
+      </div>
+    </article>
+  </div>
+</section>
