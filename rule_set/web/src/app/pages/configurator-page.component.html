@@ -138,6 +138,17 @@
       </button>
       <button
         type="button"
+        class="btn btn-warning btn-reset-seed"
+        *ngIf="enableSeedReset"
+        [disabled]="configOpLoading()"
+        (click)="openResetSeedDialog()"
+        title="Restaurar la configuracion de las ofertas semilla base a su estado inicial"
+      >
+        <span class="btn-spinner" *ngIf="configOpLoading()" aria-hidden="true"></span>
+        Restaurar configuracion semilla
+      </button>
+      <button
+        type="button"
         class="btn btn-primary"
         [disabled]="configOpLoading() || publicarLoading()"
         (click)="openPublicarDialog()"
@@ -733,6 +744,29 @@
         </label>
         <p class="state error" *ngIf="applyConfigCommentError() as msg">{{ msg }}</p>
       </div>
+      <div class="confirm-form" *ngIf="dialog.type === 'reset-seed'">
+        <label>
+          Motivo <span class="required-mark">*</span>
+          <textarea
+            rows="3"
+            [value]="resetSeedComment()"
+            (input)="resetSeedComment.set($any($event.target).value)"
+            placeholder="Describe el motivo de la restauracion"
+            autocomplete="off"
+          ></textarea>
+        </label>
+        <label>
+          Usuario
+          <input
+            type="text"
+            [value]="resetSeedUser()"
+            (input)="resetSeedUser.set($any($event.target).value)"
+            placeholder="Nombre o identificador (opcional)"
+            autocomplete="off"
+          />
+        </label>
+        <p class="state error" *ngIf="resetSeedCommentError() as msg">{{ msg }}</p>
+      </div>
       <div class="confirm-form" *ngIf="dialog.type === 'publicar-wf'">
         <label>
           Período origen <span class="required-mark">*</span>
@@ -799,7 +833,7 @@
       </div>
       <div class="confirm-actions">
         <button type="button" class="btn btn-ghost" (click)="closeConfirmDialog()">Cancelar</button>
-        <button type="button" class="btn btn-danger" [disabled]="isConfirmActionPending() || publicarLoading() || !publicarOverridesValid()" (click)="confirmDialogAction()">
+        <button type="button" class="btn btn-danger" [disabled]="isConfirmActionPending() || publicarLoading() || (dialog.type === 'publicar-wf' && !publicarOverridesValid())" (click)="confirmDialogAction()">
           <span class="btn-spinner" *ngIf="isConfirmActionPending() || publicarLoading()" aria-hidden="true"></span>
           {{ (isConfirmActionPending() || publicarLoading()) ? "Procesando..." : "Confirmar" }}
         </button>

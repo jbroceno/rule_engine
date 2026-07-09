@@ -248,6 +248,20 @@ export interface AdminConfigApplyResponse {
   snapshot_id: number;
 }
 
+export interface AdminResetSeedPayload {
+  comment: string;
+  createdBy?: string;
+}
+
+export interface AdminResetSeedResponse {
+  applied: { rules: number; params: number };
+  offerCodes: string[];
+  snapshot_id: number;
+  offer_date_id: number;
+  removedOfferCodes: string[];
+  removedPeriodCount: number;
+}
+
 export interface AdminSnapshotItem {
   snapshot_id: number;
   snapshot_name: string;

@@ -6,6 +6,8 @@ import {
   AdminConfigApplyPayload,
   AdminConfigApplyResponse,
   AdminConfigExport,
+  AdminResetSeedPayload,
+  AdminResetSeedResponse,
   AdminOffer,
   AdminOfferCreateResponse,
   AdminOfferDeleteResponse,
@@ -200,6 +202,12 @@ export class AdminApiService {
   applyConfig(payload: AdminConfigApplyPayload): Observable<AdminConfigApplyResponse> {
     return this.http
       .post<AdminConfigApplyResponse>(`${this.baseUrl}/config/apply`, payload)
+      .pipe(catchError((error) => this.handleError(error)));
+  }
+
+  resetSeed(payload: AdminResetSeedPayload): Observable<AdminResetSeedResponse> {
+    return this.http
+      .post<AdminResetSeedResponse>(`${this.baseUrl}/config/reset-seed`, payload)
       .pipe(catchError((error) => this.handleError(error)));
   }
 

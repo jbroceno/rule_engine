@@ -13,6 +13,7 @@ import { getOffers, postOffer, putOffer, removeOffer, removeOfferRulesInPeriod, 
 import { postAdminValidate } from "../controllers/admin_validate_controller.js";
 import { getAdminExport } from "../controllers/admin_export_controller.js";
 import { postAdminApply } from "../controllers/admin_apply_controller.js";
+import { postAdminResetSeed } from "../controllers/admin_reset_controller.js";
 import { getSnapshots, postCreatePocSnapshot, postSnapshotRestore, postWorkflowSnapshot, postWorkflowPublicar, delSnapshot, getSnapshotPreview } from "../controllers/admin_snapshots_controller.js";
 import { getFechas, postFecha, putFecha, delFecha, postDuplicateFecha } from "../controllers/admin_fechas_controller.js";
 
@@ -43,6 +44,7 @@ adminRouter.post("/validate", postAdminValidate);
 
 adminRouter.get("/export", getAdminExport);
 adminRouter.post("/config/apply", postAdminApply);
+adminRouter.post("/config/reset-seed", postAdminResetSeed);
 
 adminRouter.get("/snapshots", getSnapshots);
 adminRouter.post("/snapshots", postCreatePocSnapshot);

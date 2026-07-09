@@ -7,6 +7,10 @@ import {
   normalizeOperator,
   normalizeValueType,
 } from "../utils/rule_catalogs.js";
+import { SEED_OFFERS, buildSeedConfig } from "../config/seed_data.js";
+
+// Baseline vigencia for the seed-reset period — matches sql/seed_offers.sql's @VF.
+const SEED_BASELINE_VALID_FROM = "2026-01-01";
 
 function toSqlDateOnly(value = new Date()) {
   return new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
@@ -1668,4 +1672,229 @@ export async function applyConfig(payload, options = {}) {
     }
     throw new AppError("Error aplicando configuracion en SQL Server.", 500, { cause: error.message });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Seed reset (D4-EXT — full-scope reset to the 6-offer seed configuration)
+// ---------------------------------------------------------------------------
+
+/**
+ * Deletes every cfg_offer_ruleset row whose code is NOT one of the 6 seed
+ * offers, cascading through condition_values -> conditions -> actions ->
+ * rules -> params -> ruleset (mirrors applyConfig()'s own cascade DELETE,
+ * scoped by ruleset_id instead of offerCode+period). Own transaction — runs
+ * FIRST in resetToSeed() so non-seed data is gone before periods are touched.
+ *
+ * @returns {Promise<{ removedOfferCodes: string[] }>}
+ */
+export async function deleteNonSeedOffers() {
+  const seedCodesCsv = SEED_OFFERS.map((offer) => offer.code).join(",");
+  const pool = await getSqlPool();
+  const tx = new sql.Transaction(pool);
+  await tx.begin();
+
+  try {
+    const findReq = tx.request();
+    findReq.input("seedCodesCsv", sql.NVarChar(sql.MAX), seedCodesCsv);
+    const findResult = await findReq.query(`
+      SELECT ruleset_id, code
+      FROM dbo.cfg_offer_ruleset
+      WHERE code NOT IN (SELECT value FROM STRING_SPLIT(@seedCodesCsv, ','))
+    `);
+    const extraOffers = findResult.recordset ?? [];
+    const removedOfferCodes = [];
+
+    for (const { ruleset_id: rulesetId, code } of extraOffers) {
+      const delCvReq = tx.request();
+      delCvReq.input("rulesetId", sql.Int, rulesetId);
+      await delCvReq.query(`
+        DELETE cv
+        FROM dbo.cfg_offer_rule_condition_value cv
+        INNER JOIN dbo.cfg_offer_rule_condition c ON c.cond_id = cv.cond_id
+        INNER JOIN dbo.cfg_offer_rule r ON r.rule_id = c.rule_id
+        WHERE r.ruleset_id = @rulesetId
+      `);
+
+      const delCondReq = tx.request();
+      delCondReq.input("rulesetId", sql.Int, rulesetId);
+      await delCondReq.query(`
+        DELETE c
+        FROM dbo.cfg_offer_rule_condition c
+        INNER JOIN dbo.cfg_offer_rule r ON r.rule_id = c.rule_id
+        WHERE r.ruleset_id = @rulesetId
+      `);
+
+      const delActReq = tx.request();
+      delActReq.input("rulesetId", sql.Int, rulesetId);
+      await delActReq.query(`
+        DELETE a
+        FROM dbo.cfg_offer_rule_action a
+        INNER JOIN dbo.cfg_offer_rule r ON r.rule_id = a.rule_id
+        WHERE r.ruleset_id = @rulesetId
+      `);
+
+      const delRulesReq = tx.request();
+      delRulesReq.input("rulesetId", sql.Int, rulesetId);
+      await delRulesReq.query(`
+        DELETE FROM dbo.cfg_offer_rule WHERE ruleset_id = @rulesetId
+      `);
+
+      // cfg_offer_param has a real enforced FK to cfg_offer_ruleset(ruleset_id)
+      // (data_model.sql) — must be deleted before the ruleset row.
+      const delParamsReq = tx.request();
+      delParamsReq.input("rulesetId", sql.Int, rulesetId);
+      await delParamsReq.query(`
+        DELETE FROM dbo.cfg_offer_param WHERE ruleset_id = @rulesetId
+      `);
+
+      const delRulesetReq = tx.request();
+      delRulesetReq.input("rulesetId", sql.Int, rulesetId);
+      await delRulesetReq.query(`
+        DELETE FROM dbo.cfg_offer_ruleset WHERE ruleset_id = @rulesetId
+      `);
+
+      removedOfferCodes.push(code);
+    }
+
+    await tx.commit();
+    return { removedOfferCodes };
+  } catch (error) {
+    await tx.rollback();
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Error eliminando ofertas no-semilla en SQL Server.", 500, { cause: error.message });
+  }
+}
+
+/**
+ * Finds or creates the cfg_offer_dates baseline period (valid_from =
+ * SEED_BASELINE_VALID_FROM, tipo_cd = 'AMBOS') used to host the seed rules
+ * and params. Not transactional — a lightweight find-or-create, same style
+ * as the rest of the period helpers in admin_fechas_service.js.
+ *
+ * @returns {Promise<number>} offer_date_id
+ */
+export async function ensureBaselinePeriod() {
+  const pool = await getSqlPool();
+  const validFrom = normalizeVigenciaToSecond(SEED_BASELINE_VALID_FROM);
+
+  const findReq = pool.request();
+  findReq.input("validFrom", sql.DateTime2(0), validFrom);
+  const findResult = await findReq.query(`
+    SELECT TOP 1 offer_date_id FROM dbo.cfg_offer_dates
+    WHERE valid_from = @validFrom AND valid_to IS NULL AND tipo_cd = 'AMBOS'
+  `);
+  const existingId = findResult.recordset?.[0]?.offer_date_id;
+  if (existingId) {
+    return existingId;
+  }
+
+  const createReq = pool.request();
+  createReq.input("validFrom", sql.DateTime2(0), validFrom);
+  createReq.input("descripcion", sql.NVarChar(200), "Período base Ofertas Hipotecarias (seed reset)");
+  createReq.input("tipoCd", sql.VarChar(10), "AMBOS");
+  const createResult = await createReq.query(`
+    INSERT INTO dbo.cfg_offer_dates (valid_from, valid_to, descripcion, tipo_cd)
+    OUTPUT INSERTED.offer_date_id
+    VALUES (@validFrom, NULL, @descripcion, @tipoCd)
+  `);
+  const offerDateId = createResult.recordset?.[0]?.offer_date_id;
+  if (!offerDateId) {
+    throw new AppError("No se pudo crear el período base para el seed reset.", 500);
+  }
+  return offerDateId;
+}
+
+/**
+ * Upserts the 6 SEED_OFFERS rows into cfg_offer_ruleset by code — inserts
+ * missing ones, and for existing ones (even if disabled) re-enables and
+ * restores the seed name/offer_rank/oferta_id without touching ruleset_id.
+ */
+export async function ensureSeedOffers() {
+  const pool = await getSqlPool();
+
+  for (const offer of SEED_OFFERS) {
+    const findReq = pool.request();
+    findReq.input("code", sql.NVarChar(50), offer.code);
+    const findResult = await findReq.query(`
+      SELECT ruleset_id FROM dbo.cfg_offer_ruleset WHERE code = @code
+    `);
+    const existing = findResult.recordset?.[0];
+
+    if (existing) {
+      const updateReq = pool.request();
+      updateReq.input("rulesetId", sql.Int, existing.ruleset_id);
+      updateReq.input("name", sql.NVarChar(200), offer.name);
+      updateReq.input("offerRank", sql.Int, offer.offer_rank);
+      updateReq.input("ofertaId", sql.Int, offer.oferta_id);
+      await updateReq.query(`
+        UPDATE dbo.cfg_offer_ruleset
+        SET name = @name, offer_rank = @offerRank, oferta_id = @ofertaId, enabled = 1
+        WHERE ruleset_id = @rulesetId
+      `);
+    } else {
+      const insertReq = pool.request();
+      insertReq.input("code", sql.NVarChar(50), offer.code);
+      insertReq.input("name", sql.NVarChar(200), offer.name);
+      insertReq.input("offerRank", sql.Int, offer.offer_rank);
+      insertReq.input("ofertaId", sql.Int, offer.oferta_id);
+      await insertReq.query(`
+        INSERT INTO dbo.cfg_offer_ruleset (oferta_id, offer_rank, code, name, enabled, published_version)
+        VALUES (@ofertaId, @offerRank, @code, @name, 1, 1)
+      `);
+    }
+  }
+}
+
+/**
+ * Deletes every cfg_offer_dates period except offerDateId. Safe to run last
+ * in resetToSeed(): by that point non-seed offers' data is already gone
+ * (deleteNonSeedOffers) and the 6 seed offers' rows already reference only
+ * offerDateId (applyConfig with deleteAllPeriods:true), so no live rule/param
+ * still points at the periods being removed here.
+ *
+ * @param {number} offerDateId
+ * @returns {Promise<{ removedPeriodCount: number }>}
+ */
+export async function deleteExtraPeriods(offerDateId) {
+  const pool = await getSqlPool();
+  const request = pool.request();
+  request.input("offerDateId", sql.Int, offerDateId);
+  const result = await request.query(`
+    DELETE FROM dbo.cfg_offer_dates WHERE offer_date_id <> @offerDateId
+  `);
+  return { removedPeriodCount: result.rowsAffected?.[0] ?? 0 };
+}
+
+/**
+ * Full-scope reset to the 6-offer seed configuration (D4-EXT). Order matters:
+ *   1. deleteNonSeedOffers()   — own tx, runs first
+ *   2. ensureBaselinePeriod()  — find-or-create 2026-01-01 AMBOS period
+ *   3. ensureSeedOffers()      — upsert the 6 seed offers, re-enable if needed
+ *   4. applyConfig(...)        — replace seed offers' rules/params, stamped
+ *                                 with offerDateId, across ALL their periods
+ *   5. deleteExtraPeriods()    — own tx, runs last
+ *
+ * The pre-reset snapshot is the caller's responsibility (admin_reset_controller.js),
+ * matching the existing pattern in postAdminApply.
+ *
+ * @param {{ createdBy?: string|null }} [options]
+ */
+export async function resetToSeed({ createdBy } = {}) {
+  void createdBy; // reserved — snapshot (which records createdBy) is created by the controller.
+
+  const { removedOfferCodes } = await deleteNonSeedOffers();
+  const offerDateId = await ensureBaselinePeriod();
+  await ensureSeedOffers();
+  const applyResult = await applyConfig(buildSeedConfig(offerDateId), { deleteAllPeriods: true });
+  const { removedPeriodCount } = await deleteExtraPeriods(offerDateId);
+
+  return {
+    applied: applyResult.applied,
+    offerCodes: applyResult.offerCodes,
+    offer_date_id: offerDateId,
+    removedOfferCodes,
+    removedPeriodCount,
+  };
 }

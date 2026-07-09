@@ -14,6 +14,11 @@ function asBoolean(value, defaultValue) {
   return String(value).trim().toLowerCase() === "true";
 }
 
+// Exported so tests can call asBoolean(undefined, false) directly instead of
+// relying on process.env/dotenv reload timing, which is fragile — dotenv.config()
+// can repopulate a deleted process.env var from a local .env file on re-import.
+export { asBoolean };
+
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: asNumber(process.env.PORT, 3000),
@@ -48,6 +53,10 @@ export const env = {
     fullchainPath: process.env.SSL_FULLCHAIN_PATH || "",
     privkeyPath: process.env.SSL_PRIVKEY_PATH || "",
   },
+  // Feature flag: POST /api/admin/config/reset-seed. When false, the controller
+  // calls next() with no args so the route falls through to the generic 404
+  // handler — indistinguishable from a route that doesn't exist.
+  enableSeedReset: asBoolean(process.env.ENABLE_SEED_RESET, false),
 };
 
 export function hasSqlCredentials() {

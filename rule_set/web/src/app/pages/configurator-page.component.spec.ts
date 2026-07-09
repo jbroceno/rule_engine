@@ -7,6 +7,7 @@ import { ConfiguratorPageComponent } from "./configurator-page.component";
 import { AdminApiService } from "../services/admin-api.service";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminFechaItem } from "../models/admin.models";
+import { environment } from "../../environments/environment";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -53,6 +54,15 @@ function buildAdminApiMock() {
     updateOffer: () => of({ offerCode: "TEST", updated: true }),
     exportConfig: () => of({ rules: [], params: [] }),
     applyConfig: () => of({ snapshot_id: 1 }),
+    resetSeed: () =>
+      of({
+        applied: { rules: 85, params: 67 },
+        offerCodes: ["FIDELIZACION"],
+        snapshot_id: 21,
+        offer_date_id: 4,
+        removedOfferCodes: ["OFERTA_TEST"],
+        removedPeriodCount: 1,
+      }),
     getSnapshots: () => of({ items: [], total: 0 }),
     restoreSnapshot: () => of({ preRestoreSnapshotId: 1, published: true, rules: 0, params: 0 }),
     createPocSnapshot: () => of({ snapshot_id: 1 }),
@@ -819,6 +829,129 @@ describe("ConfiguratorPageComponent", () => {
 
       // After successful delete, loadPeriodOffers() is called to refresh the panel
       expect(loadPeriodOffersSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("T4.7: seed-reset button + dialog (env-flag gated)", () => {
+    let originalEnableSeedReset: boolean;
+
+    beforeEach(() => {
+      originalEnableSeedReset = environment.enableSeedReset;
+    });
+
+    afterEach(() => {
+      environment.enableSeedReset = originalEnableSeedReset;
+    });
+
+    it("T4.7a: button is NOT rendered when environment.enableSeedReset is false", () => {
+      environment.enableSeedReset = false;
+      const fixture = createComponent();
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector(".btn-reset-seed");
+      expect(button).toBeNull();
+    });
+
+    it("T4.7b: button IS rendered when environment.enableSeedReset is true", () => {
+      environment.enableSeedReset = true;
+      const fixture = createComponent();
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector(".btn-reset-seed");
+      expect(button).toBeTruthy();
+    });
+
+    it("T4.7c: clicking the button opens confirmDialog with type reset-seed", () => {
+      environment.enableSeedReset = true;
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector(".btn-reset-seed") as HTMLButtonElement;
+      button.click();
+      fixture.detectChanges();
+      const dialog = component["confirmDialog"]();
+      expect(dialog).not.toBeNull();
+      expect(dialog!.type).toBe("reset-seed");
+    });
+
+    it("T4.7d: dialog copy accurately warns of full-scope deletion", () => {
+      environment.enableSeedReset = true;
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      component["openResetSeedDialog"]();
+      fixture.detectChanges();
+      const dialog = component["confirmDialog"]();
+      const message = dialog!.message.toLowerCase();
+      expect(message).toContain("eliminara permanentemente");
+      expect(message).toContain("periodo de vigencia");
+    });
+
+    it("T4.7e: confirming without a comment blocks the request and shows an error", () => {
+      environment.enableSeedReset = true;
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      const adminApi = TestBed.inject(AdminApiService);
+      const resetSpy = spyOn(adminApi, "resetSeed").and.callThrough();
+      fixture.detectChanges();
+      component["openResetSeedDialog"]();
+      fixture.detectChanges();
+      component["confirmDialogAction"]();
+      fixture.detectChanges();
+      expect(resetSpy).not.toHaveBeenCalled();
+      expect(component["resetSeedCommentError"]()).toBeTruthy();
+      expect(component["confirmDialog"]()).not.toBeNull();
+    });
+
+    it("T4.7f: confirming with a comment calls resetSeed() and refreshes data", () => {
+      environment.enableSeedReset = true;
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      const adminApi = TestBed.inject(AdminApiService);
+      const resetSpy = spyOn(adminApi, "resetSeed").and.callThrough();
+      const getRulesSpy = spyOn(adminApi, "getRules").and.callThrough();
+      fixture.detectChanges();
+      const rulesCallsBefore = getRulesSpy.calls.count();
+      component["openResetSeedDialog"]();
+      component["resetSeedComment"].set("Restaurar antes de pruebas");
+      fixture.detectChanges();
+      component["confirmDialogAction"]();
+      fixture.detectChanges();
+      expect(resetSpy).toHaveBeenCalledTimes(1);
+      expect(resetSpy.calls.mostRecent().args[0]).toEqual(
+        jasmine.objectContaining({ comment: "Restaurar antes de pruebas" }),
+      );
+      expect(component["confirmDialog"]()).toBeNull();
+      expect(getRulesSpy.calls.count()).toBeGreaterThan(rulesCallsBefore);
+    });
+
+    it("T4.7g: cancelling the dialog sends no request", () => {
+      environment.enableSeedReset = true;
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      const adminApi = TestBed.inject(AdminApiService);
+      const resetSpy = spyOn(adminApi, "resetSeed").and.callThrough();
+      fixture.detectChanges();
+      component["openResetSeedDialog"]();
+      fixture.detectChanges();
+      component["closeConfirmDialog"]();
+      fixture.detectChanges();
+      expect(resetSpy).not.toHaveBeenCalled();
+      expect(component["confirmDialog"]()).toBeNull();
+    });
+
+    it("T4.7h: a successful reset clears both active-period selections (rules + params)", () => {
+      environment.enableSeedReset = true;
+      mockActivePeriodRules.set(makePeriod(3, "REGLAS"));
+      mockActivePeriodParams.set(makePeriod(4, "PARAMS"));
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      component["openResetSeedDialog"]();
+      component["resetSeedComment"].set("Restaurar antes de pruebas");
+      fixture.detectChanges();
+      component["confirmDialogAction"]();
+      fixture.detectChanges();
+      expect(mockActivePeriodRules()).toBeNull();
+      expect(mockActivePeriodParams()).toBeNull();
     });
   });
 });

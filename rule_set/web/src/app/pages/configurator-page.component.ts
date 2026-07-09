@@ -14,6 +14,7 @@ import {
   AdminRuleCondition,
   AdminRuleItem,
   AdminRulesQuery,
+  AdminResetSeedPayload,
   RuleActionPayloadEntry,
   ValidationIssue,
   ValidatePayloadResponse,
@@ -28,6 +29,7 @@ import {
 import { normalizeRuleOperator } from "../shared/rule-operators";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminApiService } from "../services/admin-api.service";
+import { environment } from "../../environments/environment";
 import { RuleActionPayloadTableComponent } from "./configurator/rule-action-payload-table.component";
 import { RuleConditionsTableComponent } from "./configurator/rule-conditions-table.component";
 
@@ -101,6 +103,11 @@ type ConfirmDialogState =
     }
   | {
       type: "apply-config";
+      title: string;
+      message: string;
+    }
+  | {
+      type: "reset-seed";
       title: string;
       message: string;
     }
@@ -228,6 +235,12 @@ export class ConfiguratorPageComponent implements OnInit {
   protected readonly applyConfigComment = signal("");
   protected readonly applyConfigUser = signal("");
   protected readonly applyConfigCommentError = signal<string | null>(null);
+
+  // Seed reset (feature-flagged)
+  protected readonly enableSeedReset = environment.enableSeedReset;
+  protected readonly resetSeedComment = signal("");
+  protected readonly resetSeedUser = signal("");
+  protected readonly resetSeedCommentError = signal<string | null>(null);
 
   // cfg_offer_dates
   protected readonly fechas = signal<AdminFechaItem[]>([]);
@@ -973,6 +986,8 @@ export class ConfiguratorPageComponent implements OnInit {
       this.executeParamDelete(dialog.paramId);
     } else if (dialog.type === "apply-config") {
       this.executeApplyConfig();
+    } else if (dialog.type === "reset-seed") {
+      this.executeResetSeed();
     } else if (dialog.type === "publicar-wf") {
       this.executePublicarWf();
     } else if (dialog.type === "offer-period") {
@@ -1075,6 +1090,18 @@ export class ConfiguratorPageComponent implements OnInit {
     });
   }
 
+  protected openResetSeedDialog(): void {
+    this.resetSeedComment.set("");
+    this.resetSeedUser.set("");
+    this.resetSeedCommentError.set(null);
+    this.confirmDialog.set({
+      type: "reset-seed",
+      title: "Restaurar configuracion semilla",
+      message:
+        "Esto restaurara las reglas y parametros de las 6 ofertas semilla base a su estado inicial y garantizara que exista el periodo base (2026-01-01). ADEMAS, esto eliminara permanentemente cualquier oferta, regla, parametro o periodo de vigencia que no forme parte de la configuracion semilla inicial de 6 ofertas — el sistema quedara exactamente en su estado inicial. Se creara un snapshot de la configuracion actual antes de aplicar el cambio. Esta operacion no se puede deshacer.",
+    });
+  }
+
   protected clearImportedConfig(): void {
     this.importedConfig.set(null);
     this.configOpSuccess.set(null);
@@ -1163,6 +1190,42 @@ export class ConfiguratorPageComponent implements OnInit {
         this.configOpSuccess.set(
           `Configuracion grabada: ${result.applied.rules} reglas, ${result.applied.params} parametros. Snapshot #${result.snapshot_id} creado.`
         );
+        this.applyFilters(false);
+      },
+      error: (error: Error) => {
+        this.configOpLoading.set(false);
+        this.configOpError.set(error.message);
+      },
+    });
+  }
+
+  private executeResetSeed(): void {
+    const comment = this.resetSeedComment().trim();
+    if (!comment) {
+      this.resetSeedCommentError.set("El motivo es requerido.");
+      return;
+    }
+    this.resetSeedCommentError.set(null);
+    this.closeConfirmDialog();
+    this.configOpLoading.set(true);
+    this.configOpError.set(null);
+    this.configOpSuccess.set(null);
+
+    const payload: AdminResetSeedPayload = {
+      comment,
+      createdBy: this.resetSeedUser().trim() || undefined,
+    };
+
+    this.adminApiService.resetSeed(payload).subscribe({
+      next: (result) => {
+        this.configOpLoading.set(false);
+        this.configOpSuccess.set(
+          `Configuracion semilla restaurada: ${result.applied.rules} reglas, ${result.applied.params} parametros. Snapshot #${result.snapshot_id} creado. ${result.removedOfferCodes.length} ofertas y ${result.removedPeriodCount} periodos extra eliminados.`
+        );
+        // Full-scope reset may have deleted the previously-selected period.
+        this.activePeriodService.setRulesPeriod(null);
+        this.activePeriodService.setParamsPeriod(null);
+        this.loadOffers();
         this.applyFilters(false);
       },
       error: (error: Error) => {
