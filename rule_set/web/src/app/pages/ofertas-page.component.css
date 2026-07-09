@@ -18,7 +18,7 @@
 .page-header p {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--text-secondary, #666);
+  color: var(--ink-soft);
 }
 
 .panel {
@@ -26,4 +26,100 @@
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
   padding: 1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(44, 67, 98, 0.12);
+  padding-bottom: 0.45rem;
+}
+
+.panel-head h2 {
+  margin: 0;
+}
+
+.crud-form {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+
+.crud-form h3 {
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.form-grid > label {
+  grid-column: span 2;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--ink-default);
+  font-weight: 500;
+}
+
+.check-control {
+  width: auto;
+  margin: 0;
+  justify-self: start;
+}
+
+.crud-actions,
+.row-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.row-actions-icons {
+  gap: 0.32rem;
+  flex-wrap: nowrap;
+}
+
+.row-actions-icons .action-danger {
+  color: var(--danger);
+  border-color: rgba(159, 42, 47, 0.32);
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 25, 40, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 30;
+}
+
+.confirm-modal {
+  width: min(480px, 100%);
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+
+.confirm-modal h3 {
+  margin: 0;
+}
+
+@media (max-width: 980px) {
+  .form-grid > label {
+    grid-column: 1 / -1;
+  }
 }

@@ -112,6 +112,25 @@ h3 {
   color: #fff7f7;
 }
 
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-strong);
+  border-color: var(--line-strong);
+}
+
+.state {
+  margin: 0;
+  font-weight: 500;
+}
+
+.state.error {
+  color: var(--danger);
+}
+
+.state.success {
+  color: #0e7f59;
+}
+
 .btn-icon-square {
   display: inline-grid;
   place-items: center;

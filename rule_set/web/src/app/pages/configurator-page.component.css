@@ -266,24 +266,11 @@ label {
   font-size: 0.78rem;
 }
 
-.state {
-  margin: 0;
-  font-weight: 500;
-}
-
-.state.error {
-  color: var(--danger);
-}
-
-.state.success,
+/* .state and .btn-ghost base rules live in the global src/styles.css now —
+   shared by every page that uses them. Only the configurator-specific
+   variants stay here. */
 .validate-status.valid {
   color: #0e7f59;
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--ink-strong);
-  border-color: var(--line-strong);
 }
 
 .btn-ghost.is-active,
