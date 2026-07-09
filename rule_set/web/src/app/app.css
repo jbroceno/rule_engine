@@ -70,66 +70,6 @@
   gap: 0.7rem;
 }
 
-.mode-toggle {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.42rem;
-  border: 1px solid rgba(255, 218, 184, 0.74);
-  background: linear-gradient(135deg, #ba7a2d, #d79740);
-  color: #fffaf2;
-  border-radius: 999px;
-  padding: 0.34rem 0.82rem;
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 10px 22px rgba(118, 76, 23, 0.28);
-  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
-}
-
-.mode-toggle:hover {
-  filter: brightness(1.04);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(118, 76, 23, 0.35);
-}
-
-.mode-toggle:focus-visible {
-  outline: 2px solid #ffd39f;
-  outline-offset: 2px;
-}
-
-.mode-toggle .mode-icon {
-  display: inline-flex;
-  width: 1rem;
-  height: 1rem;
-}
-
-.mode-toggle .mode-icon svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.mode-toggle .mode-icon-base,
-.mode-toggle .mode-label-base {
-  display: none;
-}
-
-.mode-toggle.is-analytic .mode-icon-analytic,
-.mode-toggle.is-analytic .mode-label-analytic {
-  display: none;
-}
-
-.mode-toggle.is-analytic .mode-icon-base,
-.mode-toggle.is-analytic .mode-label-base {
-  display: inline-flex;
-}
-
 .eyebrow {
   margin: 0;
   text-transform: uppercase;
@@ -179,6 +119,30 @@ nav a.active {
   border-color: #f2f8ff;
 }
 
+.logout-button {
+  margin-left: auto;
+  color: #e9f4ff;
+  text-decoration: none;
+  border: 1px solid rgba(209, 231, 255, 0.35);
+  background: rgba(12, 47, 79, 0.28);
+  border-radius: 999px;
+  padding: 0.38rem 0.8rem;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.logout-button:hover {
+  background: rgba(237, 248, 255, 0.18);
+  border-color: rgba(221, 238, 255, 0.6);
+}
+
+.logout-button:focus-visible {
+  outline: 2px solid #92ddf4;
+  outline-offset: 2px;
+}
+
 main {
   max-width: min(1720px, calc(100vw - 2rem));
   width: 100%;
@@ -224,10 +188,9 @@ main {
   font-size: 0.9rem;
 }
 
-.layout.theme-analitica .mode-toggle {
+.layout.theme-analitica .logout-button {
   border-radius: 10px;
-  border-color: rgba(241, 210, 176, 0.76);
-  background: linear-gradient(135deg, #ac6e24, #c58831);
+  font-size: 0.9rem;
 }
 
 @keyframes slide-fade-in {
@@ -255,7 +218,7 @@ main {
     gap: 0.55rem;
   }
 
-  .mode-toggle {
+  .logout-button {
     width: 100%;
     justify-content: center;
     margin-left: 0;

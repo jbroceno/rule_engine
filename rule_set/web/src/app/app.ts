@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { ActivePeriodService } from './services/active-period.service';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -11,10 +12,12 @@ import { ActivePeriodService } from './services/active-period.service';
   styleUrl: './app.css'
 })
 export class App {
-  readonly analyticMode = signal(false);
   readonly activePeriodService = inject(ActivePeriodService);
+  readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
-  toggleAnalyticMode(): void {
-    this.analyticMode.update((current) => !current);
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

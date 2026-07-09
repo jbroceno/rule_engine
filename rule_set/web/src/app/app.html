@@ -1,4 +1,4 @@
-<div class="layout" [class.theme-analitica]="analyticMode()">
+<div class="layout theme-analitica">
   <header class="topbar">
     <div class="topbar-main">
       <h1>Simulador de Ofertas</h1>
@@ -21,38 +21,21 @@
         }
       </span>
     </div>
-    <div class="topbar-actions">
-      <nav aria-label="Navegacion principal">
-        <a routerLink="/offer-dates" routerLinkActive="active">Períodos</a>
-        <a routerLink="/ofertas" routerLinkActive="active">Ofertas</a>
-        <a routerLink="/configurador" routerLinkActive="active">Configurador</a>
-        <a routerLink="/configuracion" routerLinkActive="active">Configuracion</a>
-        <a routerLink="/snapshots" routerLinkActive="active">Snapshots</a>
-        <a routerLink="/simulador-init" routerLinkActive="active">Simulador INIT</a>
-        <a routerLink="/simulador-pre" routerLinkActive="active">Simulador PRE</a>
-        <a routerLink="/simulador-final" routerLinkActive="active">Simulador FINAL</a>
-        <button
-          type="button"
-          class="mode-toggle"
-          [class.is-analytic]="analyticMode()"
-          [attr.aria-pressed]="analyticMode()"
-          (click)="toggleAnalyticMode()"
-        >
-          <span class="mode-icon mode-icon-analytic" aria-hidden="true">
-            <svg viewBox="0 0 24 24" role="img" focusable="false">
-              <path d="M4 17.5h16M6.5 15l3.2-3.3 3 2.4 4.8-5.1M17.5 9h2.5v2.5" />
-            </svg>
-          </span>
-          <span class="mode-icon mode-icon-base" aria-hidden="true">
-            <svg viewBox="0 0 24 24" role="img" focusable="false">
-              <path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5M4.5 8.5h15a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-8a1 1 0 0 1 1-1Z" />
-            </svg>
-          </span>
-          <span class="mode-label mode-label-analytic">Vista analitica</span>
-          <span class="mode-label mode-label-base">Vista base</span>
-        </button>
-      </nav>
-    </div>
+    @if (authService.isAuthenticated()) {
+      <div class="topbar-actions">
+        <nav aria-label="Navegacion principal">
+          <a routerLink="/offer-dates" routerLinkActive="active">Períodos</a>
+          <a routerLink="/ofertas" routerLinkActive="active">Ofertas</a>
+          <a routerLink="/configurador" routerLinkActive="active">Configurador</a>
+          <a routerLink="/configuracion" routerLinkActive="active">Configuracion</a>
+          <a routerLink="/snapshots" routerLinkActive="active">Snapshots</a>
+          <a routerLink="/simulador-init" routerLinkActive="active">Simulador INIT</a>
+          <a routerLink="/simulador-pre" routerLinkActive="active">Simulador PRE</a>
+          <a routerLink="/simulador-final" routerLinkActive="active">Simulador FINAL</a>
+          <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
+        </nav>
+      </div>
+    }
   </header>
 
   <main>
