@@ -380,7 +380,7 @@ When restoring a WF snapshot to POC, the dialog requires an extra **Fecha destin
 
 ## Config loading strategy
 
-`config_service.js` calls SQL Server stored procedure `dbo.cfg_get_offers_and_params_json` (primary). If that SP is missing, it falls back to `dbo.cfg_get_rules_json`. Configure the SQL connection via `api/.env` (see `.env.example`).
+`config_service.js` calls SQL Server stored procedure `dbo.cfg_get_offers_and_params_json_cached` (primary — a fingerprint/TTL cache wrapper around `dbo.cfg_get_offers_and_params_json`, deployed via `rule_set/sql/sp_cached_wrapper.sql`; see `docs/adr/0001-cache-fingerprint-poc-stored-procedure.md` for the design). If that SP is missing, it falls back to `dbo.cfg_get_rules_json`. Configure the SQL connection via `api/.env` (see `.env.example`).
 
 ---
 
