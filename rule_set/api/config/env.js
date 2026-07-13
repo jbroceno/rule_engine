@@ -52,6 +52,15 @@ export const env = {
   // OWASP-10: HMAC secret for snapshot integrity checksums. Falls back to
   // JWT_SECRET when SNAPSHOT_HMAC_SECRET is not set — intentionally NOT
   // required by assertAuthConfig() (must not break startup when absent).
+  //
+  // ⚠️ Ops warning (code review 2026-07-14): rotating JWT_SECRET WITHOUT also
+  // defining a dedicated SNAPSHOT_HMAC_SECRET silently invalidates every
+  // checksum computed before the rotation — restoreSnapshot will start
+  // rejecting ALL pre-rotation snapshots with a 409 "integrity failed"
+  // (indistinguishable from real tampering, since the recomputed HMAC uses
+  // the new secret against content hashed with the old one). Define
+  // SNAPSHOT_HMAC_SECRET as its own value if you plan to rotate JWT_SECRET
+  // without migrating/regenerating existing snapshot checksums.
   snapshot: {
     hmacSecret: process.env.SNAPSHOT_HMAC_SECRET || process.env.JWT_SECRET || "",
   },

@@ -1338,8 +1338,16 @@ export async function restoreSnapshot(snapshotId, { createdBy, destino = "POC", 
     secret: env.snapshot.hmacSecret,
   });
   if (verify.status === "failed") {
+    // Fix 4 (revision de codigo PR3, 2026-07-14): la manipulacion del contenido
+    // no es la unica causa posible de un checksum que no coincide — rotar
+    // JWT_SECRET sin definir un SNAPSHOT_HMAC_SECRET dedicado invalida en
+    // silencio TODOS los checksums historicos (ver env.js § env.snapshot.hmacSecret
+    // y design.md § Open Questions). El mensaje lo menciona como alternativa
+    // honesta a la manipulacion, sin dejar de rechazar la restauracion.
     throw new AppError(
-      "La integridad del snapshot no se pudo verificar: el contenido no coincide con su checksum. Restauración cancelada.",
+      "La integridad del snapshot no se pudo verificar: el contenido no coincide con su checksum. " +
+        "Restauración cancelada. Esto puede deberse a manipulación del contenido o a una rotación " +
+        "reciente de SNAPSHOT_HMAC_SECRET/JWT_SECRET sin migrar los checksums existentes.",
       409
     );
   }
@@ -1348,7 +1356,13 @@ export async function restoreSnapshot(snapshotId, { createdBy, destino = "POC", 
       `Snapshot #${snapshotId} no tiene checksum (legado/no verificable) — restaurando sin verificacion de integridad.`
     );
   }
-  const checksumPresent = row.checksum != null && row.checksum !== "";
+  // Fix 3 (revision de codigo PR3, 2026-07-14): checksumPresent es exactamente
+  // "no es un snapshot legado" — derivarlo de verify.status evita una segunda
+  // comprobacion independiente de row.checksum que podria divergir del status
+  // ya calculado por verifySnapshotChecksum (misma fuente de verdad, sin
+  // cambio de comportamiento: verifySnapshotChecksum ya devuelve "legacy"
+  // exactamente cuando storedChecksum es null/"").
+  const checksumPresent = verify.status !== "legacy";
 
   let rulesRaw;
   let paramsRaw;
