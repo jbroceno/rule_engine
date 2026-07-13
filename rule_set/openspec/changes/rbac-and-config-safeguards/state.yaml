@@ -74,7 +74,8 @@ chain_plan:
     - pr: 3
       name: snapshot-integrity
       work_units: [WU-9, WU-10, WU-11, WU-12]
-      status: pending
+      status: in_progress
+      branch: feat/rbac-and-config-safeguards-snapshot-integrity
     - pr: 4
       name: frontend-polish
       work_units: [WU-13]
