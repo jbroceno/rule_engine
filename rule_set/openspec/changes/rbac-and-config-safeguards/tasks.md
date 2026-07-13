@@ -107,7 +107,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `test/admin_apply_safeguard.test.js` — CREATE
 
-- [ ] **T-05** Write failing tests:
+- [x] **T-05** Write failing tests:
   - 400 when `confirmReplaceAll` missing/false (comment+rules otherwise valid); no snapshot/DB write occurs.
   - 400 still fires for missing/empty `comment` even with `confirmReplaceAll:true` (existing validation unchanged).
   - 200 + `snapshot_id` when `confirmReplaceAll:true` and valid payload.
@@ -121,7 +121,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `api/controllers/admin_apply_controller.js` — MODIFY; `api/services/admin_service.js` — MODIFY; `api/routes/admin_routes.js` — MODIFY
 
-- [ ] **T-06** `validateApplyPayload`: require `confirmReplaceAll === true` (400, exact Spanish message from design § Códigos y textos), checked before snapshot/DB. New `postAdminApplyPreview` calling `computeApplyImpact`. New `computeApplyImpact(payload, options)` in `admin_service.js` — read-only `SELECT COUNT` mirroring `applyConfig`'s scope clauses (no transaction). Mount `adminRouter.post("/config/apply/preview", postAdminApplyPreview)`.
+- [x] **T-06** `validateApplyPayload`: require `confirmReplaceAll === true` (400, exact Spanish message from design § Códigos y textos), checked before snapshot/DB. New `postAdminApplyPreview` calling `computeApplyImpact`. New `computeApplyImpact(payload, options)` in `admin_service.js` — read-only `SELECT COUNT` mirroring `applyConfig`'s scope clauses (no transaction). Mount `adminRouter.post("/config/apply/preview", postAdminApplyPreview)`.
   - **Acceptance**: WU-5 tests pass.
   - **Spec ref**: config-apply-safeguard "Validación del payload...", "Endpoint de previsualización de impacto".
 
@@ -131,7 +131,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `web/src/app/models/admin.models.ts` — MODIFY; `web/src/app/services/admin-api.service.ts` — MODIFY
 
-- [ ] **T-07** `ApplyImpact` interface (offerCodes, 4 counts, `perOffer[]`); add `confirmReplaceAll: boolean` to the apply request model. `previewApply(payload): Observable<ApplyImpact>`; `applyConfig` sends `confirmReplaceAll`.
+- [x] **T-07** `ApplyImpact` interface (offerCodes, 4 counts, `perOffer[]`); add `confirmReplaceAll: boolean` to the apply request model. `previewApply(payload): Observable<ApplyImpact>`; `applyConfig` sends `confirmReplaceAll`.
   - **Spec ref**: config-apply-safeguard "Endpoint de previsualización de impacto".
 
 ---
@@ -140,7 +140,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `web/src/app/pages/configurator-page.component.ts` — MODIFY; `web/src/app/pages/configurator-page.component.html` — MODIFY
 
-- [ ] **T-08** "Grabar configuración" dialog: call `previewApply` on open, render impact summary, keep confirm button disabled until preview resolves, send `confirmReplaceAll: true` only on explicit confirm.
+- [x] **T-08** "Grabar configuración" dialog: call `previewApply` on open, render impact summary, keep confirm button disabled until preview resolves, send `confirmReplaceAll: true` only on explicit confirm.
   - **Acceptance**: confirm disabled before preview resolves; final apply body includes `confirmReplaceAll: true`.
   - **Spec ref**: config-apply-safeguard "Diálogo de 'Grabar configuración' exige previsualización y confirmación".
 

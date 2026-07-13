@@ -69,7 +69,7 @@ chain_plan:
     - pr: 2
       name: apply-safeguard
       work_units: [WU-5, WU-6, WU-7, WU-8]
-      status: in_progress
+      status: applied
       branch: feat/rbac-and-config-safeguards-apply-safeguard
     - pr: 3
       name: snapshot-integrity
@@ -80,4 +80,4 @@ chain_plan:
       work_units: [WU-13]
       status: pending
 
-next_action: review + open PR1 (rbac, WU-1..WU-4) on branch feat/rbac-and-config-safeguards-rbac; then sdd-apply (PR2 — apply-safeguard, WU-5..WU-8)
+next_action: review + open PR2 (apply-safeguard, WU-5..WU-8) on branch feat/rbac-and-config-safeguards-apply-safeguard (stacked on feat/rbac-and-config-safeguards-rbac); then sdd-apply (PR3 — snapshot-integrity, WU-9..WU-12)

@@ -180,3 +180,139 @@ previously documented (`workflow_snapshot_roundtrip.test.js`, `workflow_upsert_m
 `config_cache.test.js`, etc.), none of which touch `require_role.js`, `rule_catalogs.js`, or
 `routes/index.js`. Test count went from 292 → 294 (the 2 new Fix 2 tests); pass count from
 266 → 268; fail count unchanged at 24 — **no new regressions**.
+
+---
+
+## PR2 — apply-safeguard (WU-5..WU-8)
+
+> Change: `rbac-and-config-safeguards`
+> Phase: apply
+> This document's PR2 section covers **PR2 of 4** — the apply-safeguard slice (OWASP-02:
+> `confirmReplaceAll` + read-only impact preview). WU-1..WU-4 (RBAC) were already merged into
+> this branch's history from PR1. WU-9..WU-13 (snapshot integrity, remaining frontend polish)
+> are NOT part of this batch and remain untouched in `tasks.md`.
+
+### Branch
+
+`feat/rbac-and-config-safeguards-apply-safeguard` (pre-existing, checked out, stacked on top
+of `feat/rbac-and-config-safeguards-rbac` — no new branch created, no push, no PR opened per
+instructions; PR creation is a separate step).
+
+### Work units completed
+
+| WU | Task | Status | Commit |
+|----|------|--------|--------|
+| WU-5 | T-05 — RED: failing tests for `confirmReplaceAll` gate + `computeApplyImpact` preview | Done | `34c663a` |
+| WU-6 | T-06 — GREEN: `confirmReplaceAll` gate + `postAdminApplyPreview` + `computeApplyImpact` | Done | `52fc6c6` |
+| WU-7 | T-07 — frontend types (`ApplyImpact`) + `previewApply()` service method | Done | `ff03b37` |
+| WU-8 | T-08 — "Grabar configuración" dialog requires preview before confirming | Done | `b0b85db` |
+
+### Files created
+
+- `rule_set/test/admin_apply_safeguard.test.js` — 15 scenarios: unit (no DB) coverage of
+  `validateApplyPayload` (confirmReplaceAll missing/false, comment missing/empty even with
+  confirmReplaceAll:true, valid payload passes), `validatePreviewPayload`/`postAdminApplyPreview`
+  (malformed `rules` → 400, no comment/confirmReplaceAll required), `postAdminApply` controller
+  invocations (400 fires before any DB access, since `validateApplyPayload` throws synchronously);
+  plus 3 integration scenarios (skip w/o SQL credentials, following the `hasSqlCredentials()`
+  pattern from `workflow_upsert_match.test.js`/`admin_offers_period.test.js`): `postAdminApply`
+  200+`snapshot_id` end-to-end, `computeApplyImpact` per-offer counts + idempotency + no side
+  effects, and 404 propagation for a non-existent offerCode.
+
+### Files modified
+
+- `rule_set/api/controllers/admin_apply_controller.js` — extracted shared `validateRulesShape`;
+  exported `validatePreviewPayload` (shape-only, no comment/confirmReplaceAll) and
+  `validateApplyPayload` (shape + `confirmReplaceAll === true` gate, checked before the comment
+  check + before any snapshot/DB write) for direct unit testing; new `postAdminApplyPreview`
+  handler calling `computeApplyImpact`.
+- `rule_set/api/services/admin_service.js` — new read-only `computeApplyImpact(payload, options)`:
+  mirrors `applyConfig`'s own scope derivation (offerCodes from `payload.rules`, `offer_date_id`
+  scoping via `rulePeriodIdsCsv`/`paramPeriodIdsCsv` unless `deleteAllPeriods`), but issues
+  `SELECT COUNT` instead of `DELETE`/`INSERT` and opens no transaction. Never called by the real
+  `applyConfig` (advisory only, per design's "Cálculo de impacto" decision row).
+- `rule_set/api/routes/admin_routes.js` — mounted `POST /config/apply/preview` (before
+  `/config/apply`, per design's File Changes table ordering note).
+- `rule_set/web/src/app/models/admin.models.ts` — `confirmReplaceAll: boolean` added (required)
+  to `AdminConfigApplyPayload`; new `AdminConfigApplyPreviewPayload`, `ApplyImpact`,
+  `ApplyImpactPerOffer` interfaces.
+- `rule_set/web/src/app/services/admin-api.service.ts` — new `previewApply(payload):
+  Observable<ApplyImpact>` (`POST /admin/config/apply/preview`); `applyConfig` unchanged at the
+  HTTP layer (payload now carries `confirmReplaceAll` by type contract).
+- `rule_set/web/src/app/services/admin-api.service.spec.ts` — 3 new tests: `previewApply` sends
+  `rules`/`params` without `comment`/`confirmReplaceAll`; `applyConfig` sends
+  `confirmReplaceAll:true`.
+- `rule_set/web/src/app/pages/configurator-page.component.ts` — `openApplyConfigDialog()` now
+  calls `previewApply()` immediately and stores the result in `applyImpactPreview` (plus
+  `applyImpactLoading`/`applyImpactError`); `isConfirmActionPending()` keeps the confirm button
+  disabled for `apply-config` dialogs until `applyImpactPreview()` is non-null and loading is
+  false; `closeConfirmDialog()` resets the preview state; `executeApplyConfig()` sends
+  `confirmReplaceAll: true`.
+- `rule_set/web/src/app/pages/configurator-page.component.html` — new `.apply-impact-preview`
+  block inside the `apply-config` confirm dialog: loading state, error state, and a per-offer
+  impact table (rulesToDelete/paramsToDelete/rulesToInsert/paramsToInsert + totals row).
+- `rule_set/web/src/app/pages/configurator-page.component.spec.ts` — 4 new tests: preview is
+  requested on dialog open with the imported rules/params; confirm button stays disabled while
+  the preview is pending (using a manually-controlled `Subject` to freeze resolution) and
+  becomes enabled once it resolves; the impact summary renders in the DOM (`OFERTA_A` visible);
+  confirming sends `confirmReplaceAll: true` alongside `comment` to `applyConfig`.
+
+### TDD cycle evidence
+
+1. **RED (backend, WU-5)**: `npm run test:file -- test/admin_apply_safeguard.test.js` before
+   WU-6 failed with `TypeError: ... is not a function` for `validateApplyPayload`,
+   `validatePreviewPayload`, `postAdminApplyPreview` (via the controller import) and
+   `computeApplyImpact` (via the service import) — none of these symbols existed yet. Confirmed
+   failing for the right reason (missing exports), not an assertion/typo bug.
+2. **GREEN (backend, WU-6)**: after implementing the controller/service/route changes, 12/15
+   tests in `admin_apply_safeguard.test.js` pass. The remaining 3 (the DB-integration scenarios)
+   fail with `AppError: No se pudo conectar a SQL Server...` — this sandbox's `hasSqlCredentials()`
+   returns `true` (`.env` has values set) but there is no reachable SQL Server, matching the
+   exact same environment limitation already documented for the 24 pre-existing failures in
+   PR1's section above (also `AppError` connectivity failures, not code bugs). Full-suite
+   confirmation below.
+3. **RED (frontend, WU-7/WU-8)**: ran the full Karma suite once with the model/spec changes in
+   place but BEFORE implementing `previewApply()`/`applyImpactPreview`/`confirmReplaceAll` —
+   build failed with `TS2345: Argument of type '"previewApply"' is not assignable to parameter
+   of type 'keyof AdminApiService'`, `TS7053: ... 'applyImpactPreview' does not exist on type
+   'ConfiguratorPageComponent'`, and `TS2741: Property 'confirmReplaceAll' is missing in type
+   ...`. Confirmed failing for the right reason (symbols not implemented yet), not a test bug.
+4. **GREEN (frontend, WU-7/WU-8)**: after implementing the service method, component signals/
+   logic, and template block, the full Karma suite passes with no failures.
+
+### Full-suite regression check
+
+- **Backend** (`npm test` from `rule_set/`): 309 tests, 280 pass, 27 fail, 2 skip. Test count
+  went from 294 (PR1 end state) → 309 (+15, the new `admin_apply_safeguard.test.js` file); pass
+  count from 268 → 280 (+12); fail count from 24 → 27 (+3 — exactly the 3 new DB-integration
+  scenarios in the new test file, all failing on the same pre-existing SQL-connectivity
+  limitation, not on new code defects). Verified by listing every `not ok` test name from the
+  full run: the failing set is precisely the 24 previously-documented names (`T-01a`..`T-01h`,
+  `T-02a-01`..`T-02a-10`, `CA-005`, `CA-COD-001`, `CA-VDT-004`, `CA-VDT-004b`, `WF-01`,
+  `resetToSeed()`) plus exactly 3 new ones (`postAdminApply: confirmReplaceAll:true y payload
+  valido -> 200 con snapshot_id`, `computeApplyImpact: conteos por offerCode correctos...`,
+  `computeApplyImpact: offerCode inexistente propaga 404...`) — **no other regressions**.
+- **Frontend** (`CHROME_BIN="/c/Program Files/Google/Chrome/Application/chrome.exe" npx ng test
+  --watch=false --browsers=ChromeHeadless` from `rule_set/web/`): **143 of 143 SUCCESS**
+  (136 from PR1's end state + 4 new `configurator-page.component.spec.ts` cases + 3 new
+  `admin-api.service.spec.ts` cases). No failures, no new regressions.
+
+### Deviations from design
+
+None. `computeApplyImpact`'s signature/return shape
+(`{offerCodes, rulesToDelete, paramsToDelete, rulesToInsert, paramsToInsert, perOffer}`), the
+400 error message text (`"Debes confirmar el reemplazo total de la configuración
+(confirmReplaceAll)."`), the endpoint path (`POST /admin/config/apply/preview`), and the
+`deleteAllPeriods: true` invocation from the preview controller all match `design.md` §
+"Apply seguro (OWASP-02)", § "computeApplyImpact — read-only", and § "Interfaces / Contracts"
+exactly.
+
+### Issues found
+
+None.
+
+### Scope note
+
+Only T-05 through T-08 are checked off in `tasks.md` in this batch. T-09 onward (snapshot
+integrity, remaining frontend polish) are untouched and remain `[ ]`, to be implemented in
+PR3/PR4 per `state.yaml` § `chain_plan`.
