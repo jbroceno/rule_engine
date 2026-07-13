@@ -28,7 +28,23 @@ import { ALLOWED_ROLES, normalizeRole } from "../utils/rule_catalogs.js";
  * @returns {import('express').RequestHandler}
  */
 export function requireRole(...roles) {
-  const allowed = new Set(roles.map(normalizeRole).filter((r) => ALLOWED_ROLES.has(r)));
+  const normalizedRoles = roles.map(normalizeRole);
+  const invalidRoles = normalizedRoles.filter((r) => !ALLOWED_ROLES.has(r));
+
+  // Fail fast at construction time (app-init), not at request time: silently
+  // dropping an unrecognized role here would produce a middleware whose
+  // allow-set is empty (or smaller than intended), 403-ing EVERY request
+  // forever with no startup signal — e.g. a typo'd requireRole("admni").
+  // This is a programmer/config error, not an HTTP request error, so we throw
+  // a plain Error rather than an AppError (matches assertAuthConfig() in
+  // api/config/env.js, the existing convention for startup/config failures).
+  if (invalidRoles.length > 0) {
+    throw new Error(
+      `requireRole(): rol(es) no reconocido(s) en ALLOWED_ROLES: ${invalidRoles.join(", ")}`
+    );
+  }
+
+  const allowed = new Set(normalizedRoles);
 
   return function requireRoleMiddleware(req, _res, next) {
     // Defensive: requireRole must never assume req.user exists. authMiddleware

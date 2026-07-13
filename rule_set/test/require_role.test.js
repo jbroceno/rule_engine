@@ -93,3 +93,22 @@ test("unrecognized role (not in ALLOWED_ROLES) → 403, not a 5xx error", () => 
   assert.ok(err instanceof AppError, "expected AppError, not an uncaught exception");
   assert.equal(err.statusCode, 403);
 });
+
+// ---------------------------------------------------------------------------
+// Fail-fast at construction time when requireRole(...) is called with a role
+// argument not in ALLOWED_ROLES (e.g. a typo'd call site) — silently dropping
+// it would produce a middleware whose allow-set is empty and that therefore
+// 403s EVERY request forever, with no startup signal.
+// ---------------------------------------------------------------------------
+
+test("requireRole('not-a-real-role') throws synchronously at construction time", () => {
+  assert.throws(
+    () => requireRole("not-a-real-role"),
+    /not-a-real-role/,
+    "expected a construction-time throw naming the invalid role"
+  );
+});
+
+test("requireRole('admin', 'not-a-real-role') throws — one invalid role among valid ones still fails fast", () => {
+  assert.throws(() => requireRole("admin", "not-a-real-role"), /not-a-real-role/);
+});
