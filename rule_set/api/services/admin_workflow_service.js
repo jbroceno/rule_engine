@@ -1,6 +1,8 @@
 import { getSqlPool, getWfSqlPool, sql } from "../db/sql_client.js";
 import { AppError } from "../utils/app_error.js";
 import { normalizeVigenciaToSecond } from "../utils/vigencia.js";
+import { computeSnapshotChecksum } from "../utils/snapshot_integrity.js";
+import { env } from "../config/env.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -566,11 +568,26 @@ export function buildWfSafetySnapshotComment(rangoDestino) {
 //               MRO_MOTORFECHA.DESDE_DT / HASTA_DT (post-2.6 SP migration).
 // vigDesde    — date string used for the snapshot comment (nullable).
 // createdBy   — optional user identifier string.
+// secret      — HMAC secret for the OWASP-10 checksum (env.snapshot.hmacSecret
+//               in production; defaults to "" so pre-existing 3-arg callers —
+//               this file's own unit tests — keep working unchanged).
 //
-// Returns: { name, comment, createdBy, entornoCd, rulesJson, paramsJson }
+// OWASP-10 (fix, code review 2026-07-14): WF-origin snapshots used to be
+// inserted by createWorkflowSnapshot's own raw INSERT with no checksum at
+// all, so every WF snapshot's checksum stayed NULL forever and restoreSnapshot
+// always classified it "legacy" (a warning, never a 409 rejection) — the
+// tamper-detection this whole PR exists to add never covered this entire
+// snapshot class. Fix: compute the checksum HERE, as part of assembling the
+// payload, reusing the SAME computeSnapshotChecksum single source of
+// canonicalization createSnapshot already uses (api/utils/snapshot_integrity.js).
+// Critical invariant preserved: the checksum is computed from the EXACT
+// rulesJson/paramsJson strings returned below — the same strings
+// createWorkflowSnapshot passes to the INSERT — never a re-stringify.
+//
+// Returns: { name, comment, createdBy, entornoCd, rulesJson, paramsJson, checksum }
 // ---------------------------------------------------------------------------
 
-export function assembleWfSnapshotPayload(rawSpJson, vigDesde, createdBy) {
+export function assembleWfSnapshotPayload(rawSpJson, vigDesde, createdBy, secret = "") {
   let snapshotData;
   try {
     snapshotData = typeof rawSpJson === "string" ? JSON.parse(rawSpJson) : rawSpJson;
@@ -581,13 +598,18 @@ export function assembleWfSnapshotPayload(rawSpJson, vigDesde, createdBy) {
   const date = new Date().toISOString().replace("T", " ").substring(0, 16);
   const name = `WF Snapshot ${date}`;
 
+  const rulesJson = JSON.stringify(snapshotData);
+  const paramsJson = "[]";
+  const checksum = computeSnapshotChecksum(rulesJson, paramsJson, secret);
+
   return {
     name,
     comment: `Snapshot WF período ${vigDesde ?? "completo"}`,
     createdBy: createdBy ?? null,
     entornoCd: "WF",
-    rulesJson: JSON.stringify(snapshotData),
-    paramsJson: "[]",
+    rulesJson,
+    paramsJson,
+    checksum,
   };
 }
 
@@ -608,7 +630,7 @@ export async function createWorkflowSnapshot(vigDesde, vigHasta, createdBy) {
 
   const row = spResult.recordset?.[0];
   const rawJson = row?.snapshot_json ?? "{}";
-  const payload = assembleWfSnapshotPayload(rawJson, vigDesde, createdBy);
+  const payload = assembleWfSnapshotPayload(rawJson, vigDesde, createdBy, env.snapshot.hmacSecret);
 
   const insertReq = pool.request();
   insertReq.input("name", sql.NVarChar(200), payload.name);
@@ -617,11 +639,14 @@ export async function createWorkflowSnapshot(vigDesde, vigHasta, createdBy) {
   insertReq.input("entornoCd", sql.VarChar(5), payload.entornoCd);
   insertReq.input("rulesJson", sql.NVarChar(sql.MAX), payload.rulesJson);
   insertReq.input("paramsJson", sql.NVarChar(sql.MAX), payload.paramsJson);
+  // OWASP-10: same checksum column/invariant as createSnapshot — computed
+  // above from these exact rulesJson/paramsJson strings, never re-stringified.
+  insertReq.input("checksum", sql.NVarChar(64), payload.checksum);
 
   const result = await insertReq.query(`
-    INSERT INTO dbo.cfg_config_snapshot (snapshot_name, comment, created_by, entorno_cd, rules_json, params_json)
+    INSERT INTO dbo.cfg_config_snapshot (snapshot_name, comment, created_by, entorno_cd, rules_json, params_json, checksum)
     OUTPUT INSERTED.snapshot_id
-    VALUES (@name, @comment, @createdBy, @entornoCd, @rulesJson, @paramsJson)
+    VALUES (@name, @comment, @createdBy, @entornoCd, @rulesJson, @paramsJson, @checksum)
   `);
 
   const snapshotId = result.recordset?.[0]?.snapshot_id;

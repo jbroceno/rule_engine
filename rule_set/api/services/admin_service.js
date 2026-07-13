@@ -8,6 +8,8 @@ import {
   normalizeValueType,
 } from "../utils/rule_catalogs.js";
 import { SEED_OFFERS, buildSeedConfig } from "../config/seed_data.js";
+import { env } from "../config/env.js";
+import { computeSnapshotChecksum, verifySnapshotChecksum } from "../utils/snapshot_integrity.js";
 
 // Baseline vigencia for the seed-reset period — matches sql/seed_offers.sql's @VF.
 const SEED_BASELINE_VALID_FROM = "2026-01-01";
@@ -1117,13 +1119,20 @@ export async function createSnapshot(name, comment, createdBy) {
   request.input("name", sql.NVarChar(200), name);
   request.input("comment", sql.NVarChar(1000), comment ?? null);
   request.input("createdBy", sql.NVarChar(100), createdBy ?? null);
-  request.input("rulesJson", sql.NVarChar(sql.MAX), JSON.stringify(rules));
-  request.input("paramsJson", sql.NVarChar(sql.MAX), JSON.stringify(params));
+  // OWASP-10: rulesJson/paramsJson MUST be the exact strings passed to the
+  // INSERT below — computeSnapshotChecksum is never called on a re-serialized
+  // object (see design.md's critical invariant).
+  const rulesJson = JSON.stringify(rules);
+  const paramsJson = JSON.stringify(params);
+  request.input("rulesJson", sql.NVarChar(sql.MAX), rulesJson);
+  request.input("paramsJson", sql.NVarChar(sql.MAX), paramsJson);
+  const checksum = computeSnapshotChecksum(rulesJson, paramsJson, env.snapshot.hmacSecret);
+  request.input("checksum", sql.NVarChar(64), checksum);
 
   const result = await request.query(`
-    INSERT INTO dbo.cfg_config_snapshot (snapshot_name, comment, created_by, rules_json, params_json)
+    INSERT INTO dbo.cfg_config_snapshot (snapshot_name, comment, created_by, rules_json, params_json, checksum)
     OUTPUT INSERTED.snapshot_id
-    VALUES (@name, @comment, @createdBy, @rulesJson, @paramsJson)
+    VALUES (@name, @comment, @createdBy, @rulesJson, @paramsJson, @checksum)
   `);
 
   const snapshotId = result.recordset?.[0]?.snapshot_id;
@@ -1309,7 +1318,7 @@ export async function restoreSnapshot(snapshotId, { createdBy, destino = "POC", 
   const getReq = pool.request();
   getReq.input("snapshotId", sql.Int, snapshotId);
   const getResult = await getReq.query(`
-    SELECT snapshot_id, snapshot_name, entorno_cd, rules_json, params_json
+    SELECT snapshot_id, snapshot_name, entorno_cd, rules_json, params_json, checksum
     FROM dbo.cfg_config_snapshot
     WHERE snapshot_id = @snapshotId
   `);
@@ -1318,6 +1327,42 @@ export async function restoreSnapshot(snapshotId, { createdBy, destino = "POC", 
   if (!row) {
     throw new AppError(`No existe snapshot_id ${snapshotId}.`, 404);
   }
+
+  // OWASP-10: verify integrity BEFORE any transform/apply step, on the raw
+  // persisted strings (before JSON.parse) — see design.md § "Momento de
+  // verificación en restore".
+  const verify = verifySnapshotChecksum({
+    rulesJson: row.rules_json,
+    paramsJson: row.params_json,
+    storedChecksum: row.checksum,
+    secret: env.snapshot.hmacSecret,
+  });
+  if (verify.status === "failed") {
+    // Fix 4 (revision de codigo PR3, 2026-07-14): la manipulacion del contenido
+    // no es la unica causa posible de un checksum que no coincide — rotar
+    // JWT_SECRET sin definir un SNAPSHOT_HMAC_SECRET dedicado invalida en
+    // silencio TODOS los checksums historicos (ver env.js § env.snapshot.hmacSecret
+    // y design.md § Open Questions). El mensaje lo menciona como alternativa
+    // honesta a la manipulacion, sin dejar de rechazar la restauracion.
+    throw new AppError(
+      "La integridad del snapshot no se pudo verificar: el contenido no coincide con su checksum. " +
+        "Restauración cancelada. Esto puede deberse a manipulación del contenido o a una rotación " +
+        "reciente de SNAPSHOT_HMAC_SECRET/JWT_SECRET sin migrar los checksums existentes.",
+      409
+    );
+  }
+  if (verify.status === "legacy") {
+    console.warn(
+      `Snapshot #${snapshotId} no tiene checksum (legado/no verificable) — restaurando sin verificacion de integridad.`
+    );
+  }
+  // Fix 3 (revision de codigo PR3, 2026-07-14): checksumPresent es exactamente
+  // "no es un snapshot legado" — derivarlo de verify.status evita una segunda
+  // comprobacion independiente de row.checksum que podria divergir del status
+  // ya calculado por verifySnapshotChecksum (misma fuente de verdad, sin
+  // cambio de comportamiento: verifySnapshotChecksum ya devuelve "legacy"
+  // exactamente cuando storedChecksum es null/"").
+  const checksumPresent = verify.status !== "legacy";
 
   let rulesRaw;
   let paramsRaw;
@@ -1439,17 +1484,19 @@ export async function restoreSnapshot(snapshotId, { createdBy, destino = "POC", 
   const backupComment = `Auto: antes de restaurar snapshot #${snapshotId} ("${row.snapshot_name}")`;
   const preRestoreSnapshotId = await createSnapshot(backupName, backupComment, createdBy ?? null);
 
+  const integrity = { status: verify.status, checksumPresent };
+
   if (String(destino).toUpperCase() === "WF") {
     if (!rangoDestino?.vigDesde) {
       throw new AppError("rangoDestino.vigDesde es obligatorio para destino WF.", 400);
     }
     const publishResult = await publishSnapshotToWorkflow(rules, params, rangoDestino, { ofertaIdOverrides });
-    return { ...publishResult, preRestoreSnapshotId };
+    return { ...publishResult, preRestoreSnapshotId, integrity };
   }
 
   // Apply the restored config (POC) — scoped to offer_date_ids present in the payload.
   const applyResult = await applyConfig({ rules, params });
-  return { ...applyResult, preRestoreSnapshotId };
+  return { ...applyResult, preRestoreSnapshotId, integrity };
 }
 
 export async function getSnapshotContent(snapshotId) {

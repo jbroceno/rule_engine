@@ -1,7 +1,7 @@
 import { TestBed } from "@angular/core/testing";
 import { HttpClientTestingModule, HttpTestingController } from "@angular/common/http/testing";
 
-import { AdminApiService } from "./admin-api.service";
+import { AdminApiError, AdminApiService } from "./admin-api.service";
 import {
   AdminConfigApplyPayload,
   AdminWorkflowPublicarPayload,
@@ -266,5 +266,78 @@ describe("AdminApiService — config-apply-safeguard (PR2, OWASP-02)", () => {
     expect(req.request.method).toBe("POST");
     expect(req.request.body["confirmReplaceAll"]).toBeTrue();
     req.flush({ applied: { rules: 0, params: 0 }, offerCodes: [], snapshot_id: 1 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fix 2 (code review PR3, 2026-07-14, OWASP-10): handleError propagates the
+// real HTTP status on the thrown error instead of discarding it — callers
+// (e.g. SnapshotsPageComponent) can then detect a specific status (409
+// snapshot-integrity failure) WITHOUT depending on the exact message text.
+// ---------------------------------------------------------------------------
+
+describe("AdminApiService — handleError propagates HTTP status (Fix 2, code review PR3)", () => {
+  let service: AdminApiService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [AdminApiService],
+    });
+    service = TestBed.inject(AdminApiService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it("restoreSnapshot on a 409 response rethrows an AdminApiError carrying status:409 and the server message", (done) => {
+    service.restoreSnapshot(1).subscribe({
+      next: () => fail("expected an error, got a success response"),
+      error: (err: AdminApiError) => {
+        expect(err instanceof AdminApiError).toBeTrue();
+        expect(err.status).toBe(409);
+        expect(err.message).toContain("integridad");
+        done();
+      },
+    });
+
+    const req = httpMock.expectOne("/api/admin/snapshots/1/restore");
+    req.flush(
+      { message: "La integridad del snapshot no se pudo verificar: el contenido no coincide con su checksum. Restauración cancelada." },
+      { status: 409, statusText: "Conflict" },
+    );
+  });
+
+  it("restoreSnapshot on a 409 response with a COMPLETELY DIFFERENT message still carries status:409 (detection no longer depends on exact text)", (done) => {
+    service.restoreSnapshot(1).subscribe({
+      next: () => fail("expected an error, got a success response"),
+      error: (err: AdminApiError) => {
+        expect(err.status).toBe(409);
+        expect(err.message).toBe("Algún otro conflicto no relacionado con integridad de snapshots.");
+        done();
+      },
+    });
+
+    const req = httpMock.expectOne("/api/admin/snapshots/1/restore");
+    req.flush(
+      { message: "Algún otro conflicto no relacionado con integridad de snapshots." },
+      { status: 409, statusText: "Conflict" },
+    );
+  });
+
+  it("restoreSnapshot on a 500 response carries status:500 (not confused with the 409 integrity case)", (done) => {
+    service.restoreSnapshot(1).subscribe({
+      next: () => fail("expected an error, got a success response"),
+      error: (err: AdminApiError) => {
+        expect(err.status).toBe(500);
+        done();
+      },
+    });
+
+    const req = httpMock.expectOne("/api/admin/snapshots/1/restore");
+    req.flush({ message: "Error interno." }, { status: 500, statusText: "Internal Server Error" });
   });
 });
