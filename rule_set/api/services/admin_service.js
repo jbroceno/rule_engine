@@ -1508,15 +1508,40 @@ export async function exportConfig() {
   };
 }
 
-export async function applyConfig(payload, options = {}) {
-  // payload.rules : AdminRuleItem[] — rule_id ignored, new ones assigned
-  // payload.params: AdminParamsItem[] | undefined — if absent, DB params untouched
-  // options.deleteAllPeriods: when true, deletes rules/params across ALL periods for affected
-  //   offer codes (used by "Grabar configuración" bulk replace). Default false — scopes the
-  //   delete to only the offer_date_id values present in the payload, so other periods are
-  //   not touched (correct for snapshot restore operations).
+/**
+ * Single source of truth for how a bulk-apply payload maps onto DB scope.
+ * Both `applyConfig` (real DELETE/INSERT) and `computeApplyImpact` (read-only
+ * SELECT COUNT preview) call this so their notion of "which offerCodes are
+ * touched" and "which offer_date_id periods are in scope" can never drift
+ * apart again (see design.md § "computeApplyImpact — read-only" for the two
+ * bugs this fixed: a rules-only payload falsely showing param deletions in
+ * the preview, and an offerCode present only in `payload.params` — no
+ * corresponding `payload.rules` entries — being invisible to the preview).
+ *
+ * Pure/synchronous — no I/O. `options.deleteAllPeriods` mirrors the flag
+ * `applyConfig`/`computeApplyImpact` already accept.
+ *
+ * @param {{rules: Array, params?: Array}} payload
+ * @param {{deleteAllPeriods?: boolean}} [options]
+ * @returns {{
+ *   offerCodes: string[],
+ *   paramOfferCodes: string[],
+ *   hasParams: boolean,
+ *   rulePeriodIdsCsv: string,
+ *   paramPeriodIdsCsv: string,
+ *   ruleScopeClause: string,
+ *   directScopeClause: string,
+ *   paramScopeClause: string,
+ * }}
+ */
+export function deriveApplyScope(payload, options = {}) {
   const { deleteAllPeriods = false } = options;
+  const hasParams = Array.isArray(payload.params);
+
   const offerCodes = [...new Set(payload.rules.map((r) => String(r.offerCode)))];
+  const paramOfferCodes = hasParams
+    ? [...new Set(payload.params.map((g) => String(g.offerCode)))]
+    : [];
 
   // Collect offer_date_ids from payload to scope the DELETE when not doing a full replace.
   const rulePeriodIds = deleteAllPeriods
@@ -1524,7 +1549,7 @@ export async function applyConfig(payload, options = {}) {
     : [...new Set(payload.rules.map((r) => r.offer_date_id).filter((id) => id != null && Number(id) > 0))];
   const rulePeriodIdsCsv = rulePeriodIds !== null ? rulePeriodIds.join(",") : "";
 
-  const paramPeriodIds = deleteAllPeriods || !Array.isArray(payload.params)
+  const paramPeriodIds = deleteAllPeriods || !hasParams
     ? null
     : [...new Set(
         payload.params.flatMap((g) =>
@@ -1532,6 +1557,46 @@ export async function applyConfig(payload, options = {}) {
         )
       )];
   const paramPeriodIdsCsv = paramPeriodIds !== null ? paramPeriodIds.join(",") : "";
+
+  const ruleScopeClause = rulePeriodIdsCsv
+    ? "AND r.offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@rulePeriodIdsCsv, ','))"
+    : "";
+  const directScopeClause = rulePeriodIdsCsv
+    ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@rulePeriodIdsCsv, ','))"
+    : "";
+  const paramScopeClause = paramPeriodIdsCsv
+    ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@paramPeriodIdsCsv, ','))"
+    : "";
+
+  return {
+    offerCodes,
+    paramOfferCodes,
+    hasParams,
+    rulePeriodIdsCsv,
+    paramPeriodIdsCsv,
+    ruleScopeClause,
+    directScopeClause,
+    paramScopeClause,
+  };
+}
+
+export async function applyConfig(payload, options = {}) {
+  // payload.rules : AdminRuleItem[] — rule_id ignored, new ones assigned
+  // payload.params: AdminParamsItem[] | undefined — if absent, DB params untouched
+  // options.deleteAllPeriods: when true, deletes rules/params across ALL periods for affected
+  //   offer codes (used by "Grabar configuración" bulk replace). Default false — scopes the
+  //   delete to only the offer_date_id values present in the payload, so other periods are
+  //   not touched (correct for snapshot restore operations).
+  const {
+    offerCodes,
+    paramOfferCodes,
+    hasParams,
+    rulePeriodIdsCsv,
+    paramPeriodIdsCsv,
+    ruleScopeClause,
+    directScopeClause,
+    paramScopeClause,
+  } = deriveApplyScope(payload, options);
 
   const pool = await getSqlPool();
   const tx = new sql.Transaction(pool);
@@ -1547,13 +1612,6 @@ export async function applyConfig(payload, options = {}) {
 
     // --- Delete existing rules (cascade) for affected offerCodes ---
     // Scoped to specific offer_date_ids unless deleteAllPeriods=true.
-    const ruleScopeClause = rulePeriodIdsCsv
-      ? "AND r.offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@rulePeriodIdsCsv, ','))"
-      : "";
-    const directScopeClause = rulePeriodIdsCsv
-      ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@rulePeriodIdsCsv, ','))"
-      : "";
-
     for (const [, rulesetId] of rulesetIdCache) {
       const addInputs = (req) => {
         req.input("rulesetId", sql.Int, rulesetId);
@@ -1620,12 +1678,7 @@ export async function applyConfig(payload, options = {}) {
 
     // --- Handle params (only if provided in the payload) ---
     let paramsApplied = 0;
-    if (Array.isArray(payload.params)) {
-      const paramOfferCodes = [...new Set(payload.params.map((g) => String(g.offerCode)))];
-      const paramScopeClause = paramPeriodIdsCsv
-        ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@paramPeriodIdsCsv, ','))"
-        : "";
-
+    if (hasParams) {
       for (const offerCode of paramOfferCodes) {
         const rulesetId = await resolveRulesetId(tx, offerCode);
         const disableReq = tx.request();
@@ -1680,10 +1733,26 @@ export async function applyConfig(payload, options = {}) {
 
 /**
  * Read-only preview of what applyConfig(payload, options) would delete/insert.
- * Mirrors applyConfig's own scope derivation (offerCodes from payload.rules,
- * offer_date_id scoping unless deleteAllPeriods) but performs SELECT COUNT
- * instead of DELETE/INSERT, and opens no transaction — advisory only, never
- * called by the real applyConfig (see design.md § "Cálculo de impacto (preview)").
+ * Calls the SAME deriveApplyScope(payload, options) helper applyConfig calls,
+ * so the two can never disagree on which offerCodes/periods are in scope —
+ * then performs SELECT COUNT instead of DELETE/INSERT, and opens no
+ * transaction — advisory only, never called by the real applyConfig
+ * (see design.md § "computeApplyImpact — read-only").
+ *
+ * Bug fixes (code review, 2026-07-13):
+ *  - A rules-only payload (no `params` key) used to always run the params
+ *    COUNT query per offer, showing a false-positive paramsToDelete even
+ *    though applyConfig's own params block is skipped entirely when
+ *    `payload.params` is not an array. Now guarded by `hasParams`, mirroring
+ *    applyConfig's `if (Array.isArray(payload.params))`.
+ *  - An offerCode present only in `payload.params` (no corresponding
+ *    `payload.rules` entries) used to be entirely invisible to this preview
+ *    (the loop only iterated `offerCodes`, derived from `payload.rules`),
+ *    even though applyConfig WOULD disable/insert its params. Now the loop
+ *    iterates the union of `offerCodes` and `paramOfferCodes`; an offer with
+ *    params-but-no-rules gets `rulesToDelete: 0, rulesToInsert: 0` (accurate —
+ *    applyConfig's rule-delete loop never touches it) plus its real param
+ *    counts.
  *
  * @param {{rules: Array, params?: Array}} payload
  * @param {{deleteAllPeriods?: boolean}} [options]
@@ -1695,22 +1764,21 @@ export async function applyConfig(payload, options = {}) {
  * }>}
  */
 export async function computeApplyImpact(payload, options = {}) {
-  const { deleteAllPeriods = false } = options;
-  const offerCodes = [...new Set(payload.rules.map((r) => String(r.offerCode)))];
+  const {
+    offerCodes,
+    paramOfferCodes,
+    hasParams,
+    rulePeriodIdsCsv,
+    paramPeriodIdsCsv,
+    directScopeClause,
+    paramScopeClause,
+  } = deriveApplyScope(payload, options);
 
-  const rulePeriodIds = deleteAllPeriods
-    ? null
-    : [...new Set(payload.rules.map((r) => r.offer_date_id).filter((id) => id != null && Number(id) > 0))];
-  const rulePeriodIdsCsv = rulePeriodIds !== null ? rulePeriodIds.join(",") : "";
-
-  const paramPeriodIds = deleteAllPeriods || !Array.isArray(payload.params)
-    ? null
-    : [...new Set(
-        payload.params.flatMap((g) =>
-          (g.paramValues ?? []).map((p) => p.offer_date_id).filter((id) => id != null && Number(id) > 0)
-        )
-      )];
-  const paramPeriodIdsCsv = paramPeriodIds !== null ? paramPeriodIds.join(",") : "";
+  const offerCodeSet = new Set(offerCodes);
+  const paramOfferCodeSet = new Set(paramOfferCodes);
+  // Union, preserving `offerCodes` order first (keeps existing callers/tests
+  // that only have rules+params on the same offerCode unaffected).
+  const allOfferCodes = [...offerCodes, ...paramOfferCodes.filter((code) => !offerCodeSet.has(code))];
 
   // rulesToInsert per offer — length of payload.rules grouped by offerCode.
   const rulesToInsertByOffer = new Map();
@@ -1721,7 +1789,7 @@ export async function computeApplyImpact(payload, options = {}) {
 
   // paramsToInsert per offer, deduplicated by key — mirrors applyConfig's seenKeys.
   const paramsToInsertByOffer = new Map();
-  if (Array.isArray(payload.params)) {
+  if (hasParams) {
     for (const group of payload.params) {
       const code = String(group.offerCode);
       const seenKeys = new Set();
@@ -1736,40 +1804,46 @@ export async function computeApplyImpact(payload, options = {}) {
     }
   }
 
-  const directScopeClause = rulePeriodIdsCsv
-    ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@rulePeriodIdsCsv, ','))"
-    : "";
-  const paramScopeClause = paramPeriodIdsCsv
-    ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@paramPeriodIdsCsv, ','))"
-    : "";
-
   const pool = await getSqlPool();
   const perOffer = [];
   let rulesToDelete = 0;
   let paramsToDelete = 0;
 
-  for (const offerCode of offerCodes) {
+  for (const offerCode of allOfferCodes) {
     const rulesetId = await findRulesetIdByOfferCode(pool, offerCode);
 
-    const rulesCountReq = pool.request();
-    rulesCountReq.input("rulesetId", sql.Int, rulesetId);
-    if (rulePeriodIdsCsv) rulesCountReq.input("rulePeriodIdsCsv", sql.NVarChar(sql.MAX), rulePeriodIdsCsv);
-    const rulesCountResult = await rulesCountReq.query(`
-      SELECT COUNT(*) AS cnt
-      FROM dbo.cfg_offer_rule
-      WHERE ruleset_id = @rulesetId ${directScopeClause}
-    `);
-    const offerRulesToDelete = Number(rulesCountResult.recordset?.[0]?.cnt ?? 0);
+    // Only offers that actually have rules in the payload get a rules-count
+    // query — matches applyConfig, whose rule-delete loop is scoped to
+    // `rulesetIdCache` (built from `offerCodes`, i.e. payload.rules only).
+    let offerRulesToDelete = 0;
+    if (offerCodeSet.has(offerCode)) {
+      const rulesCountReq = pool.request();
+      rulesCountReq.input("rulesetId", sql.Int, rulesetId);
+      if (rulePeriodIdsCsv) rulesCountReq.input("rulePeriodIdsCsv", sql.NVarChar(sql.MAX), rulePeriodIdsCsv);
+      const rulesCountResult = await rulesCountReq.query(`
+        SELECT COUNT(*) AS cnt
+        FROM dbo.cfg_offer_rule
+        WHERE ruleset_id = @rulesetId ${directScopeClause}
+      `);
+      offerRulesToDelete = Number(rulesCountResult.recordset?.[0]?.cnt ?? 0);
+    }
 
-    const paramsCountReq = pool.request();
-    paramsCountReq.input("rulesetId", sql.Int, rulesetId);
-    if (paramPeriodIdsCsv) paramsCountReq.input("paramPeriodIdsCsv", sql.NVarChar(sql.MAX), paramPeriodIdsCsv);
-    const paramsCountResult = await paramsCountReq.query(`
-      SELECT COUNT(*) AS cnt
-      FROM dbo.cfg_offer_param
-      WHERE ruleset_id = @rulesetId AND enabled = 1 ${paramScopeClause}
-    `);
-    const offerParamsToDelete = Number(paramsCountResult.recordset?.[0]?.cnt ?? 0);
+    // Bug A fix: only query params-count when the payload actually provides
+    // `params` (mirrors applyConfig's `if (Array.isArray(payload.params))`).
+    // Bug B fix: iterate `paramOfferCodeSet` (not just `offerCodeSet`) so an
+    // offer with params-but-no-rules gets its own accurate count.
+    let offerParamsToDelete = 0;
+    if (hasParams && paramOfferCodeSet.has(offerCode)) {
+      const paramsCountReq = pool.request();
+      paramsCountReq.input("rulesetId", sql.Int, rulesetId);
+      if (paramPeriodIdsCsv) paramsCountReq.input("paramPeriodIdsCsv", sql.NVarChar(sql.MAX), paramPeriodIdsCsv);
+      const paramsCountResult = await paramsCountReq.query(`
+        SELECT COUNT(*) AS cnt
+        FROM dbo.cfg_offer_param
+        WHERE ruleset_id = @rulesetId AND enabled = 1 ${paramScopeClause}
+      `);
+      offerParamsToDelete = Number(paramsCountResult.recordset?.[0]?.cnt ?? 0);
+    }
 
     rulesToDelete += offerRulesToDelete;
     paramsToDelete += offerParamsToDelete;
@@ -1786,7 +1860,7 @@ export async function computeApplyImpact(payload, options = {}) {
   const rulesToInsert = payload.rules.length;
   const paramsToInsert = Array.from(paramsToInsertByOffer.values()).reduce((sum, n) => sum + n, 0);
 
-  return { offerCodes, rulesToDelete, paramsToDelete, rulesToInsert, paramsToInsert, perOffer };
+  return { offerCodes: allOfferCodes, rulesToDelete, paramsToDelete, rulesToInsert, paramsToInsert, perOffer };
 }
 
 // ---------------------------------------------------------------------------

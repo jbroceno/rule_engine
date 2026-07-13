@@ -34,6 +34,11 @@ const {
   validatePreviewPayload,
 } = await import("../api/controllers/admin_apply_controller.js");
 
+// deriveApplyScope — RED until the code-review fix extracts this shared helper
+// (Bug A + Bug B root cause). Pure/synchronous, no DB — imported statically so
+// its unit tests below never touch SQL.
+const { deriveApplyScope } = await import("../api/services/admin_service.js");
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -183,6 +188,44 @@ test("postAdminApplyPreview: rules ausente -> next(AppError 400)", async () => {
   const { err } = await runHandler(postAdminApplyPreview, {});
   assert.ok(err instanceof AppError, "se esperaba AppError");
   assert.equal(err.statusCode, 400);
+});
+
+// ---------------------------------------------------------------------------
+// Unit (no DB) — deriveApplyScope: shared scope derivation used by BOTH
+// applyConfig and computeApplyImpact (code review, 2026-07-13). Pure/sync —
+// no SQL pool touched, so these are genuinely environment-independent,
+// unlike the integration-level computeApplyImpact tests further below.
+//
+// Bug A root cause: computeApplyImpact used to run a params-count query for
+// every offer even when payload.params was entirely absent. Fix: the shared
+// helper only derives paramOfferCodes / paramPeriodIdsCsv when
+// Array.isArray(payload.params); callers must check `hasParams` before
+// querying/deleting params.
+//
+// Bug B root cause: computeApplyImpact only iterated offerCodes (from
+// payload.rules), so an offerCode present ONLY in payload.params (no rules
+// entries for it) was invisible to the preview. Fix: the helper separately
+// exposes paramOfferCodes so callers can iterate the union.
+// ---------------------------------------------------------------------------
+
+test("deriveApplyScope: payload sin 'params' -> paramOfferCodes vacio y hasParams:false (Bug A)", () => {
+  const scope = deriveApplyScope({ rules: [validRule("OFERTA_A")] }, { deleteAllPeriods: true });
+  assert.equal(scope.hasParams, false);
+  assert.deepEqual(scope.paramOfferCodes, []);
+  assert.deepEqual(scope.offerCodes, ["OFERTA_A"]);
+});
+
+test("deriveApplyScope: 'params' referencia un offerCode ausente en 'rules' -> paramOfferCodes lo incluye (Bug B)", () => {
+  const payload = {
+    rules: [validRule("OFERTA_A")],
+    params: [
+      { offerCode: "OFERTA_B", paramValues: [{ key: "K", value: "1", value_type: "NUMBER" }] },
+    ],
+  };
+  const scope = deriveApplyScope(payload, { deleteAllPeriods: true });
+  assert.equal(scope.hasParams, true);
+  assert.deepEqual(scope.offerCodes, ["OFERTA_A"]);
+  assert.deepEqual(scope.paramOfferCodes, ["OFERTA_B"]);
 });
 
 // ---------------------------------------------------------------------------
@@ -425,5 +468,129 @@ test(
       () => computeApplyImpact(payload, { deleteAllPeriods: true }),
       (err) => err instanceof AppError && err.statusCode === 404
     );
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Integration (skip sin SQL) — Bug A: payload solo con 'rules' (sin 'params')
+// no debe contar params a borrar (antes del fix, computeApplyImpact corria la
+// query de conteo de params incondicionalmente para cada offer).
+// ---------------------------------------------------------------------------
+
+test(
+  "computeApplyImpact: payload solo con 'rules' (sin 'params') -> paramsToDelete:0 en total y por oferta (Bug A)",
+  { skip: !hasSqlCredentials() },
+  async () => {
+    const { computeApplyImpact } = await import("../api/services/admin_service.js");
+    const pool = await getSqlPool();
+    const code = `TEST_BUGA_${Date.now()}`;
+    let rulesetId = null;
+
+    try {
+      const tx = new sql.Transaction(pool);
+      await tx.begin();
+      rulesetId = await seedRuleset(tx, code, 5);
+      const offerDateId = await seedOfferDate(tx, "2099-06-01");
+      await seedRule(tx, rulesetId, offerDateId, "_existing");
+      // Existing ENABLED params for this offer — a rules-only apply must NOT
+      // report these as "to delete", since applyConfig's params block is
+      // entirely skipped when payload.params is absent.
+      await seedParam(tx, rulesetId, offerDateId, "EXISTING_PARAM_A");
+      await seedParam(tx, rulesetId, offerDateId, "EXISTING_PARAM_B");
+      await tx.commit();
+
+      // No 'params' key at all — mirrors a "rules-only" apply from the UI.
+      const payload = { rules: [validRule(code)] };
+
+      const impact = await computeApplyImpact(payload, { deleteAllPeriods: true });
+
+      assert.equal(impact.paramsToDelete, 0, "total paramsToDelete debe ser 0 sin 'params' en el payload");
+      assert.equal(impact.paramsToInsert, 0, "total paramsToInsert debe ser 0 sin 'params' en el payload");
+      assert.equal(impact.perOffer.length, 1);
+      assert.equal(impact.perOffer[0].offerCode, code);
+      assert.equal(impact.perOffer[0].paramsToDelete, 0, "perOffer paramsToDelete debe ser 0 para la unica oferta");
+      assert.equal(impact.perOffer[0].paramsToInsert, 0);
+      // rulesToDelete IS still counted — unaffected by the params guard.
+      assert.equal(impact.perOffer[0].rulesToDelete, 1);
+    } finally {
+      if (rulesetId) {
+        await cleanupRuleset(pool, rulesetId).catch(() => {});
+      }
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Integration (skip sin SQL) — Bug B: un offerCode presente SOLO en 'params'
+// (sin entradas en 'rules') debe aparecer en perOffer con sus conteos reales
+// (antes del fix, el loop solo iteraba offerCodes derivado de payload.rules,
+// dejando este offerCode invisible pese a que applyConfig SI le tocaria los
+// params).
+// ---------------------------------------------------------------------------
+
+test(
+  "computeApplyImpact: offerCode presente solo en 'params' (sin 'rules') aparece en perOffer con conteos reales (Bug B)",
+  { skip: !hasSqlCredentials() },
+  async () => {
+    const { computeApplyImpact } = await import("../api/services/admin_service.js");
+    const pool = await getSqlPool();
+    const codeWithRules = `TEST_BUGB_RULES_${Date.now()}`;
+    const codeParamsOnly = `TEST_BUGB_PARAMS_${Date.now()}`;
+    let rulesetIdRules = null;
+    let rulesetIdParamsOnly = null;
+
+    try {
+      const tx = new sql.Transaction(pool);
+      await tx.begin();
+      rulesetIdRules = await seedRuleset(tx, codeWithRules, 5);
+      rulesetIdParamsOnly = await seedRuleset(tx, codeParamsOnly, 6);
+      const offerDateId = await seedOfferDate(tx, "2099-07-01");
+      await seedRule(tx, rulesetIdRules, offerDateId, "_existing");
+      // Existing enabled param for the offer that has NO rules in the payload.
+      await seedParam(tx, rulesetIdParamsOnly, offerDateId, "EXISTING_PARAM_ONLY");
+      await tx.commit();
+
+      const payload = {
+        rules: [validRule(codeWithRules)],
+        params: [
+          {
+            offerCode: codeParamsOnly,
+            paramValues: [
+              { key: "NEW_PARAM_X", value: "1", value_type: "NUMBER" },
+              { key: "NEW_PARAM_Y", value: "2", value_type: "NUMBER" },
+            ],
+          },
+        ],
+      };
+
+      const impact = await computeApplyImpact(payload, { deleteAllPeriods: true });
+
+      // Top-level totals must include the params-only offer's counts.
+      assert.equal(impact.paramsToDelete, 1, "debe contar el param existente de la oferta solo-params");
+      assert.equal(impact.paramsToInsert, 2, "debe contar los 2 params nuevos de la oferta solo-params");
+      assert.ok(
+        impact.offerCodes.includes(codeParamsOnly),
+        "el offerCode solo-params debe aparecer en el listado top-level de offerCodes afectados"
+      );
+
+      const paramsOnlyEntry = impact.perOffer.find((o) => o.offerCode === codeParamsOnly);
+      assert.ok(paramsOnlyEntry, "la oferta solo-params debe tener su propia entrada en perOffer");
+      assert.equal(paramsOnlyEntry.rulesToDelete, 0, "no tiene reglas en el payload -> 0 a borrar");
+      assert.equal(paramsOnlyEntry.rulesToInsert, 0, "no tiene reglas en el payload -> 0 a insertar");
+      assert.equal(paramsOnlyEntry.paramsToDelete, 1);
+      assert.equal(paramsOnlyEntry.paramsToInsert, 2);
+
+      const rulesEntry = impact.perOffer.find((o) => o.offerCode === codeWithRules);
+      assert.ok(rulesEntry, "la oferta con reglas debe seguir apareciendo en perOffer");
+      assert.equal(rulesEntry.rulesToDelete, 1);
+      assert.equal(rulesEntry.paramsToDelete, 0, "esta oferta no tiene grupo en 'params' -> 0 a borrar");
+    } finally {
+      if (rulesetIdRules) {
+        await cleanupRuleset(pool, rulesetIdRules).catch(() => {});
+      }
+      if (rulesetIdParamsOnly) {
+        await cleanupRuleset(pool, rulesetIdParamsOnly).catch(() => {});
+      }
+    }
   }
 );
