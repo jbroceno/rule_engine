@@ -1754,6 +1754,19 @@ export async function applyConfig(payload, options = {}) {
  *    applyConfig's rule-delete loop never touches it) plus its real param
  *    counts.
  *
+ * Bug fix (code review, 2026-07-14):
+ *  - The ruleset-id resolver used to be findRulesetIdByOfferCode (WHERE
+ *    enabled = 1, 404 otherwise) unconditionally for EVERY offer in the
+ *    union above. But applyConfig's params disable/insert loops resolve
+ *    `paramOfferCodes` via resolveRulesetId, which has no `enabled` filter.
+ *    A payload whose `params` referenced an offerCode with no corresponding
+ *    `payload.rules` entries, and whose ruleset had `enabled = 0`, made this
+ *    preview 404 while the real apply would succeed. Now a code present in
+ *    `offerCodes` resolves via findRulesetIdByOfferCode (matches
+ *    applyConfig's rulesetIdCache build loop) and a code present only in
+ *    `paramOfferCodes` resolves via resolveRulesetId (matches applyConfig's
+ *    params-only resolution) — same resolver, same code path, per offerCode.
+ *
  * @param {{rules: Array, params?: Array}} payload
  * @param {{deleteAllPeriods?: boolean}} [options]
  * @returns {Promise<{
@@ -1810,7 +1823,18 @@ export async function computeApplyImpact(payload, options = {}) {
   let paramsToDelete = 0;
 
   for (const offerCode of allOfferCodes) {
-    const rulesetId = await findRulesetIdByOfferCode(pool, offerCode);
+    // Resolve with the SAME resolver applyConfig's real write path uses for
+    // this offerCode: codes present in `offerCodes` (i.e. they have rules in
+    // the payload) go through the enabled-filtering findRulesetIdByOfferCode,
+    // matching applyConfig's rulesetIdCache build loop; codes present ONLY in
+    // `paramOfferCodes` go through the non-filtering resolveRulesetId,
+    // matching applyConfig's params disable/insert loops. Previously this
+    // used findRulesetIdByOfferCode unconditionally for every code, so a
+    // disabled offer referenced only via `params` 404'd in the preview while
+    // the real apply would succeed (code review finding, 2026-07-14).
+    const rulesetId = offerCodeSet.has(offerCode)
+      ? await findRulesetIdByOfferCode(pool, offerCode)
+      : await resolveRulesetId(pool, offerCode);
 
     // Only offers that actually have rules in the payload get a rules-count
     // query — matches applyConfig, whose rule-delete loop is scoped to
