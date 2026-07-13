@@ -69,8 +69,17 @@ chain_plan:
     - pr: 2
       name: apply-safeguard
       work_units: [WU-5, WU-6, WU-7, WU-8]
-      status: applied
+      status: reviewed_fixed
       branch: feat/rbac-and-config-safeguards-apply-safeguard
+      review_note: >
+        Fresh-context adversarial review (2026-07-14) confirmed 3 findings, all fixed on the
+        same branch (see apply-progress.md § "Code-review findings and fixes round 2
+        (2026-07-14)"): commit 564087b (Fix 1 — computeApplyImpact/applyConfig resolver
+        divergence for params-only disabled offers), commit 9114302 (Fix 2 — extracted
+        dedupeParamsByKey shared helper), commit 39d4462 (Fix 3 — CLAUDE.md docs for
+        confirmReplaceAll + /admin/config/apply/preview). Full suite green (npm test): 318
+        tests, 284 pass, 0 fail, 34 skip (no SQL credentials in this sandbox). Not pushed, no
+        PR opened yet — separate step owned by the orchestrator.
     - pr: 3
       name: snapshot-integrity
       work_units: [WU-9, WU-10, WU-11, WU-12]
@@ -80,4 +89,4 @@ chain_plan:
       work_units: [WU-13]
       status: pending
 
-next_action: review + open PR2 (apply-safeguard, WU-5..WU-8) on branch feat/rbac-and-config-safeguards-apply-safeguard (stacked on feat/rbac-and-config-safeguards-rbac); then sdd-apply (PR3 — snapshot-integrity, WU-9..WU-12)
+next_action: push branch feat/rbac-and-config-safeguards-apply-safeguard and open PR2 (apply-safeguard, WU-5..WU-8, review fixes applied) targeting main, stacked after PR1; then sdd-apply (PR3 — snapshot-integrity, WU-9..WU-12)

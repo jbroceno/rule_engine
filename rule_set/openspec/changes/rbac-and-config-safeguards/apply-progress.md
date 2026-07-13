@@ -480,3 +480,137 @@ integration were amended into `design.md` § "computeApplyImpact — read-only" 
 "Architecture Decisions" (new row) and § "File Changes" (amended rows for
 `admin_service.js` and `configurator-page.component.ts`) — see the "Amendment
 (2026-07-14)" notes there.
+
+---
+
+## Code-review findings and fixes round 2 (2026-07-14)
+
+A second fresh-context adversarial code review ran on this branch's diff
+(`git diff 3acd38c...HEAD`, merge-base with `main`) before opening the PR, this time
+targeting the PR2 diff as a whole (including the round-1 fixes committed above). It
+confirmed 3 real findings, all approved by the user, fixed on the same branch as 3
+separate commits — no push, no PR opened.
+
+### Fix 1 (High) — `computeApplyImpact`'s preview resolver diverged from `applyConfig`'s real write path
+
+**What was wrong**: `computeApplyImpact`'s per-offer loop resolved EVERY offerCode in
+`allOfferCodes` (the union of `offerCodes` and `paramOfferCodes`) via
+`findRulesetIdByOfferCode`, which filters `WHERE enabled = 1` and throws 404 if not
+found. But `applyConfig`'s real params-write path (the disable loop and the insert
+loop) resolves offerCodes drawn from `payload.params` via `resolveRulesetId`, which has
+NO `enabled` filter. Consequence: a payload whose `params` array referenced an offer
+code with no corresponding `payload.rules` entries, where that offer's
+`cfg_offer_ruleset` row currently had `enabled = 0`, made the preview 404 while the
+real apply would succeed — permanently blocking a legitimate save, since the frontend
+gates the confirm button on the preview succeeding.
+
+**Fix applied (TDD)**: read both `findRulesetIdByOfferCode` and `resolveRulesetId` in
+full (lines ~19-48 of `admin_service.js`) to confirm the exact difference (the
+`enabled = 1` filter). Chose to make `computeApplyImpact` match `applyConfig`'s actual
+behavior (the real apply already accepts params-only writes to disabled offers) rather
+than change `applyConfig` — per the instructions, the safer/less-surprising direction.
+`computeApplyImpact` now resolves a code present in `offerCodes` (has rules in the
+payload) via `findRulesetIdByOfferCode` (matches `applyConfig`'s `rulesetIdCache` build
+loop, which does 404 on disabled offers with rules) and a code present ONLY in
+`paramOfferCodes` via `resolveRulesetId` (matches `applyConfig`'s params-only
+resolution).
+
+Added 2 integration tests (`{ skip: !hasSqlCredentials() }`, matching this test file's
+existing convention) to `test/admin_apply_safeguard.test.js`:
+1. `computeApplyImpact: offerCode solo en 'params' con ruleset enabled=0 NO debe dar 404` —
+   seeds a disabled ruleset referenced only via `params`, asserts the preview succeeds
+   (not 404) and reports its real param counts.
+2. `computeApplyImpact: offerCode inexistente presente SOLO en 'params' ... sigue
+   propagando 404` — regression guard confirming a *truly* nonexistent offerCode (no
+   row at all, not just disabled) still 404s, matching `applyConfig`'s own behavior for
+   that case.
+
+In this sandbox there are no SQL credentials configured (`hasSqlCredentials()` returns
+`false`), so both new integration tests report `SKIP`, same as the other 8
+integration-level tests already in this file — the fix's logic was verified by manual
+code reading plus the 16 non-DB tests in the file passing unchanged. Flagged as an
+action item for a reviewer with a live SQL Server to re-run this file and confirm the
+two new tests pass end-to-end before merging.
+
+**Commit**: `564087b` — "fix(admin-service): computeApplyImpact usa el mismo resolver
+que applyConfig por offerCode"
+
+### Fix 2 (Medium) — duplicated param-dedup logic
+
+**What was wrong**: the "dedupe params by key within a group, first-seen wins" logic
+was hand-duplicated as two separate inline blocks: in `applyConfig`'s param-insert loop
+(`seenKeys` set) and in `computeApplyImpact`'s param-count loop (also `seenKeys`, with a
+comment literally saying "mirrors applyConfig's seenKeys" — an admission it was a
+manual copy). Functionally identical at the time, but exactly the class of drift risk
+the `deriveApplyScope` extraction (commit `2ebc596`) was supposed to close for
+scope-derivation — it just didn't cover this specific dedup step.
+
+**Fix applied**: extracted the dedup-by-key-within-group logic into a shared
+`dedupeParamsByKey(paramValues)` helper in `admin_service.js`, next to
+`deriveApplyScope`. Returns the deduped array (fits `applyConfig`'s insert loop, which
+needs the actual param objects to insert) — `computeApplyImpact` calls
+`.length` on the same return value for its count, so both call sites share one
+source of truth. `applyConfig`'s insert loop now iterates
+`dedupeParamsByKey(group.paramValues)` directly instead of maintaining its own
+`seenKeys` set; `computeApplyImpact`'s count loop now computes
+`dedupeParamsByKey(group.paramValues).length` instead of its own `seenKeys` set.
+
+Added tests to `test/admin_apply_safeguard.test.js`:
+- 2 pure unit tests (no DB, environment-independent) for `dedupeParamsByKey` itself:
+  first-seen-wins on duplicate keys, and empty/`undefined` input returns `[]` without
+  throwing.
+- 1 integration test (`{ skip: !hasSqlCredentials() }`) that runs both `applyConfig`
+  and `computeApplyImpact` against the SAME payload (with duplicate-keyed params) and
+  asserts `applyConfig`'s `applied.params` count equals `computeApplyImpact`'s
+  `paramsToInsert` — a regression guard that would catch a future re-divergence (e.g.
+  someone re-inlining a slightly different `seenKeys` block in only one of the two call
+  sites).
+
+**Commit**: `9114302` — "refactor(admin-service): extrae dedupeParamsByKey compartido
+entre applyConfig y computeApplyImpact"
+
+### Fix 3 (Low) — root `CLAUDE.md` docs stale
+
+**What was wrong**: `git diff 3acd38c...HEAD -- CLAUDE.md` was empty — the root
+`CLAUDE.md`'s documented `POST /admin/config/apply` payload still showed the OLD shape
+without `confirmReplaceAll`, and there was no mention anywhere of the new
+`POST /admin/config/apply/preview` endpoint (both shipped in WU-6/WU-7, PR2).
+
+**Fix applied**: updated the root `CLAUDE.md` (`rule_engine/CLAUDE.md`, NOT
+`rule_set/CLAUDE.md` — confirmed this is the real one per the note already recorded in
+this document from PR1): added `confirmReplaceAll: true` (required boolean) to the
+documented `/admin/config/apply` payload example, plus the exact 400 message when it's
+missing/false. Added a new row to the "Admin — bulk config operations" table for
+`POST /admin/config/apply/preview` (read-only, no DB write, no snapshot, no
+`comment`/`confirmReplaceAll` required) with its own payload/response documentation
+(`ApplyImpact` shape) matching the existing table/section style. Also updated the
+"Config bulk operations workflow" § step 3 ("Grabar configuración") to describe the
+preview call on dialog open and the confirm-button-disabled-until-preview-resolves
+behavior, and the `confirmReplaceAll: true` sent on confirm.
+
+**Commit**: `39d4462` — "docs(claude-md): documenta confirmReplaceAll y POST
+/admin/config/apply/preview"
+
+### Full-suite regression check (after all 3 fixes)
+
+`npm test` from `rule_set/` (after `npm install` — `node_modules/` was not present at
+the start of this session): **318 tests, 284 pass, 0 fail, 34 skip**. No SQL
+credentials configured in this sandbox (`api/.env` absent/incomplete), so every
+integration-level test in `admin_apply_safeguard.test.js` and the other DB-dependent
+test files reports `SKIP` cleanly (via `hasSqlCredentials()`) rather than failing on a
+connectivity error, unlike the environment described in earlier sections of this
+document. Test count went from 313 (PR2 pre-round-2-review state, after `npm install`)
+to 318 (+5: 2 new Fix 1 tests, 2 new pure `dedupeParamsByKey` unit tests, 1 new Fix 2
+cross-check integration test); pass count went from 282 to 284 (+2 — exactly the 2 pure
+`dedupeParamsByKey` unit tests, genuinely environment-independent); the other 3 new
+tests (2 Fix 1 integration tests + 1 Fix 2 integration test) are additional `SKIP`s, not
+failures. **No regressions** — 0 failures across the entire suite.
+
+### Scope note
+
+Only the 3 findings above were addressed in this round. T-09 onward (snapshot
+integrity, remaining frontend polish) remain untouched and `[ ]` in `tasks.md`, to be
+implemented in PR3/PR4. `state.yaml` PR2 entry updated to `status: reviewed_fixed` with
+a `review_note` pointing at this section and the 3 commits above; PR3's entry
+(`status: pending`) was left untouched — no other session had started it at the time of
+this update.
