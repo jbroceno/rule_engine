@@ -2,7 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule } from "@angular/forms";
 
-import { AdminOffer, AdminSnapshotContentResponse, AdminSnapshotItem, AdminSnapshotListQuery } from "../models/admin.models";
+import { AdminOffer, AdminSnapshotContentResponse, AdminSnapshotItem, AdminSnapshotListQuery, RestoreIntegrity } from "../models/admin.models";
 import { AdminApiService } from "../services/admin-api.service";
 
 @Component({
@@ -32,6 +32,9 @@ export class SnapshotsPageComponent {
   protected readonly error = signal<string | null>(null);
   protected readonly actionSuccess = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
+  /** OWASP-10: distinguishes a snapshot-integrity (409) rejection from a generic server error,
+   *  so the template can surface a visibly different message. */
+  protected readonly actionErrorKind = signal<"generic" | "integrity">("generic");
 
   protected readonly restoring = signal(false);
   protected readonly restoreUser = signal("");
@@ -133,6 +136,7 @@ export class SnapshotsPageComponent {
 
   protected confirmRestore(snapshot: AdminSnapshotItem): void {
     this.actionError.set(null);
+    this.actionErrorKind.set("generic");
     this.actionSuccess.set(null);
     this.restoreUser.set("");
     this.restoreDestino.set("POC");
@@ -216,6 +220,7 @@ export class SnapshotsPageComponent {
     this.closeConfirmDialog();
     this.restoring.set(true);
     this.actionError.set(null);
+    this.actionErrorKind.set("generic");
     this.actionSuccess.set(null);
     const vigHastaNorm = this.restoreVigHasta().trim();
 
@@ -230,26 +235,41 @@ export class SnapshotsPageComponent {
       .subscribe({
         next: (result) => {
           this.restoring.set(false);
+          const integritySuffix = this.formatIntegritySuffix(result.integrity);
           if (destino === "WF") {
             this.actionSuccess.set(
-              `Snapshot #${snapshot.snapshot_id} publicado en Workflow: ${result.rules ?? 0} reglas, ${result.params ?? 0} parámetros. Snapshot de seguridad #${result.preRestoreSnapshotId} creado.`,
+              `Snapshot #${snapshot.snapshot_id} publicado en Workflow: ${result.rules ?? 0} reglas, ${result.params ?? 0} parámetros. Snapshot de seguridad #${result.preRestoreSnapshotId} creado.${integritySuffix}`,
             );
           } else if (isWfSnap) {
             this.actionSuccess.set(
-              `Snapshot WF #${snapshot.snapshot_id} desplegado en POC: ${result.applied?.rules ?? 0} reglas, ${result.applied?.params ?? 0} parámetros. Snapshot de seguridad #${result.preRestoreSnapshotId} creado.`,
+              `Snapshot WF #${snapshot.snapshot_id} desplegado en POC: ${result.applied?.rules ?? 0} reglas, ${result.applied?.params ?? 0} parámetros. Snapshot de seguridad #${result.preRestoreSnapshotId} creado.${integritySuffix}`,
             );
           } else {
             this.actionSuccess.set(
-              `Snapshot #${snapshot.snapshot_id} restaurado: ${result.applied?.rules ?? 0} reglas, ${result.applied?.params ?? 0} parámetros. Snapshot de seguridad #${result.preRestoreSnapshotId} creado.`,
+              `Snapshot #${snapshot.snapshot_id} restaurado: ${result.applied?.rules ?? 0} reglas, ${result.applied?.params ?? 0} parámetros. Snapshot de seguridad #${result.preRestoreSnapshotId} creado.${integritySuffix}`,
             );
           }
           this.applyFilters(false);
         },
         error: (err: Error) => {
           this.restoring.set(false);
+          this.actionErrorKind.set(this.isIntegrityError(err.message) ? "integrity" : "generic");
           this.actionError.set(err.message);
         },
       });
+  }
+
+  /** OWASP-10: builds the " Integridad: ..." suffix appended to the restore success message. */
+  private formatIntegritySuffix(integrity?: RestoreIntegrity): string {
+    if (!integrity) return "";
+    return integrity.status === "legacy"
+      ? " Snapshot legado / no verificable (sin checksum de integridad)."
+      : " Integridad verificada (checksum coincide).";
+  }
+
+  /** OWASP-10: matches the exact 409 message text from design.md § "Códigos y textos de error". */
+  private isIntegrityError(message: string): boolean {
+    return /integridad del snapshot/i.test(message);
   }
 
   protected openSnapshotWfDialog(): void {
@@ -267,6 +287,7 @@ export class SnapshotsPageComponent {
     this.closeSnapshotWfDialog();
     this.takingSnapshot.set(true);
     this.actionError.set(null);
+    this.actionErrorKind.set("generic");
     this.actionSuccess.set(null);
     const vigDesdeRaw = this.snapshotVigDesde().trim();
     const vigHastaRaw = this.snapshotVigHasta().trim();
@@ -309,6 +330,7 @@ export class SnapshotsPageComponent {
       },
       error: (err: Error) => {
         this.loadingPreview.set(false);
+        this.actionErrorKind.set("generic");
         this.actionError.set(err.message);
       },
     });
@@ -341,6 +363,7 @@ export class SnapshotsPageComponent {
     this.deleting.set(true);
     this.actionSuccess.set(null);
     this.actionError.set(null);
+    this.actionErrorKind.set("generic");
 
     this.adminApiService.deleteSnapshot(snap.snapshot_id).subscribe({
       next: () => {

@@ -318,6 +318,13 @@ export interface AdminSnapshotListQuery {
   pageSize?: number;
 }
 
+/** Integrity verdict for a restored snapshot (OWASP-10). "failed" never reaches
+ *  the frontend as a success payload — it is rejected as an HTTP 409 instead. */
+export interface RestoreIntegrity {
+  status: "verified" | "legacy";
+  checksumPresent: boolean;
+}
+
 export interface AdminSnapshotRestoreResponse {
   applied?: { rules: number; params: number };
   offerCodes?: string[];
@@ -325,6 +332,7 @@ export interface AdminSnapshotRestoreResponse {
   published?: boolean;
   rules?: number;
   params?: number;
+  integrity?: RestoreIntegrity;
 }
 
 export interface AdminSnapshotDeleteResponse {
