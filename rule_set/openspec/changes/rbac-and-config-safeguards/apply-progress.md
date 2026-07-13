@@ -156,14 +156,13 @@ component's own `error:` handler can surface a message (matching the pattern alr
 that does nothing beyond falling through to the existing unconditional re-throw — no logout,
 no redirect, no nav-hiding, no role decoding (kept out of scope per the user's approval).
 
-**Could not execute the Karma test suite in this sandbox**: no Chrome/Chromium binary is
-installed and `CHROME_BIN` is unset; `ng test --watch=false` fails at
-`karma-chrome-launcher` with `Cannot find the binary ... Please set env variable CHROME_BIN`.
-The Angular application build (`ng test` bundling step) completed successfully, confirming
-the TypeScript compiles cleanly, but the actual Jasmine pass/fail result is **not verified**
-in this environment — this is reported explicitly rather than fabricating a passing result.
-**Action for reviewer**: run `npm run web:test` (or `ng test --watch=false`) in an environment
-with Chrome installed before merging PR1, to confirm the 2 new spec cases pass.
+**Karma/Jasmine suite executed (2026-07-13, follow-up)**: Chrome was installed at
+`C:\Program Files\Google\Chrome\Application\chrome.exe` after the batch above was applied.
+Ran `CHROME_BIN="/c/Program Files/Google/Chrome/Application/chrome.exe" npx ng test
+--watch=false --browsers=ChromeHeadless` from `rule_set/web/`: **136 of 136 SUCCESS**
+(134 pre-existing + the 2 new `auth.interceptor.spec.ts` cases for the 403 branch). No
+failures. The earlier "not verified in this sandbox" caveat is resolved — Fix 3 is
+confirmed green end-to-end, not just TypeScript-clean.
 
 Updated `tasks.md`: T-13a marked `[x]` with a note that it was pulled forward from PR4; T-13b
 and T-13c remain `[ ]`, explicitly still in PR4. Updated `design.md` File Changes row for
