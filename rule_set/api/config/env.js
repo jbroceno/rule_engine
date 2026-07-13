@@ -49,6 +49,12 @@ export const env = {
     jwtSecret: process.env.JWT_SECRET || "",
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || "8h",
   },
+  // OWASP-10: HMAC secret for snapshot integrity checksums. Falls back to
+  // JWT_SECRET when SNAPSHOT_HMAC_SECRET is not set — intentionally NOT
+  // required by assertAuthConfig() (must not break startup when absent).
+  snapshot: {
+    hmacSecret: process.env.SNAPSHOT_HMAC_SECRET || process.env.JWT_SECRET || "",
+  },
   ssl: {
     fullchainPath: process.env.SSL_FULLCHAIN_PATH || "",
     privkeyPath: process.env.SSL_PRIVKEY_PATH || "",
