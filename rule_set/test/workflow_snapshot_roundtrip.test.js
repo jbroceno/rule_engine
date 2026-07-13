@@ -35,6 +35,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { hasSqlCredentials, hasWfSqlCredentials } from "../api/config/env.js";
+import { computeSnapshotChecksum } from "../api/utils/snapshot_integrity.js";
 
 // ---------------------------------------------------------------------------
 // Helper extracted from createWorkflowSnapshot (mirrors what the service does).
@@ -112,6 +113,107 @@ test("T2.4e: assembleWfSnapshotPayload handles malformed JSON without throwing",
   const parsed = JSON.parse(payload.rulesJson);
   assert.equal(typeof parsed, "object");
 });
+
+// ---------------------------------------------------------------------------
+// Fix 1 (revision de codigo PR3, 2026-07-14): assembleWfSnapshotPayload
+// tambien calcula un checksum HMAC-SHA256 (OWASP-10), reusando la MISMA
+// canonicalizacion de api/utils/snapshot_integrity.js, sobre las cadenas
+// EXACTAS rulesJson/paramsJson que createWorkflowSnapshot persiste despues.
+//
+// Antes de este fix, createWorkflowSnapshot hacia su propio INSERT crudo sin
+// checksum -> todo snapshot de origen WF quedaba con checksum=NULL para
+// siempre, clasificado "legacy" en restoreSnapshot (aviso, nunca rechazo
+// 409) — la proteccion OWASP-10 nunca cubria esta clase de snapshots.
+//
+// Estos son tests unitarios puros (sin BD) sobre assembleWfSnapshotPayload —
+// no dependen de credenciales SQL, a diferencia de la verificacion end-to-end
+// de mas abajo (createWorkflowSnapshot + restoreSnapshot, que si requiere BD
+// POC+WF).
+// ---------------------------------------------------------------------------
+
+test("T-WF-checksum-a: assembleWfSnapshotPayload calcula un checksum hex de 64 caracteres", () => {
+  const spJson = JSON.stringify({ reglas: [{ REGLA_ID: 1, OFERTA_ID: 1 }] });
+  const payload = assembleWfSnapshotPayload(spJson, "2026-01-01", "user", "test-secret");
+  assert.match(
+    payload.checksum,
+    /^[0-9a-f]{64}$/,
+    `debe ser hex de 64 caracteres (HMAC-SHA256), obtenido: ${payload.checksum}`
+  );
+});
+
+test("T-WF-checksum-b: el checksum coincide exactamente con computeSnapshotChecksum sobre payload.rulesJson/paramsJson (misma fuente, nunca re-serializado)", () => {
+  const spJson = JSON.stringify({ reglas: [{ REGLA_ID: 2, OFERTA_ID: 1 }] });
+  const secret = "another-secret";
+  const payload = assembleWfSnapshotPayload(spJson, "2026-02-01", null, secret);
+  const expected = computeSnapshotChecksum(payload.rulesJson, payload.paramsJson, secret);
+  assert.equal(payload.checksum, expected);
+});
+
+test("T-WF-checksum-c: contenido distinto -> checksum distinto (sensible al contenido, no un valor fijo)", () => {
+  const secret = "s3";
+  const payloadA = assembleWfSnapshotPayload(JSON.stringify({ reglas: [{ REGLA_ID: 1 }] }), null, null, secret);
+  const payloadB = assembleWfSnapshotPayload(JSON.stringify({ reglas: [{ REGLA_ID: 2 }] }), null, null, secret);
+  assert.notEqual(payloadA.checksum, payloadB.checksum);
+});
+
+test("T-WF-checksum-d: llamada de 3 argumentos (sin secret explicito) sigue calculando un checksum hex valido (compatibilidad con T2.4a-e)", () => {
+  const payload = assembleWfSnapshotPayload("{}", null, null);
+  assert.match(payload.checksum, /^[0-9a-f]{64}$/);
+});
+
+// ---------------------------------------------------------------------------
+// Fix 1 — verificacion end-to-end: createWorkflowSnapshot persiste un checksum
+// no nulo, y restoreSnapshot posterior sobre ese mismo snapshot reporta
+// integrity.status "verified" (no "legacy"). Requiere BD POC + BD WF reales
+// (createWorkflowSnapshot abre ambos pools) — se omite limpiamente si no hay
+// credenciales, mismo patron que el resto de este fichero (CA-VDT-004/004b).
+// ---------------------------------------------------------------------------
+
+test(
+  "T-WF-checksum-e: createWorkflowSnapshot persiste checksum no nulo; restoreSnapshot posterior reporta integrity.status 'verified' — requiere BD POC+WF",
+  { skip: !hasSqlCredentials() || !hasWfSqlCredentials() },
+  async () => {
+    const { getSqlPool, sql } = await import("../api/db/sql_client.js");
+    const { createWorkflowSnapshot } = await import("../api/services/admin_workflow_service.js");
+    const { restoreSnapshot } = await import("../api/services/admin_service.js");
+    const pool = await getSqlPool();
+
+    let snapshotId = null;
+    let preRestoreSnapshotId = null;
+    try {
+      const created = await createWorkflowSnapshot(null, null, null);
+      snapshotId = created.snapshot_id;
+
+      const row = await pool
+        .request()
+        .input("id", sql.Int, snapshotId)
+        .query(`SELECT checksum FROM dbo.cfg_config_snapshot WHERE snapshot_id = @id`);
+      const checksum = row.recordset?.[0]?.checksum;
+      assert.ok(checksum, "checksum de un snapshot de origen WF no debe ser nulo/vacio");
+      assert.match(String(checksum), /^[0-9a-f]{64}$/i);
+
+      // pocFechaDesde es obligatorio para restaurar un snapshot WF en POC.
+      const result = await restoreSnapshot(snapshotId, { destino: "POC", pocFechaDesde: "2026-01-01" });
+      assert.equal(result.integrity.status, "verified");
+      preRestoreSnapshotId = result.preRestoreSnapshotId;
+    } finally {
+      if (snapshotId) {
+        await pool
+          .request()
+          .input("id", sql.Int, snapshotId)
+          .query(`DELETE FROM dbo.cfg_config_snapshot WHERE snapshot_id = @id`)
+          .catch(() => {});
+      }
+      if (preRestoreSnapshotId) {
+        await pool
+          .request()
+          .input("id", sql.Int, preRestoreSnapshotId)
+          .query(`DELETE FROM dbo.cfg_config_snapshot WHERE snapshot_id = @id`)
+          .catch(() => {});
+      }
+    }
+  }
+);
 
 // ---------------------------------------------------------------------------
 // CA-VDT-004 (2.1 RED): cfg_get_workflow_snapshot_json SP parámetros deben ser
