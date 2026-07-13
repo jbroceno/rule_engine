@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { signal } from "@angular/core";
 import { provideRouter } from "@angular/router";
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 
 import { ConfiguratorPageComponent } from "./configurator-page.component";
 import { AdminApiService } from "../services/admin-api.service";
 import { ActivePeriodService } from "../services/active-period.service";
-import { AdminFechaItem } from "../models/admin.models";
+import { AdminFechaItem, AdminRuleItem, ApplyImpact } from "../models/admin.models";
 import { environment } from "../../environments/environment";
 
 // ---------------------------------------------------------------------------
@@ -53,7 +53,18 @@ function buildAdminApiMock() {
     createOffer: () => of({ ruleset_id: 1, offerCode: "TEST" }),
     updateOffer: () => of({ offerCode: "TEST", updated: true }),
     exportConfig: () => of({ rules: [], params: [] }),
-    applyConfig: () => of({ snapshot_id: 1 }),
+    applyConfig: () => of({ snapshot_id: 1, applied: { rules: 1, params: 0 }, offerCodes: ["OFERTA_A"] }),
+    previewApply: () =>
+      of({
+        offerCodes: ["OFERTA_A"],
+        rulesToDelete: 2,
+        paramsToDelete: 1,
+        rulesToInsert: 1,
+        paramsToInsert: 0,
+        perOffer: [
+          { offerCode: "OFERTA_A", rulesToDelete: 2, paramsToDelete: 1, rulesToInsert: 1, paramsToInsert: 0 },
+        ],
+      }),
     resetSeed: () =>
       of({
         applied: { rules: 85, params: 67 },
@@ -952,6 +963,112 @@ describe("ConfiguratorPageComponent", () => {
       fixture.detectChanges();
       expect(mockActivePeriodRules()).toBeNull();
       expect(mockActivePeriodParams()).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // WU-08 (PR2, config-apply-safeguard): "Grabar configuracion" dialog exige
+  // previsualizacion de impacto antes de habilitar la confirmacion.
+  // -------------------------------------------------------------------------
+
+  describe("WU-08 (PR2): previsualizacion de impacto en el dialogo de Grabar configuracion", () => {
+    function fakeRule(offerCode = "OFERTA_A"): AdminRuleItem {
+      return {
+        rule_id: 1,
+        offerCode,
+        stage: "PRE",
+        rule_name: "Regla importada",
+        priority: 900,
+        enabled: true,
+        stop_processing: false,
+        offer_date_id: null,
+        actions: [],
+        conditions: [],
+      };
+    }
+
+    function fakeImpact(): ApplyImpact {
+      return {
+        offerCodes: ["OFERTA_A"],
+        rulesToDelete: 2,
+        paramsToDelete: 1,
+        rulesToInsert: 1,
+        paramsToInsert: 0,
+        perOffer: [
+          { offerCode: "OFERTA_A", rulesToDelete: 2, paramsToDelete: 1, rulesToInsert: 1, paramsToInsert: 0 },
+        ],
+      };
+    }
+
+    it("openApplyConfigDialog calls previewApply with the imported rules/params", () => {
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      const adminApi = TestBed.inject(AdminApiService);
+      const previewSpy = spyOn(adminApi, "previewApply").and.callThrough();
+
+      component["importedConfig"].set({ rules: [fakeRule()], params: null });
+      component["openApplyConfigDialog"]();
+      fixture.detectChanges();
+
+      expect(previewSpy).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ rules: [fakeRule()] }),
+      );
+    });
+
+    it("confirm button stays disabled while the preview has not resolved yet", () => {
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      const adminApi = TestBed.inject(AdminApiService);
+      const pending$ = new Subject<ApplyImpact>();
+      spyOn(adminApi, "previewApply").and.returnValue(pending$.asObservable());
+
+      component["importedConfig"].set({ rules: [fakeRule()], params: null });
+      component["openApplyConfigDialog"]();
+      fixture.detectChanges();
+
+      expect(component["isConfirmActionPending"]()).toBeTrue();
+
+      pending$.next(fakeImpact());
+      pending$.complete();
+      fixture.detectChanges();
+
+      expect(component["isConfirmActionPending"]()).toBeFalse();
+    });
+
+    it("renders the impact summary (offerCodes + counts) once the preview resolves", () => {
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+
+      component["importedConfig"].set({ rules: [fakeRule()], params: null });
+      component["openApplyConfigDialog"]();
+      fixture.detectChanges();
+
+      const impact = component["applyImpactPreview"]();
+      expect(impact).not.toBeNull();
+      expect(impact!.offerCodes).toEqual(["OFERTA_A"]);
+      expect(impact!.rulesToDelete).toBe(2);
+
+      const modal = fixture.nativeElement.querySelector(".confirm-modal");
+      expect(modal.textContent).toContain("OFERTA_A");
+    });
+
+    it("confirming sends confirmReplaceAll:true to applyConfig, alongside comment", () => {
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      const adminApi = TestBed.inject(AdminApiService);
+      const applySpy = spyOn(adminApi, "applyConfig").and.callThrough();
+
+      component["importedConfig"].set({ rules: [fakeRule()], params: null });
+      component["openApplyConfigDialog"]();
+      fixture.detectChanges();
+
+      component["applyConfigComment"].set("Motivo de prueba PR2");
+      component["confirmDialogAction"]();
+      fixture.detectChanges();
+
+      expect(applySpy).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ confirmReplaceAll: true, comment: "Motivo de prueba PR2" }),
+      );
     });
   });
 });

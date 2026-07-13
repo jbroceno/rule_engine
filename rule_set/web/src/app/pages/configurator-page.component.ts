@@ -15,6 +15,7 @@ import {
   AdminRuleItem,
   AdminRulesQuery,
   AdminResetSeedPayload,
+  ApplyImpact,
   RuleActionPayloadEntry,
   ValidationIssue,
   ValidatePayloadResponse,
@@ -235,6 +236,11 @@ export class ConfiguratorPageComponent implements OnInit {
   protected readonly applyConfigComment = signal("");
   protected readonly applyConfigUser = signal("");
   protected readonly applyConfigCommentError = signal<string | null>(null);
+
+  // OWASP-02: previsualizacion de impacto antes de confirmar "Grabar configuracion"
+  protected readonly applyImpactPreview = signal<ApplyImpact | null>(null);
+  protected readonly applyImpactLoading = signal(false);
+  protected readonly applyImpactError = signal<string | null>(null);
 
   // Seed reset (feature-flagged)
   protected readonly enableSeedReset = environment.enableSeedReset;
@@ -944,6 +950,9 @@ export class ConfiguratorPageComponent implements OnInit {
 
   protected closeConfirmDialog(): void {
     this.confirmDialog.set(null);
+    this.applyImpactPreview.set(null);
+    this.applyImpactLoading.set(false);
+    this.applyImpactError.set(null);
   }
 
   protected isRulePending(ruleId: number): boolean {
@@ -970,6 +979,10 @@ export class ConfiguratorPageComponent implements OnInit {
     }
     if (dialog.type === "offer-period") {
       return this.isOfferCodePending(dialog.offerCode);
+    }
+    if (dialog.type === "apply-config") {
+      // Confirm stays disabled until the impact preview resolves (OWASP-02).
+      return this.configOpLoading() || this.applyImpactLoading() || this.applyImpactPreview() === null;
     }
     return this.configOpLoading();
   }
@@ -1088,6 +1101,26 @@ export class ConfiguratorPageComponent implements OnInit {
       title: "Grabar configuracion en BD",
       message: `Se eliminaran TODAS las reglas actuales de [${offerCodes}] y se insertaran las ${config.rules.length} reglas importadas. ${paramsNote} Se recomienda exportar la configuracion actual como copia de seguridad antes de continuar. Esta operacion no se puede deshacer.`,
     });
+
+    // OWASP-02: fetch the read-only impact preview before the confirm button is enabled.
+    this.applyImpactPreview.set(null);
+    this.applyImpactError.set(null);
+    this.applyImpactLoading.set(true);
+    this.adminApiService
+      .previewApply({
+        rules: config.rules,
+        ...(config.params !== null ? { params: config.params } : {}),
+      })
+      .subscribe({
+        next: (impact) => {
+          this.applyImpactPreview.set(impact);
+          this.applyImpactLoading.set(false);
+        },
+        error: (error: Error) => {
+          this.applyImpactLoading.set(false);
+          this.applyImpactError.set(error.message);
+        },
+      });
   }
 
   protected openResetSeedDialog(): void {
@@ -1181,6 +1214,7 @@ export class ConfiguratorPageComponent implements OnInit {
       ...(config.params !== null ? { params: config.params } : {}),
       comment,
       createdBy: this.applyConfigUser().trim() || undefined,
+      confirmReplaceAll: true,
     };
 
     this.adminApiService.applyConfig(payload).subscribe({

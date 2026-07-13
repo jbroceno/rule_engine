@@ -722,6 +722,42 @@
       <h3>{{ dialog.title }}</h3>
       <p>{{ dialog.message }}</p>
       <div class="confirm-form" *ngIf="dialog.type === 'apply-config'">
+        <div class="apply-impact-preview">
+          <p class="state loading" *ngIf="applyImpactLoading()">Calculando impacto...</p>
+          <p class="state error" *ngIf="applyImpactError() as msg">{{ msg }}</p>
+          <div *ngIf="applyImpactPreview() as impact" class="apply-impact-summary">
+            <p>
+              Ofertas afectadas: <strong>{{ impact.offerCodes.join(', ') }}</strong>
+            </p>
+            <table class="apply-impact-table">
+              <thead>
+                <tr>
+                  <th>Oferta</th>
+                  <th>Reglas a eliminar</th>
+                  <th>Params a eliminar</th>
+                  <th>Reglas a insertar</th>
+                  <th>Params a insertar</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of impact.perOffer">
+                  <td>{{ row.offerCode }}</td>
+                  <td>{{ row.rulesToDelete }}</td>
+                  <td>{{ row.paramsToDelete }}</td>
+                  <td>{{ row.rulesToInsert }}</td>
+                  <td>{{ row.paramsToInsert }}</td>
+                </tr>
+                <tr class="apply-impact-total">
+                  <td>Total</td>
+                  <td>{{ impact.rulesToDelete }}</td>
+                  <td>{{ impact.paramsToDelete }}</td>
+                  <td>{{ impact.rulesToInsert }}</td>
+                  <td>{{ impact.paramsToInsert }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
         <label>
           Motivo <span class="required-mark">*</span>
           <textarea
