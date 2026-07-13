@@ -4,8 +4,10 @@ import { Observable, catchError, throwError } from "rxjs";
 
 import {
   AdminConfigApplyPayload,
+  AdminConfigApplyPreviewPayload,
   AdminConfigApplyResponse,
   AdminConfigExport,
+  ApplyImpact,
   AdminResetSeedPayload,
   AdminResetSeedResponse,
   AdminOffer,
@@ -202,6 +204,13 @@ export class AdminApiService {
   applyConfig(payload: AdminConfigApplyPayload): Observable<AdminConfigApplyResponse> {
     return this.http
       .post<AdminConfigApplyResponse>(`${this.baseUrl}/config/apply`, payload)
+      .pipe(catchError((error) => this.handleError(error)));
+  }
+
+  /** Read-only preview of what applyConfig(...) would delete/insert — no comment/confirmReplaceAll required. */
+  previewApply(payload: AdminConfigApplyPreviewPayload): Observable<ApplyImpact> {
+    return this.http
+      .post<ApplyImpact>(`${this.baseUrl}/config/apply/preview`, payload)
       .pipe(catchError((error) => this.handleError(error)));
   }
 

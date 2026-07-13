@@ -2,7 +2,11 @@ import { TestBed } from "@angular/core/testing";
 import { HttpClientTestingModule, HttpTestingController } from "@angular/common/http/testing";
 
 import { AdminApiService } from "./admin-api.service";
-import { AdminWorkflowPublicarPayload, AdminWorkflowSnapshotPayload } from "../models/admin.models";
+import {
+  AdminConfigApplyPayload,
+  AdminWorkflowPublicarPayload,
+  AdminWorkflowSnapshotPayload,
+} from "../models/admin.models";
 
 // ---------------------------------------------------------------------------
 // T2b.1 — AdminApiService: getOffers(offerDateId?) and deleteOfferRulesInPeriod()
@@ -183,5 +187,84 @@ describe("AdminApiService — mro-snapshot-deploy cap-2/3", () => {
     expect(req.request.body["vigDesde"]).toBeNull();
     expect(req.request.body["vigHasta"]).toBeNull();
     req.flush({ snapshot_id: 78, snapshot_name: "WF Snapshot 2026-06-02 12:01" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WU-7 (PR2, config-apply-safeguard): previewApply() + confirmReplaceAll
+// ---------------------------------------------------------------------------
+
+describe("AdminApiService — config-apply-safeguard (PR2, OWASP-02)", () => {
+  let service: AdminApiService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [AdminApiService],
+    });
+    service = TestBed.inject(AdminApiService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it("previewApply sends POST /api/admin/config/apply/preview with rules (and params when present)", () => {
+    const payload = {
+      rules: [
+        {
+          rule_id: 1,
+          offerCode: "OFERTA_A",
+          stage: "PRE" as const,
+          rule_name: "Regla",
+          priority: 900,
+          enabled: true,
+          stop_processing: false,
+          offer_date_id: null,
+          actions: [],
+          conditions: [],
+        },
+      ],
+    };
+
+    service.previewApply(payload).subscribe();
+
+    const req = httpMock.expectOne("/api/admin/config/apply/preview");
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body["rules"]).toEqual(payload.rules);
+    req.flush({
+      offerCodes: ["OFERTA_A"],
+      rulesToDelete: 0,
+      paramsToDelete: 0,
+      rulesToInsert: 1,
+      paramsToInsert: 0,
+      perOffer: [],
+    });
+  });
+
+  it("previewApply does NOT send comment or confirmReplaceAll fields", () => {
+    service.previewApply({ rules: [] }).subscribe();
+
+    const req = httpMock.expectOne("/api/admin/config/apply/preview");
+    expect(Object.prototype.hasOwnProperty.call(req.request.body, "comment")).toBeFalse();
+    expect(Object.prototype.hasOwnProperty.call(req.request.body, "confirmReplaceAll")).toBeFalse();
+    req.flush({ offerCodes: [], rulesToDelete: 0, paramsToDelete: 0, rulesToInsert: 0, paramsToInsert: 0, perOffer: [] });
+  });
+
+  it("applyConfig sends confirmReplaceAll:true in the HTTP POST body", () => {
+    const payload: AdminConfigApplyPayload = {
+      rules: [],
+      comment: "Motivo",
+      confirmReplaceAll: true,
+    };
+
+    service.applyConfig(payload).subscribe();
+
+    const req = httpMock.expectOne("/api/admin/config/apply");
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body["confirmReplaceAll"]).toBeTrue();
+    req.flush({ applied: { rules: 0, params: 0 }, offerCodes: [], snapshot_id: 1 });
   });
 });
