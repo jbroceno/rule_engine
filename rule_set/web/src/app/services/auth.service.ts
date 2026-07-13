@@ -17,6 +17,26 @@ export class AuthService {
   /** Computed signal: true when a token is stored in localStorage. */
   readonly isAuthenticated = computed(() => this.tokenSig() !== null);
 
+  /**
+   * Computed signal: the `role` claim decoded client-side from the JWT payload.
+   * UI-defense only — no signature verification needed here, the real
+   * authorization gate is the server's `requireRole` middleware. Falsy
+   * (null) when there's no token or the token is malformed.
+   */
+  readonly role = computed<string | null>(() => {
+    const token = this.tokenSig();
+    if (!token) return null;
+    const payload = AuthService.decodeJwtPayload(token);
+    return typeof payload?.["role"] === "string" ? (payload["role"] as string) : null;
+  });
+
+  /**
+   * Computed signal: true when the decoded `role` claim is "admin".
+   * Normalized the same way as the backend's `normalizeRole()` (trim +
+   * lowercase) since `dbo.cfg_user.role` has no DB-level casing constraint.
+   */
+  readonly isAdmin = computed(() => this.role()?.trim().toLowerCase() === "admin");
+
   constructor(private readonly http: HttpClient) {}
 
   /** POST /api/auth/login — stores the returned token in localStorage. */
@@ -43,5 +63,25 @@ export class AuthService {
       localStorage.removeItem(TOKEN_KEY);
     }
     this.tokenSig.set(token);
+  }
+
+  /**
+   * Base64url-decodes the payload segment (2nd part) of a JWT and parses it
+   * as JSON. Returns null (never throws) if the token doesn't have the
+   * expected 3-segment shape or the payload isn't valid base64url/JSON.
+   */
+  private static decodeJwtPayload(token: string): Record<string, unknown> | null {
+    try {
+      const parts = token.split(".");
+      if (parts.length !== 3) return null;
+      let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const paddingNeeded = (4 - (base64.length % 4)) % 4;
+      base64 += "=".repeat(paddingNeeded);
+      const json = atob(base64);
+      const parsed = JSON.parse(json);
+      return typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
   }
 }

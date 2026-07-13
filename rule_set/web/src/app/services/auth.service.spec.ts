@@ -4,6 +4,18 @@ import { HttpClientTestingModule, HttpTestingController } from "@angular/common/
 import { AuthService } from "./auth.service";
 
 // ---------------------------------------------------------------------------
+// Test helper — builds a fake JWT (base64url header.payload.signature) so
+// tests never depend on the real backend/jsonwebtoken.
+// ---------------------------------------------------------------------------
+function makeToken(payload: Record<string, unknown>): string {
+  const toBase64Url = (obj: Record<string, unknown>): string =>
+    btoa(JSON.stringify(obj)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const header = toBase64Url({ alg: "HS256", typ: "JWT" });
+  const body = toBase64Url(payload);
+  return `${header}.${body}.fake-signature`;
+}
+
+// ---------------------------------------------------------------------------
 // AuthService unit tests
 // ---------------------------------------------------------------------------
 
@@ -80,5 +92,48 @@ describe("AuthService", () => {
     expect(localStorage.getItem("auth_token")).toBeNull();
     expect(service.isAuthenticated()).toBeFalse();
     expect(service.getToken()).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // role() / isAdmin() — T-13b: client-side JWT payload decode (UI defense only)
+  // -------------------------------------------------------------------------
+  it("role() and isAdmin() are falsy when no token is stored", () => {
+    expect(service.role()).toBeFalsy();
+    expect(service.isAdmin()).toBeFalse();
+  });
+
+  it("role() returns 'admin' and isAdmin() is true for a valid admin token", () => {
+    const token = makeToken({ userId: 1, email: "admin@bank.com", role: "admin" });
+    service.login("admin@bank.com", "secret").subscribe();
+    httpMock.expectOne("/api/auth/login").flush({ token, expiresIn: "8h" });
+
+    expect(service.role()).toBe("admin");
+    expect(service.isAdmin()).toBeTrue();
+  });
+
+  it("role() returns 'viewer' and isAdmin() is false for a valid viewer token", () => {
+    const token = makeToken({ userId: 2, email: "viewer@bank.com", role: "viewer" });
+    service.login("viewer@bank.com", "secret").subscribe();
+    httpMock.expectOne("/api/auth/login").flush({ token, expiresIn: "8h" });
+
+    expect(service.role()).toBe("viewer");
+    expect(service.isAdmin()).toBeFalse();
+  });
+
+  it("role() and isAdmin() are falsy (not throwing) for a malformed token", () => {
+    service.login("user@bank.com", "secret").subscribe();
+    httpMock.expectOne("/api/auth/login").flush({ token: "not-a-valid-jwt", expiresIn: "8h" });
+
+    expect(() => service.role()).not.toThrow();
+    expect(service.role()).toBeFalsy();
+    expect(service.isAdmin()).toBeFalse();
+  });
+
+  it("isAdmin() is true regardless of the role claim's casing (matches backend normalizeRole)", () => {
+    const token = makeToken({ userId: 3, email: "admin2@bank.com", role: "Admin" });
+    service.login("admin2@bank.com", "secret").subscribe();
+    httpMock.expectOne("/api/auth/login").flush({ token, expiresIn: "8h" });
+
+    expect(service.isAdmin()).toBeTrue();
   });
 });

@@ -24,11 +24,17 @@
     @if (authService.isAuthenticated()) {
       <div class="topbar-actions">
         <nav aria-label="Navegacion principal">
-          <a routerLink="/offer-dates" routerLinkActive="active">Períodos</a>
+          @if (authService.isAdmin()) {
+            <a routerLink="/offer-dates" routerLinkActive="active">Períodos</a>
+          }
           <a routerLink="/ofertas" routerLinkActive="active">Ofertas</a>
-          <a routerLink="/configurador" routerLinkActive="active">Configurador</a>
+          @if (authService.isAdmin()) {
+            <a routerLink="/configurador" routerLinkActive="active">Configurador</a>
+          }
           <a routerLink="/configuracion" routerLinkActive="active">Configuracion</a>
-          <a routerLink="/snapshots" routerLinkActive="active">Snapshots</a>
+          @if (authService.isAdmin()) {
+            <a routerLink="/snapshots" routerLinkActive="active">Snapshots</a>
+          }
           <a routerLink="/simulador-init" routerLinkActive="active">Simulador INIT</a>
           <a routerLink="/simulador-pre" routerLinkActive="active">Simulador PRE</a>
           <a routerLink="/simulador-final" routerLinkActive="active">Simulador FINAL</a>
