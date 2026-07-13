@@ -8,6 +8,14 @@
 --   2) Run: node scripts/seed_user.mjs --email <op> --password <secret>
 --   3) Set JWT_SECRET in api/.env.
 --   4) Only then deploy/start the build that has authMiddleware mounted in app.js.
+--
+-- ROLES (RBAC, OWASP-01): the `role` column is enforced against the catalog
+-- ALLOWED_ROLES = ["admin", "viewer"] (api/utils/rule_catalogs.js), consumed by
+-- the requireRole("admin") middleware gating /api/admin/* and /api/workflow/*
+-- (api/middleware/require_role.js). "admin" is the default and can operate the
+-- full API surface; "viewer" is authenticated but gets 403 on admin/workflow
+-- routes. Seed a viewer user with:
+--   node scripts/seed_user.mjs --email <viewer-email> --password <secret> --role viewer
 
 -- El contexto de base de datos lo fija quien ejecuta el script
 -- (p. ej. `sqlcmd -d <BD>`), no se hardcodea aquí.

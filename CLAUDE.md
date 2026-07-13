@@ -222,6 +222,9 @@ Protege **todas** las rutas `/api/*` excepto exactamente `GET /api/health` y `PO
 
 El middleware se monta en `app.js` **después** de `express.json()` y **antes** de `app.use("/api", apiRoutes)`. La comprobación de rutas públicas usa method+path exactos (`GET /api/health`, `POST /api/auth/login`) para evitar que `/api/healthcheck` o futuros `/api/auth/refresh` queden accidentalmente expuestos.
 
+**Middleware RBAC** (`api/middleware/require_role.js`):
+Factory `requireRole(...roles)`, montado como segundo middleware en el único punto de montaje de cada router privilegiado (`api/routes/index.js`): `router.use("/admin", requireRole("admin"), adminRoutes)` y `router.use("/workflow", requireRole("admin"), workflowRoutes)`. Como `authMiddleware` ya garantiza `req.user` para estas rutas, `requireRole` solo lee `req.user.role`: `403` si el rol no está en la lista permitida (rol insuficiente o no reconocido — nunca un 5xx), `401` defensivo si `req.user` faltara. Catálogo `ALLOWED_ROLES = new Set(["admin", "viewer"])` + `normalizeRole(v)` en `api/utils/rule_catalogs.js`, siguiendo la misma convención que `ALLOWED_STAGES`/`normalizeStage`. Rutas públicas, `/api/simulate/*` y `GET /api/config` no llevan este gate — solo `/api/admin/*` y `/api/workflow/*` lo exigen.
+
 ### Simulation & config
 
 | Method | Path | Description |
@@ -450,15 +453,22 @@ Mismo patrón ya demostrado por `mssql` (`import sql from "mssql"` en `sql_clien
 | `user_id` | INT IDENTITY PK | |
 | `email` | NVARCHAR(200) NOT NULL | UNIQUE constraint `UQ_cfg_user_email` |
 | `password_hash` | NVARCHAR(300) NOT NULL | Hash bcrypt (`$2a$10$…`, ~60 chars) |
-| `role` | NVARCHAR(50) DEFAULT `'admin'` | Almacenado en el JWT; sin comprobación RBAC en esta versión |
+| `role` | NVARCHAR(50) DEFAULT `'admin'` | Almacenado en el JWT; validado contra `ALLOWED_ROLES` (RBAC, ver abajo) por `requireRole` en `/api/admin/*` y `/api/workflow/*` |
 | `enabled` | BIT DEFAULT `1` | Usuario deshabilitado → login rechazado con 401 genérico |
 | `created_at` | DATETIME2(0) DEFAULT SYSDATETIME() | |
+
+#### Catálogo de roles (`ALLOWED_ROLES`)
+
+`api/utils/rule_catalogs.js` define `ALLOWED_ROLES = new Set(["admin", "viewer"])` (+ `normalizeRole(v)`), consumido por el middleware `requireRole(...roles)` (`api/middleware/require_role.js`) montado sobre `/api/admin/*` y `/api/workflow/*`. `admin` tiene acceso completo; `viewer` está autenticado (JWT válido) pero recibe `403` en rutas admin/workflow — no queda desautenticado (sin logout/redirect en el frontend).
 
 ### Alta del primer usuario
 
 ```bash
 # Desde rule_set/
 node scripts/seed_user.mjs --email admin@example.com --password 's3cret' [--role admin]
+
+# Alta de un usuario viewer (solo lectura, sin acceso a /admin ni /workflow):
+node scripts/seed_user.mjs --email viewer@example.com --password 's3cret' --role viewer
 
 # Si --password se omite, el script pide la contraseña de forma interactiva (readline, sin enmascarar).
 # Para CI/no-interactivo, usar la variable de entorno SEED_PASSWORD.
