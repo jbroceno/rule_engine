@@ -69,14 +69,16 @@ chain_plan:
     - pr: 2
       name: apply-safeguard
       work_units: [WU-5, WU-6, WU-7, WU-8]
-      status: pending
+      status: applied
+      branch: feat/rbac-and-config-safeguards-apply-safeguard
     - pr: 3
       name: snapshot-integrity
       work_units: [WU-9, WU-10, WU-11, WU-12]
-      status: pending
+      status: applied
+      branch: feat/rbac-and-config-safeguards-snapshot-integrity
     - pr: 4
       name: frontend-polish
       work_units: [WU-13]
       status: pending
 
-next_action: review + open PR1 (rbac, WU-1..WU-4) on branch feat/rbac-and-config-safeguards-rbac; then sdd-apply (PR2 — apply-safeguard, WU-5..WU-8)
+next_action: review + open PR3 (snapshot-integrity, WU-9..WU-12) on branch feat/rbac-and-config-safeguards-snapshot-integrity (stacked on feat/rbac-and-config-safeguards-apply-safeguard); then sdd-apply (PR4 — frontend polish, WU-13)

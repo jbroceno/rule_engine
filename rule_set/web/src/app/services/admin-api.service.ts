@@ -4,8 +4,10 @@ import { Observable, catchError, throwError } from "rxjs";
 
 import {
   AdminConfigApplyPayload,
+  AdminConfigApplyPreviewPayload,
   AdminConfigApplyResponse,
   AdminConfigExport,
+  ApplyImpact,
   AdminResetSeedPayload,
   AdminResetSeedResponse,
   AdminOffer,
@@ -52,6 +54,26 @@ import {
   AdminWorkflowPublicarResponse,
   AdminSnapshotContentResponse,
 } from "../models/admin.models";
+
+/**
+ * Fix 2 (code review PR3, 2026-07-14): a plain `Error` thrown by `handleError`
+ * used to carry ONLY the server's translated message, discarding
+ * `HttpErrorResponse.status` entirely — callers that needed to distinguish a
+ * specific HTTP status (e.g. 409 snapshot-integrity failure) had no choice
+ * but to regex-match the exact Spanish message text, duplicated independently
+ * from the backend's exact string. `AdminApiError` preserves `status` as a
+ * real property while remaining an `Error` (so every existing caller that
+ * only reads `.message` keeps working unchanged).
+ */
+export class AdminApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = "AdminApiError";
+  }
+}
 
 @Injectable({ providedIn: "root" })
 export class AdminApiService {
@@ -205,6 +227,13 @@ export class AdminApiService {
       .pipe(catchError((error) => this.handleError(error)));
   }
 
+  /** Read-only preview of what applyConfig(...) would delete/insert — no comment/confirmReplaceAll required. */
+  previewApply(payload: AdminConfigApplyPreviewPayload): Observable<ApplyImpact> {
+    return this.http
+      .post<ApplyImpact>(`${this.baseUrl}/config/apply/preview`, payload)
+      .pipe(catchError((error) => this.handleError(error)));
+  }
+
   resetSeed(payload: AdminResetSeedPayload): Observable<AdminResetSeedResponse> {
     return this.http
       .post<AdminResetSeedResponse>(`${this.baseUrl}/config/reset-seed`, payload)
@@ -318,7 +347,7 @@ export class AdminApiService {
 
   private handleError(error: HttpErrorResponse) {
     const message = this.extractErrorMessage(error);
-    return throwError(() => new Error(message));
+    return throwError(() => new AdminApiError(message, error.status));
   }
 
   private extractErrorMessage(error: HttpErrorResponse): string {

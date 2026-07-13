@@ -52,7 +52,9 @@
   </form>
 
   <p class="state success" *ngIf="actionSuccess() as msg">{{ msg }}</p>
-  <p class="state error" *ngIf="actionError() as msg">{{ msg }}</p>
+  <p class="state error" [class.integrity-error]="actionErrorKind() === 'integrity'" *ngIf="actionError() as msg">
+    <strong *ngIf="actionErrorKind() === 'integrity'">Error de integridad del snapshot: </strong>{{ msg }}
+  </p>
 
   <p class="state" *ngIf="loading()">Cargando snapshots...</p>
   <div class="state error" *ngIf="!loading() && error() as msg">

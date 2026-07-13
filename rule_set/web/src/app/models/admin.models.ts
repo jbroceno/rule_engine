@@ -240,12 +240,37 @@ export interface AdminConfigApplyPayload {
   params?: AdminParamsItem[];
   comment: string;
   createdBy?: string;
+  confirmReplaceAll: boolean;
 }
 
 export interface AdminConfigApplyResponse {
   applied: { rules: number; params: number };
   offerCodes: string[];
   snapshot_id: number;
+}
+
+/** Payload accepted by the read-only preview endpoint — no comment/confirmReplaceAll required. */
+export interface AdminConfigApplyPreviewPayload {
+  rules: AdminRuleItem[];
+  params?: AdminParamsItem[];
+}
+
+/** Response from POST /admin/config/apply/preview (OWASP-02). */
+export interface ApplyImpactPerOffer {
+  offerCode: string;
+  rulesToDelete: number;
+  paramsToDelete: number;
+  rulesToInsert: number;
+  paramsToInsert: number;
+}
+
+export interface ApplyImpact {
+  offerCodes: string[];
+  rulesToDelete: number;
+  paramsToDelete: number;
+  rulesToInsert: number;
+  paramsToInsert: number;
+  perOffer: ApplyImpactPerOffer[];
 }
 
 export interface AdminResetSeedPayload {
@@ -293,6 +318,13 @@ export interface AdminSnapshotListQuery {
   pageSize?: number;
 }
 
+/** Integrity verdict for a restored snapshot (OWASP-10). "failed" never reaches
+ *  the frontend as a success payload — it is rejected as an HTTP 409 instead. */
+export interface RestoreIntegrity {
+  status: "verified" | "legacy";
+  checksumPresent: boolean;
+}
+
 export interface AdminSnapshotRestoreResponse {
   applied?: { rules: number; params: number };
   offerCodes?: string[];
@@ -300,6 +332,7 @@ export interface AdminSnapshotRestoreResponse {
   published?: boolean;
   rules?: number;
   params?: number;
+  integrity?: RestoreIntegrity;
 }
 
 export interface AdminSnapshotDeleteResponse {
