@@ -643,3 +643,158 @@ PR1 (24 pre-existing failures) and PR2 (+5 more).
 Only T-09 through T-12 are checked off in `tasks.md` in this batch. T-13 (frontend polish: role
 decode, nav hiding — T-13a was already completed in PR1) remains untouched and stays `[ ]`/`[x]`
 as it was before this batch, to be implemented in PR4 per `state.yaml` § `chain_plan`.
+
+---
+
+## Code-review findings and fixes (2026-07-14)
+
+A fresh-context adversarial code review of PR3 (WU-9..WU-12) ran on this branch
+(`feat/rbac-and-config-safeguards-snapshot-integrity`, stacked on
+`feat/rbac-and-config-safeguards-apply-safeguard`) before the PR was opened. It confirmed 4 real
+findings, all approved by the user, fixed on the same branch as 3 commits — no push, no PR opened.
+
+### Finding 1 (highest priority) — `createWorkflowSnapshot` never computed a checksum; WF-origin
+### snapshots were permanently outside the OWASP-10 protection
+
+**What was wrong**: `createWorkflowSnapshot` (`admin_workflow_service.js`) did its own raw
+`INSERT INTO dbo.cfg_config_snapshot` without ever calling `createSnapshot()` or computing a
+checksum — every WF-origin snapshot row got `checksum = NULL`, so `verifySnapshotChecksum` always
+classified it `"legacy"` (a warning, never a 409 rejection) at restore time. The entire
+tamper-detection mechanism this PR exists to add never protected this whole class of snapshots
+(anything created via "Snapshot WF" — `POST /admin/snapshots/workflow` — or the pre-publish safety
+snapshot inside `postWorkflowPublicar`, both of which call `createWorkflowSnapshot`).
+
+**Fix applied (TDD)**: `assembleWfSnapshotPayload(rawSpJson, vigDesde, createdBy, secret = "")`
+gained a 4th parameter and now also computes `checksum`, calling the SAME
+`computeSnapshotChecksum` from `api/utils/snapshot_integrity.js` (never reimplemented) over the
+EXACT `rulesJson`/`paramsJson` strings it returns — the identical critical invariant already
+established for `createSnapshot` (never re-stringify; hash the exact bytes persisted). The
+default `secret = ""` keeps the 5 pre-existing 3-argument calls in
+`workflow_snapshot_roundtrip.test.js` (T2.4a–e) working unchanged. `createWorkflowSnapshot` now
+passes `env.snapshot.hmacSecret` as the 4th argument and adds `checksum` to the `INSERT` column
+list/values.
+
+Extracting the checksum computation into `assembleWfSnapshotPayload` (a pure function, no I/O)
+rather than inline in `createWorkflowSnapshot` was a deliberate design choice: it made the fix
+genuinely unit-testable without any DB dependency, matching the same "extract to a pure function"
+principle already used for `deriveApplyScope` in PR2's fixes.
+
+**TDD (RED first)**: added 4 pure unit tests (no DB) to `workflow_snapshot_roundtrip.test.js`
+asserting `assembleWfSnapshotPayload` returns a valid 64-hex-char checksum, that it matches
+`computeSnapshotChecksum` called independently on the same strings/secret, that different content
+produces a different checksum, and that the 3-argument compatibility call still works. Confirmed
+RED via `git stash` on `admin_workflow_service.js`: 5 tests failed (regex/equality assertions
+against `payload.checksum`, which was `undefined` — the 4th parameter was silently ignored by the
+old 3-parameter function and no `checksum` field existed). Confirmed GREEN after `git stash pop`:
+all 4 pure unit tests pass. Also added 1 integration-level test (`createWorkflowSnapshot` +
+`restoreSnapshot` end-to-end, asserting `integrity.status === "verified"`), `{ skip: !hasSqlCredentials() || !hasWfSqlCredentials() }` — this one could not be verified end-to-end in this
+sandbox (same pre-existing SQL-connectivity limitation documented for every other integration test
+in this change; `hasSqlCredentials()`/`hasWfSqlCredentials()` both return `true` because `.env` has
+values set, but there is no reachable SQL Server). Flagged as an action item for the reviewer to
+re-run this test against live POC + WF SQL Servers before merging PR3.
+
+**Commit**: `e01d475` — "Fix 1: createWorkflowSnapshot tambien calcula y persiste checksum
+(OWASP-10)"
+
+### Finding 2 — frontend detected the 409 integrity rejection by regex-matching translated text
+### instead of the real HTTP status
+
+**What was wrong**: `snapshots-page.component.ts`'s `isIntegrityError(message)` matched the
+translated Spanish error text via `/integridad del snapshot/i`, duplicated independently from the
+exact string in `admin_service.js`. This was possible only because `AdminApiService.handleError()`
+built `new Error(message)` from just the JSON body's `message` field, discarding
+`HttpErrorResponse.status` entirely — any future wording change on either side (backend message or
+frontend regex) would silently break the detection without any test failing to catch it.
+
+**Fix applied (TDD)**: new exported class `AdminApiError extends Error { status?: number }` in
+`admin-api.service.ts`; `handleError()` now throws `new AdminApiError(message, error.status)`
+instead of a plain `Error`. Since `AdminApiError` still extends `Error`, every OTHER caller across
+the app that only reads `.message` continues to work unchanged (no disruption). `snapshots-page
+.component.ts`'s `isIntegrityError()` now takes the full `AdminApiError` and checks
+`err.status === 409` as the PRIMARY detection, keeping the message regex only as a defensive
+fallback (e.g. for the unlikely case `status` is missing, such as a pure client-side/network
+error). The success-path message display (`formatIntegritySuffix`) was untouched — only the
+DETECTION mechanism changed, not what's shown to the user.
+
+**TDD (RED first)**: extended `admin-api.service.spec.ts` (+3 tests: a 409 propagates
+`status: 409` with the integrity message; a 409 with a COMPLETELY DIFFERENT message body still
+propagates `status: 409`, proving detection is independent of exact text; a 500 propagates
+`status: 500`, not confused with the 409 case) and `snapshots-page.component.spec.ts` (+1 test: a
+409 with a message unrelated to "integridad" still sets `actionErrorKind() === "integrity"`).
+Confirmed RED via `git stash` on both `admin-api.service.ts` and `snapshots-page.component.ts`:
+Angular build failed with `TS2305: Module "../services/admin-api.service" has no exported member
+'AdminApiError'` in both spec files — the same "missing export = legitimate RED" convention
+already used for `deriveApplyScope` in PR2. Confirmed GREEN after `git stash pop`: 21/21 SUCCESS
+across both spec files.
+
+**Commit**: `ef888c0` — "Fix 2: propaga el HTTP status real en vez de regex sobre el texto
+traducido"
+
+### Finding 3 — `checksumPresent` re-derived a value `verifySnapshotChecksum` had already computed
+
+**What was wrong**: `checksumPresent` in `restoreSnapshot` was computed independently as
+`row.checksum != null && row.checksum !== ""`, which is always exactly `verify.status !== "legacy"`
+by construction (`verifySnapshotChecksum` already returns `"legacy"` iff `storedChecksum` is
+`null`/`""`). The duplicated condition was redundant and risked drifting from
+`verifySnapshotChecksum`'s own criterion if that function's "legacy" logic ever changed without a
+matching update here.
+
+**Fix applied**: `checksumPresent` now derives from `verify.status !== "legacy"` instead of
+re-checking `row.checksum`. Purely internal derivation change — no observable behavior difference
+(verified: the same tests pass before and after, since the two expressions are logically
+identical).
+
+**Commit**: `098d3bc` — "Fix 3+4: simplifica checksumPresent y avisa de rotacion de secreto en el
+409" (bundled with Fix 4 below — both are small, related `restoreSnapshot`/`env.js` changes).
+
+### Finding 4 — no warning anywhere that rotating `JWT_SECRET` silently invalidates all snapshot
+### checksums
+
+**What was wrong**: rotating `JWT_SECRET` without a dedicated `SNAPSHOT_HMAC_SECRET` silently turns
+every historical snapshot's checksum verification from `"verified"` to `"failed"` (indistinguishable
+from real tampering, since the recomputed HMAC uses the new secret against content hashed with the
+old one), with zero warning anywhere in code or docs.
+
+**Fix applied (minimal, documentation/message-only — NOT a structural fix)**: the 409 error message
+in `restoreSnapshot` now appends a clause suggesting a recent `SNAPSHOT_HMAC_SECRET`/`JWT_SECRET`
+rotation as an alternative explanation to tampering, without ceasing to reject the restore. A
+comment was added next to `env.snapshot.hmacSecret`'s fallback in `env.js` warning ops that rotating
+`JWT_SECRET` without a dedicated `SNAPSHOT_HMAC_SECRET` will invalidate all prior snapshot
+checksums. The underlying ambiguity (a `failed` result caused by rotation is still indistinguishable
+from a real tamper at the code level) is NOT resolved structurally — this remains an open risk,
+tracked in `design.md` § Open Questions, for a future iteration (e.g. secret versioning).
+
+**Commit**: `098d3bc` — same commit as Fix 3 (see above).
+
+### Full-suite regression check (after all 4 fixes)
+
+- **Backend** (`npm test` from `rule_set/`): 328 tests, 293 pass, 33 fail, 2 skip. Test count went
+  from 323 (PR3 pre-review state) → 328 (+5: the 4 new pure unit tests for the Fix 1 checksum +
+  1 new integration-level test); pass count from 289 → 293 (+4 — the 4 pure unit tests, genuinely
+  environment-independent); fail count from 32 → 33 (+1 — exactly the 1 new
+  `T-WF-checksum-e` integration test, failing on the same pre-existing SQL-connectivity limitation
+  as every other integration test in this change, not on a new code defect). Verified by listing
+  every `not ok` test name from the full run: the failing set is precisely the 32
+  previously-documented names plus exactly 1 new one (`T-WF-checksum-e: createWorkflowSnapshot
+  persiste checksum no nulo; restoreSnapshot posterior reporta integrity.status 'verified' —
+  requiere BD POC+WF`) — **no other regressions**.
+- **Frontend** (`CHROME_BIN="/c/Program Files/Google/Chrome/Application/chrome.exe" npx ng test
+  --watch=false --browsers=ChromeHeadless` from `rule_set/web/`): **152 of 152 SUCCESS** (148 from
+  PR3's end state + 3 new `admin-api.service.spec.ts` cases + 1 new
+  `snapshots-page.component.spec.ts` case). No failures, no regressions.
+
+### Deviations from design
+
+None beyond what's documented above and amended into `design.md`: § "Technical Approach" (point
+3, checksum now covers both creation paths), § "Architecture Decisions" (2 new rows for Fix 1's
+extraction choice, plus amendments to the HMAC-secret, legacy, and momento-de-verificación rows for
+Fix 3/Fix 4/Fix 2), § "Códigos y textos de error" (409 message text amended for Fix 4), § "File
+Changes" (amended rows for `admin_service.js`, `admin_workflow_service.js`,
+`admin-api.service.ts`, `snapshots-page.component.ts`, and the 3 affected test files), and §
+"Open Questions" (Fix 4's mitigation noted, underlying risk still open).
+
+### Issues found
+
+None beyond the already-documented sandbox limitation (no live SQL Server reachable to execute the
+`T-WF-checksum-e` integration test end-to-end) — same category of limitation already present and
+accepted in PR1 (24 pre-existing failures), PR2 (+5 more), and PR3's original batch (+3 more).
