@@ -1070,5 +1070,57 @@ describe("ConfiguratorPageComponent", () => {
         jasmine.objectContaining({ confirmReplaceAll: true, comment: "Motivo de prueba PR2" }),
       );
     });
+
+    it("Fix 3: a stale preview from a closed-then-reopened dialog does not overwrite a newer preview (out-of-order responses)", () => {
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      const adminApi = TestBed.inject(AdminApiService);
+
+      const previewA$ = new Subject<ApplyImpact>();
+      const previewB$ = new Subject<ApplyImpact>();
+      const previewSpy = spyOn(adminApi, "previewApply");
+      previewSpy.and.returnValue(previewA$.asObservable());
+
+      // Open dialog #1 — fires preview A, does not resolve yet.
+      component["importedConfig"].set({ rules: [fakeRule("OFERTA_A")], params: null });
+      component["openApplyConfigDialog"]();
+      fixture.detectChanges();
+
+      // Close before A resolves.
+      component["closeConfirmDialog"]();
+      fixture.detectChanges();
+
+      // Reopen with different imported data — fires preview B.
+      previewSpy.and.returnValue(previewB$.asObservable());
+      component["importedConfig"].set({ rules: [fakeRule("OFERTA_B")], params: null });
+      component["openApplyConfigDialog"]();
+      fixture.detectChanges();
+
+      const impactB: ApplyImpact = {
+        offerCodes: ["OFERTA_B"],
+        rulesToDelete: 5,
+        paramsToDelete: 3,
+        rulesToInsert: 1,
+        paramsToInsert: 0,
+        perOffer: [
+          { offerCode: "OFERTA_B", rulesToDelete: 5, paramsToDelete: 3, rulesToInsert: 1, paramsToInsert: 0 },
+        ],
+      };
+      previewB$.next(impactB);
+      fixture.detectChanges();
+
+      // A resolves late, out of order, AFTER B already landed — must be ignored.
+      previewA$.next({
+        offerCodes: ["OFERTA_A"],
+        rulesToDelete: 99,
+        paramsToDelete: 99,
+        rulesToInsert: 99,
+        paramsToInsert: 99,
+        perOffer: [],
+      });
+      fixture.detectChanges();
+
+      expect(component["applyImpactPreview"]()).toEqual(impactB);
+    });
   });
 });

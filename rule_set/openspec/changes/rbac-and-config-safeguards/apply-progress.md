@@ -316,3 +316,167 @@ None.
 Only T-05 through T-08 are checked off in `tasks.md` in this batch. T-09 onward (snapshot
 integrity, remaining frontend polish) are untouched and remain `[ ]`, to be implemented in
 PR3/PR4 per `state.yaml` § `chain_plan`.
+
+---
+
+## Code-review findings and fixes (2026-07-14)
+
+A fresh-context adversarial code review of PR2 (WU-5..WU-8) ran on this branch
+(`feat/rbac-and-config-safeguards-apply-safeguard`, stacked on
+`feat/rbac-and-config-safeguards-rbac`) before the PR was opened. It confirmed 3 real
+findings, all approved by the user, fixed on the same branch as 2 separate commits — no
+push, no PR opened.
+
+### Finding 1+2 (root-cause refactor) — `computeApplyImpact`'s scope derivation had
+### silently diverged from `applyConfig`'s
+
+**What was wrong**: `applyConfig` and `computeApplyImpact` each derived their own notion
+of "which offerCodes/periods are in scope" independently (copy-pasted derivation logic).
+That duplication had drifted apart in two concrete bugs:
+
+- **Bug A**: `computeApplyImpact` ran a `SELECT COUNT(*) FROM dbo.cfg_offer_param ...`
+  for every offer **unconditionally**, even when `payload.params` was omitted from the
+  payload entirely. But `applyConfig`'s entire params section is wrapped in
+  `if (Array.isArray(payload.params)) { ... }` — a rules-only apply (a supported, common
+  case: "replace the rules, leave params untouched") skips params entirely. Result: the
+  preview showed a false-positive non-zero `paramsToDelete` for a rules-only apply that
+  would, in reality, touch zero param rows.
+- **Bug B**: `computeApplyImpact`'s per-offer loop only iterated `offerCodes` derived
+  from `payload.rules`. `applyConfig` separately derives `paramOfferCodes` from
+  `payload.params` — a *different* set, since a payload can legitimately contain a
+  `params` group for an offerCode with no corresponding `rules` entries in that same
+  apply. Any such offerCode was invisible in `computeApplyImpact`'s `perOffer` array and
+  its params deletion/insertion was missing from the top-level totals, even though
+  `applyConfig` WOULD disable/insert its params for real.
+
+**Fix applied**: extracted a single shared helper, exported
+`deriveApplyScope(payload, options)` in `admin_service.js` — pure/synchronous, no I/O.
+It derives and returns everything both functions need: `offerCodes` (from
+`payload.rules`), `paramOfferCodes` (from `payload.params`, `[]` if not provided),
+`hasParams` (`Array.isArray(payload.params)`), `rulePeriodIdsCsv`/`paramPeriodIdsCsv`,
+and the three scope-clause strings (`ruleScopeClause`, `directScopeClause`,
+`paramScopeClause`). `applyConfig` was refactored to call this helper instead of
+inlining the derivation — a pure extraction; its `DELETE`/`INSERT` behavior for every
+code path it already exercised is unchanged (verified by the full-suite regression run
+below). `computeApplyImpact` was refactored to call the SAME helper, then:
+
+- Bug A fix: the params-count query per offer is now guarded by `hasParams`, mirroring
+  `applyConfig`'s own `if (Array.isArray(payload.params))` check.
+- Bug B fix: the per-offer loop now iterates the union of `offerCodes` ∪
+  `paramOfferCodes` (not just `offerCodes`). An offer present only in `payload.params`
+  gets its own `perOffer` entry with `rulesToDelete: 0, rulesToInsert: 0` (accurate —
+  `applyConfig`'s rule-delete loop never touches an offerCode outside `payload.rules`)
+  plus its real param counts. The top-level `offerCodes` field in the response was also
+  changed to reflect this union (previously only listed rule-derived offers) — a
+  beneficial side effect: the frontend's "Ofertas afectadas" list now correctly includes
+  an offer affected only by params.
+
+**TDD (RED first)**: added 2 pure unit tests for `deriveApplyScope` directly (no DB,
+genuinely environment-independent) plus 2 integration-level tests for
+`computeApplyImpact`'s end-to-end behavior (`{ skip: !hasSqlCredentials() }`, matching
+the file's existing pattern) in `test/admin_apply_safeguard.test.js`:
+
+1. `deriveApplyScope: payload sin 'params' -> paramOfferCodes vacio y hasParams:false` —
+   confirmed RED by stashing the fix and re-running: failed with
+   `deriveApplyScope is not a function` (the export did not exist yet — same
+   "missing export" RED convention already established in this file for WU-5/WU-6).
+   Confirmed GREEN after the fix.
+2. `deriveApplyScope: 'params' referencia un offerCode ausente en 'rules' -> paramOfferCodes lo incluye` —
+   same RED (missing export) → GREEN.
+3. `computeApplyImpact: payload solo con 'rules' (sin 'params') -> paramsToDelete:0 en total y por oferta (Bug A)` —
+   integration-level, seeds existing enabled params for the offer and asserts they are
+   NOT reported when the payload omits `params`.
+4. `computeApplyImpact: offerCode presente solo en 'params' (sin 'rules') aparece en perOffer con conteos reales (Bug B)` —
+   integration-level, seeds two offers (one with rules, one params-only) and asserts the
+   params-only offer gets its own accurate `perOffer` entry and is included in the
+   top-level totals and `offerCodes`.
+
+Tests 3 and 4 could not be verified end-to-end in THIS sandbox (same pre-existing
+limitation as the rest of this file's integration tests: `hasSqlCredentials()` returns
+`true` because `.env` has values set, but there is no reachable SQL Server — both fail
+with the same `AppError: No se pudo conectar a SQL Server...` connectivity error in both
+the RED and GREEN states, not a logic assertion). This was verified explicitly by
+stashing/restoring `admin_service.js` and re-running: tests 1 and 2 flipped cleanly from
+RED (`TypeError: deriveApplyScope is not a function`) to GREEN; tests 3 and 4 showed the
+identical SQL-connectivity failure before and after the fix, exactly like the 3 already-
+documented pre-existing integration tests in this same file (`postAdminApply:
+confirmReplaceAll:true...`, `computeApplyImpact: conteos por offerCode correctos...`,
+`computeApplyImpact: offerCode inexistente propaga 404...`). Flagged as an action item
+for the reviewer to re-run this file against a live SQL Server before merging PR2 to get
+a true end-to-end confirmation of Bug A/B; the logic itself IS confirmed correct via the
+environment-independent `deriveApplyScope` unit tests plus manual code reading.
+
+**Commit**: `2ebc596` — "fix(admin-service): extrae deriveApplyScope compartido,
+corrige Bug A y Bug B de computeApplyImpact"
+
+### Finding 3 — frontend: `openApplyConfigDialog` didn't cancel stale preview requests
+
+**What was wrong**: `openApplyConfigDialog()` fired
+`this.adminApiService.previewApply(...).subscribe(...)` with a bare subscribe — no
+cancellation. `closeConfirmDialog()` reset the preview signals but did not cancel the
+in-flight request. If the dialog was closed and reopened (e.g. with a different imported
+config) before the first preview request resolved, the stale response could still land
+and silently overwrite `applyImpactPreview` with the WRONG offer's impact numbers —
+undermining the OWASP-02 informed-consent safeguard (the actual submitted apply payload
+is NOT affected — `executeApplyConfig()` reads `importedConfig()`/`applyConfigComment()`
+fresh at click time, not the stale preview — but the numbers the user sees before
+confirming could be wrong, which is a real UI-honesty bug for a "confirm you understand
+the impact" safeguard).
+
+**Fix applied (TDD, minimal scope)**: a generation-counter guard —
+`applyImpactRequestId` (private field), incremented both when the dialog opens (new
+preview request) and when `closeConfirmDialog()` runs (invalidate any in-flight
+request). `openApplyConfigDialog()` captures the counter value into a local `requestId`
+at request-fire time; the `next`/`error` callbacks only apply their result
+(`applyImpactPreview.set(...)` / `applyImpactError.set(...)`) if `requestId` still
+equals the current `applyImpactRequestId` when the response lands — otherwise the
+response is silently ignored. No new RxJS pattern introduced (`switchMap`/`Subject`
+cancellation): this codebase has no prior art of either pattern for HTTP calls, so a
+plain counter is the simplest, most idiomatic fix for this single call site.
+
+**Test added**: `Fix 3: a stale preview from a closed-then-reopened dialog does not
+overwrite a newer preview (out-of-order responses)` in
+`configurator-page.component.spec.ts` — opens the dialog (preview A fires via a
+`Subject`, does not resolve), closes the dialog, reopens with different imported data
+(preview B fires via a second `Subject`), resolves B, THEN resolves A late/out-of-order,
+and asserts `applyImpactPreview()` still equals B's data, not A's.
+
+**RED confirmed**: stashed the component fix, ran
+`CHROME_BIN=... npx ng test --watch=false --browsers=ChromeHeadless --include='**/configurator-page.component.spec.ts'`
+→ 1 FAILED, 58 SUCCESS. The failure showed A's stale data (`rulesToDelete: 99`,
+`offerCodes: ['OFERTA_A']`) had overwritten B's real preview — confirmed failing for the
+right reason (the actual bug reproduced), not a test/typo bug.
+
+**GREEN confirmed**: restored the fix, re-ran the same file → 59 SUCCESS (58 pre-existing
++ 1 new). Full Karma suite re-run at the end of the batch: 144 of 144 SUCCESS.
+
+**Commit**: this batch's second commit — "fix(configurator): ignora respuestas de
+previsualizacion obsoletas al reabrir el dialogo de Grabar" (includes this doc update
+and the `design.md` amendments alongside the component/spec changes).
+
+### Full-suite regression check (after both fixes)
+
+- **Backend** (`npm test` from `rule_set/`): 313 tests, 282 pass, 29 fail, 2 skip. Test
+  count went from 309 (PR2 pre-review state) → 313 (+4: 2 new `deriveApplyScope` unit
+  tests + 2 new `computeApplyImpact` Bug A/B integration tests); pass count from 280 →
+  282 (+2 — the 2 unit tests, which are genuinely environment-independent); fail count
+  from 27 → 29 (+2 — exactly the 2 new Bug A/B integration tests, both failing on the
+  same pre-existing SQL-connectivity limitation as the other 3 integration tests already
+  in this file, not on new code defects). Verified by listing every `not ok` test name
+  from the full run: the failing set is precisely the 27 previously-documented names
+  (`T-01a`..`T-01h`, `T-02a-01`..`T-02a-10`, `resetToSeed()`, `CA-005`, `CA-COD-001`,
+  `CA-VDT-004`, `CA-VDT-004b`, `WF-01`, plus the 3 pre-existing
+  `admin_apply_safeguard.test.js` integration tests) plus exactly 2 new ones
+  (`computeApplyImpact: payload solo con 'rules' (sin 'params')...`, `computeApplyImpact:
+  offerCode presente solo en 'params' (sin 'rules')...`) — **no other regressions**.
+- **Frontend** (`CHROME_BIN="/c/Program Files/Google/Chrome/Application/chrome.exe" npx
+  ng test --watch=false --browsers=ChromeHeadless` from `rule_set/web/`): **144 of 144
+  SUCCESS** (143 from PR2's end state + 1 new Fix 3 test). No failures, no regressions.
+
+### Deviations from design
+
+None beyond what's documented above. `deriveApplyScope`'s shape and both callers'
+integration were amended into `design.md` § "computeApplyImpact — read-only" and §
+"Architecture Decisions" (new row) and § "File Changes" (amended rows for
+`admin_service.js` and `configurator-page.component.ts`) — see the "Amendment
+(2026-07-14)" notes there.

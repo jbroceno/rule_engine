@@ -241,6 +241,13 @@ export class ConfiguratorPageComponent implements OnInit {
   protected readonly applyImpactPreview = signal<ApplyImpact | null>(null);
   protected readonly applyImpactLoading = signal(false);
   protected readonly applyImpactError = signal<string | null>(null);
+  // Stale-response guard (code review, 2026-07-13): incremented every time the
+  // apply-config dialog opens (new preview request) or closes (invalidate any
+  // in-flight request). A previewApply() response only applies its result if
+  // it's still the most recent request when it resolves — otherwise a preview
+  // request from a closed/reopened dialog could land late and silently
+  // overwrite a newer preview with stale numbers.
+  private applyImpactRequestId = 0;
 
   // Seed reset (feature-flagged)
   protected readonly enableSeedReset = environment.enableSeedReset;
@@ -953,6 +960,10 @@ export class ConfiguratorPageComponent implements OnInit {
     this.applyImpactPreview.set(null);
     this.applyImpactLoading.set(false);
     this.applyImpactError.set(null);
+    // Invalidate any in-flight preview request — its resolution (if it lands
+    // later) must be ignored, not overwrite the state reset above nor a
+    // subsequent dialog-open's preview (Fix 3, code review 2026-07-13).
+    this.applyImpactRequestId++;
   }
 
   protected isRulePending(ruleId: number): boolean {
@@ -1103,6 +1114,12 @@ export class ConfiguratorPageComponent implements OnInit {
     });
 
     // OWASP-02: fetch the read-only impact preview before the confirm button is enabled.
+    // Stale-response guard (Fix 3, code review 2026-07-13): capture the request
+    // token for THIS dialog-open; a resolving response is only applied if it's
+    // still the current token when it lands (closing/reopening the dialog
+    // bumps the counter, so a late/out-of-order response is silently ignored
+    // instead of overwriting a newer preview).
+    const requestId = ++this.applyImpactRequestId;
     this.applyImpactPreview.set(null);
     this.applyImpactError.set(null);
     this.applyImpactLoading.set(true);
@@ -1113,10 +1130,16 @@ export class ConfiguratorPageComponent implements OnInit {
       })
       .subscribe({
         next: (impact) => {
+          if (requestId !== this.applyImpactRequestId) {
+            return;
+          }
           this.applyImpactPreview.set(impact);
           this.applyImpactLoading.set(false);
         },
         error: (error: Error) => {
+          if (requestId !== this.applyImpactRequestId) {
+            return;
+          }
           this.applyImpactLoading.set(false);
           this.applyImpactError.set(error.message);
         },
