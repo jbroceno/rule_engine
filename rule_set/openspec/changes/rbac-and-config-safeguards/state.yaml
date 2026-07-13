@@ -65,30 +65,31 @@ chain_plan:
     - pr: 1
       name: rbac
       work_units: [WU-1, WU-2, WU-3, WU-4]
-      status: applied
+      status: merged
+      merge_commit: 05a556a
     - pr: 2
       name: apply-safeguard
       work_units: [WU-5, WU-6, WU-7, WU-8]
-      status: reviewed_fixed
-      branch: feat/rbac-and-config-safeguards-apply-safeguard
+      status: merged
+      merge_commit: bd8b9f3
       review_note: >
         Fresh-context adversarial review (2026-07-14) confirmed 3 findings, all fixed on the
-        same branch (see apply-progress.md § "Code-review findings and fixes round 2
+        same branch before merge (see apply-progress.md § "Code-review findings and fixes round 2
         (2026-07-14)"): commit 564087b (Fix 1 — computeApplyImpact/applyConfig resolver
         divergence for params-only disabled offers), commit 9114302 (Fix 2 — extracted
         dedupeParamsByKey shared helper), commit 39d4462 (Fix 3 — CLAUDE.md docs for
-        confirmReplaceAll + /admin/config/apply/preview). Full suite green (npm test): 318
-        tests, 284 pass, 0 fail, 34 skip (no SQL credentials in this sandbox). Not pushed, no
-        PR opened yet — separate step owned by the orchestrator.
+        confirmReplaceAll + /admin/config/apply/preview). Merged as GitHub PR #3.
     - pr: 3
       name: snapshot-integrity
       work_units: [WU-9, WU-10, WU-11, WU-12]
-      status: applied
-      branch: feat/rbac-and-config-safeguards-snapshot-integrity
+      status: merged
+      merge_commit: 92bb8ad
+      merge_note: Merged as GitHub PR #2 (numbering reflects PR creation order on GitHub, not this chain_plan's pr index).
     - pr: 4
       name: frontend-polish
       work_units: [WU-13]
-      status: pending
+      status: in_progress
+      branch: feat/rbac-and-config-safeguards-frontend-polish
 
 pr_verify:
   pr1:
