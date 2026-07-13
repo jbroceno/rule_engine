@@ -16,10 +16,17 @@ router.post("/simulate/init", simulateInit);
 router.post("/simulate/pre", simulatePre);
 router.post("/simulate/final", simulateFinal);
 router.use("/auth", authRoutes);
-// requireRole("admin") gates the entire admin/workflow surface at the single
-// mount point (design.md § "Punto de gate RBAC") — authMiddleware (app.js)
-// already guarantees req.user for these non-public paths.
+// requireRole("admin") gates the admin surface at the single mount point
+// (design.md § "Punto de gate RBAC") — authMiddleware (app.js) already
+// guarantees req.user for these non-public paths.
 router.use("/admin", requireRole("admin"), adminRoutes);
-router.use("/workflow", requireRole("admin"), workflowRoutes);
+// /workflow intentionally has NO role gate: workflow_routes.js only exposes
+// POST /workflow/condiciones-hipotecas, a real-time eligibility query that is
+// a peer of /simulate/* in privilege level (any authenticated role), not an
+// admin/publish action. The actual WF-publish actions (postWorkflowSnapshot,
+// postWorkflowPublicar) live under /api/admin/workflow/*, already covered by
+// the /admin gate above. Corrected during PR1 code review — see
+// openspec/changes/rbac-and-config-safeguards/proposal.md § Amendment.
+router.use("/workflow", workflowRoutes);
 
 export default router;

@@ -99,9 +99,8 @@ restauración.
   - Montar `requireRole("admin")` en el punto único de montaje del router admin
     (`api/routes/index.js:18` → `router.use("/admin", requireRole("admin"), adminRoutes)`), de modo
     que toda la superficie `/api/admin/*` queda protegida en un solo lugar.
-  - Montar el mismo `requireRole("admin")` en el montaje de `workflow_routes.js` (`index.js:19`):
-    es igualmente privilegiado (publicación a WF) y queda dentro de alcance de este change (decisión
-    confirmada, ver Open questions resueltas).
+  - `/api/workflow/*` (`workflow_routes.js`) **NO** lleva este gate — ver Amendment (2026-07-13) al
+    final del documento; queda fuera de alcance de este change.
   - Catálogo de roles en `api/utils/rule_catalogs.js` (o fichero análogo): `ALLOWED_ROLES = ["admin", "viewer"]`.
 - **OWASP-02 — salvaguarda de apply (backend)**
   - En `admin_apply_controller.js`: exigir `confirmReplaceAll === true` en el body cuando la
@@ -201,7 +200,7 @@ restauración.
 | Fichero | Cambio |
 |---|---|
 | `rule_set/api/middleware/require_role.js` | **Nuevo.** Factory `requireRole(...roles)` → middleware que exige `req.user.role` en la lista; 403 si insuficiente, 401 si falta `req.user`. |
-| `rule_set/api/routes/index.js` | `router.use("/admin", requireRole("admin"), adminRoutes)` (línea 18) y `router.use("/workflow", requireRole("admin"), workflowRoutes)` (línea 19). |
+| `rule_set/api/routes/index.js` | `router.use("/admin", requireRole("admin"), adminRoutes)` (línea 18). `/workflow` NO cambia — ver Amendment (2026-07-13). |
 | `rule_set/api/utils/rule_catalogs.js` | Añadir `ALLOWED_ROLES = ["admin", "viewer"]` + normalizador. |
 | `rule_set/api/controllers/admin_apply_controller.js` | Exigir `confirmReplaceAll === true` (400 si falta); rama/endpoint de previsualización dry-run. |
 | `rule_set/api/routes/admin_routes.js` | Ruta nueva de previsualización (`POST /config/apply/preview`) si se opta por endpoint separado. |
@@ -251,8 +250,8 @@ restauración.
 
 Resueltas con el usuario tras la propuesta inicial:
 
-1. ~~¿Gate de rol también sobre `/api/workflow/*`?~~ **Resuelto: sí**, incluido en alcance (ver Scope
-   y Affected files).
+1. ~~¿Gate de rol también sobre `/api/workflow/*`?~~ **Resuelto inicialmente: sí** — **corregido
+   después en la revisión de código de PR1, ver Amendment (2026-07-13) más abajo: NO**.
 2. ~~¿Previsualización como endpoint separado o flag `dryRun`?~~ **Resuelto: endpoint separado**
    `POST /admin/config/apply/preview`.
 3. ~~¿`SNAPSHOT_HMAC_SECRET` dedicado obligatorio o con fallback?~~ **Resuelto: fallback a
@@ -264,3 +263,29 @@ Pendiente para spec/diseño:
 5. **Códigos y textos exactos** del 403 ("No tienes permisos de administrador."), del 400 de apply
    ("Debes confirmar el reemplazo total.") y del 409 de integridad ("La integridad del snapshot no se
    pudo verificar."). Redacción final en español en spec/diseño.
+
+## Amendment (2026-07-13) — corrección durante la revisión de código de PR1
+
+Una revisión de código adversarial de PR1 (WU-1..WU-4, RBAC) sobre este branch detectó que el
+gate `requireRole("admin")` se había montado también en `router.use("/workflow", requireRole("admin"),
+workflowRoutes)`, replicando la decisión "resuelta" en Open questions #1 arriba. **Esa decisión era
+incorrecta** y se revierte:
+
+- `workflow_routes.js` solo expone `POST /workflow/condiciones-hipotecas`, una consulta de
+  elegibilidad en tiempo real — funcionalmente un **par de `/api/simulate/*`** (que correctamente
+  NO lleva gate de rol), **no** una acción de administración/publicación.
+- Las acciones reales de publicación a WF (`postWorkflowSnapshot`, `postWorkflowPublicar`) **ya**
+  viven bajo `/api/admin/workflow/*`, montadas dentro de `adminRoutes` y por tanto **ya protegidas**
+  por el gate `/admin` existente — no requieren ningún cambio adicional.
+- Gatear `/api/workflow/*` con `requireRole("admin")` habría roto a cualquier llamador externo
+  (Workflow/BPM) que no porte un JWT con rol admin, sin beneficio de seguridad real (la superficie
+  ya es de solo consulta y de igual privilegio que `/simulate/*`).
+
+**Corrección aplicada**: `router.use("/workflow", requireRole("admin"), workflowRoutes)` vuelve a
+`router.use("/workflow", workflowRoutes)` (sin gate de rol — igual que antes de este change;
+`authMiddleware` en la raíz de la app sigue exigiendo un JWT válido de cualquier rol, sin cambios).
+`router.use("/admin", requireRole("admin"), adminRoutes)` se mantiene exactamente igual — confirmado
+correcto por la spec.
+
+Este documento (Scope, Affected files, Open questions #1 arriba) se ha editado in-place para
+reflejar la corrección; este apartado documenta el porqué del cambio para quien revise el historial.

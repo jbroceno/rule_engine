@@ -11,10 +11,13 @@
 --
 -- ROLES (RBAC, OWASP-01): the `role` column is enforced against the catalog
 -- ALLOWED_ROLES = ["admin", "viewer"] (api/utils/rule_catalogs.js), consumed by
--- the requireRole("admin") middleware gating /api/admin/* and /api/workflow/*
--- (api/middleware/require_role.js). "admin" is the default and can operate the
--- full API surface; "viewer" is authenticated but gets 403 on admin/workflow
--- routes. Seed a viewer user with:
+-- the requireRole("admin") middleware gating /api/admin/* ONLY
+-- (api/middleware/require_role.js). /api/workflow/* is NOT gated by role — it
+-- behaves like /api/simulate/*, authenticated (any role) — see
+-- api/routes/index.js comment and openspec/changes/rbac-and-config-safeguards/
+-- proposal.md § Amendment. "admin" is the default and can operate the full API
+-- surface; "viewer" is authenticated but gets 403 on admin routes. Seed a
+-- viewer user with:
 --   node scripts/seed_user.mjs --email <viewer-email> --password <secret> --role viewer
 
 -- El contexto de base de datos lo fija quien ejecuta el script

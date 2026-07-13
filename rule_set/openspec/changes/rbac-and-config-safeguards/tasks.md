@@ -4,6 +4,12 @@
 > Phase: tasks
 > Delivery strategy: ask-on-risk
 > TDD mode: STRICT (tests before implementation, per design.md § Testing Strategy)
+>
+> **Amendment (2026-07-13)**: a fresh-context code review of PR1 (WU-1..WU-4) surfaced 3 findings,
+> fixed on the same branch before opening the PR: (1) reverted an incorrect `/api/workflow/*` role
+> gate (see WU-3 note below); (2) added fail-fast validation to `requireRole(...)` for unrecognized
+> role arguments; (3) pulled T-13a (interceptor 403 handling) forward from PR4 into PR1. See
+> `apply-progress.md` for the full findings/fixes log.
 
 ---
 
@@ -73,9 +79,18 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `api/routes/index.js` — MODIFY
 
-- [x] **T-03** `router.use("/admin", requireRole("admin"), adminRoutes)` and `router.use("/workflow", requireRole("admin"), workflowRoutes)`. No change to `/simulate/*`, `/config`, `/health`, `/auth/login`.
-  - **Acceptance**: manual/integration check — `/api/simulate/*` and `GET /api/config` unaffected; `/api/admin/*` and `/api/workflow/*` now 403 for non-admin.
-  - **Spec ref**: admin-rbac "Usuario admin accede con normalidad", "Rutas no administrativas no exigen rol".
+> **Amendment (2026-07-13, PR1 code review)**: original T-03 also mounted `requireRole("admin")` on
+> `/workflow`. Corrected — `/api/workflow/*` is a peer of `/api/simulate/*` (real-time eligibility
+> query, not an admin/publish action) and must stay ungated; the actual WF-publish actions already
+> live under `/api/admin/workflow/*`, covered by the `/admin` gate. T-03 is now admin-only. See
+> `proposal.md § Amendment (2026-07-13)`.
+
+- [x] **T-03** `router.use("/admin", requireRole("admin"), adminRoutes)`. `/workflow` stays
+  ungated (`router.use("/workflow", workflowRoutes)`, unchanged — see Amendment above). No change to
+  `/simulate/*`, `/config`, `/health`, `/auth/login`.
+  - **Acceptance**: manual/integration check — `/api/simulate/*`, `GET /api/config`, and
+    `/api/workflow/*` unaffected; `/api/admin/*` now 403 for non-admin.
+  - **Spec ref**: admin-rbac "Usuario admin accede con normalidad", "Rutas no administrativas no exigen rol", "Usuario viewer NO recibe 403 en ruta de workflow (fuera de alcance)".
 
 ---
 
@@ -177,10 +192,22 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `web/src/app/interceptors/auth.interceptor.ts` — MODIFY; `web/src/app/services/auth.service.ts` — MODIFY; `web/src/app/app.ts` — MODIFY; `web/src/app/app.html` — MODIFY
 
-- [ ] **T-13a** Interceptor: branch `err.status === 403` → show "sin permisos" notice, no `logout()`, no redirect; `401` behavior unchanged.
+> **Amendment (2026-07-13, PR1 code review)**: T-13a was pulled forward and completed as part of
+> PR1 (not PR4/standalone) — see `proposal.md` risk on the interceptor exposure window (PR1 already
+> ships `sql/users.sql` docs telling operators to seed a `viewer` user now, so the 403-as-raw-error
+> gap was a real exposure, not theoretical). T-13b and T-13c remain in PR4 as originally planned —
+> untouched by this amendment.
+
+- [x] **T-13a** Interceptor: branch `err.status === 403` → no `logout()`, no redirect (distinct from
+  `401`); re-throw so the calling component can surface a permission message. **Completed in PR1**
+  (pulled forward from PR4 during code review, 2026-07-13). Karma/Jasmine test added in
+  `auth.interceptor.spec.ts`; TS build verified (bundle compiles cleanly); could not execute
+  `npm run web:test` in this sandbox — no Chrome/Chromium binary available
+  (`karma-chrome-launcher` fails with "Cannot find the binary ... Please set env variable
+  CHROME_BIN"). Verify in an environment with a browser before merging PR1.
   - **Spec ref**: admin-rbac "403 no desloguea al usuario", "401 conserva el comportamiento de logout".
-- [ ] **T-13b** `auth.service.ts`: decode JWT payload client-side (base64url) to expose `role` and `isAdmin` computed signal (UI defense only, no signature check needed client-side).
-- [ ] **T-13c** `app.ts`/`app.html`: hide `/configurador`, `/snapshots`, `/offer-dates` nav links when `!authService.isAdmin()`.
+- [ ] **T-13b** `auth.service.ts`: decode JWT payload client-side (base64url) to expose `role` and `isAdmin` computed signal (UI defense only, no signature check needed client-side). **Still in PR4.**
+- [ ] **T-13c** `app.ts`/`app.html`: hide `/configurador`, `/snapshots`, `/offer-dates` nav links when `!authService.isAdmin()`. **Still in PR4.**
   - **Spec ref**: admin-rbac "Viewer no ve enlaces de administración", "Admin ve la navegación completa".
 
 ---
