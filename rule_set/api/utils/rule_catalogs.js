@@ -14,6 +14,7 @@ export const ALLOWED_OPERATORS = new Set([
   "IS_FALSE",
 ]);
 export const ALLOWED_ACTION_TYPES = new Set(["SET", "ADD", "APPEND", "SET_DICTAMEN"]);
+export const ALLOWED_ROLES = new Set(["admin", "viewer"]);
 
 export function normalizeStage(value) {
   return typeof value === "string" ? value.trim().toUpperCase() : "";
@@ -39,4 +40,8 @@ export function normalizeValueType(valueType) {
 
 export function normalizeActionType(actionType) {
   return String(actionType ?? "").trim().toUpperCase();
+}
+
+export function normalizeRole(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
