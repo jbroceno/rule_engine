@@ -30,8 +30,12 @@ export class AuthService {
     return typeof payload?.["role"] === "string" ? (payload["role"] as string) : null;
   });
 
-  /** Computed signal: true when the decoded `role` claim is "admin". */
-  readonly isAdmin = computed(() => this.role() === "admin");
+  /**
+   * Computed signal: true when the decoded `role` claim is "admin".
+   * Normalized the same way as the backend's `normalizeRole()` (trim +
+   * lowercase) since `dbo.cfg_user.role` has no DB-level casing constraint.
+   */
+  readonly isAdmin = computed(() => this.role()?.trim().toLowerCase() === "admin");
 
   constructor(private readonly http: HttpClient) {}
 

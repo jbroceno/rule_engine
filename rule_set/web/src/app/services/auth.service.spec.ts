@@ -128,4 +128,12 @@ describe("AuthService", () => {
     expect(service.role()).toBeFalsy();
     expect(service.isAdmin()).toBeFalse();
   });
+
+  it("isAdmin() is true regardless of the role claim's casing (matches backend normalizeRole)", () => {
+    const token = makeToken({ userId: 3, email: "admin2@bank.com", role: "Admin" });
+    service.login("admin2@bank.com", "secret").subscribe();
+    httpMock.expectOne("/api/auth/login").flush({ token, expiresIn: "8h" });
+
+    expect(service.isAdmin()).toBeTrue();
+  });
 });
