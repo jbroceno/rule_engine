@@ -1,0 +1,82 @@
+change: rbac-and-config-safeguards
+title: RBAC efectivo y salvaguardas de integridad de configuración (OWASP-01/02/10)
+status: proposed
+created_at: '2026-07-10'
+
+phases_done:
+  - proposal
+  - spec
+  - design
+  - tasks
+
+phases_pending:
+  - apply
+  - verify
+  - archive
+
+summary:
+  description: >
+    Endurece la superficie de administración frente a tres hallazgos de la auditoría OWASP
+    Top 10 (informe-owasp-top10-2026-07-10.md): OWASP-01 (sin RBAC real — el role del JWT no
+    se aplica en ninguna ruta), OWASP-02 (POST /admin/config/apply con deleteAllPeriods:true
+    reemplaza toda la configuración con solo un texto libre como salvaguarda) y OWASP-10
+    (restauración de snapshots sin verificación de integridad). Solución proporcionada al
+    alcance TFM: middleware factory requireRole("admin") en el montaje del router admin;
+    confirmación explícita (confirmReplaceAll) + previsualización de impacto (dry-run) para
+    el apply; HMAC-SHA256 sobre rules_json+params_json calculado al crear el snapshot y
+    verificado antes de restaurar. Incluye migración SQL (columna checksum), manejo de 403
+    en el interceptor Angular y diálogo de confirmación con previsualización.
+
+owasp_findings:
+  - OWASP-01  # A01 Broken Access Control — RBAC decorativo (Critical)
+  - OWASP-02  # A04 Insecure Design — reemplazo total sin salvaguarda real (Critical)
+  - OWASP-10  # A08 Software/Data Integrity — snapshots sin checksum/firma (High)
+
+decisions:
+  roles: Modelo de dos roles (admin | viewer); gate único requireRole("admin") sobre /api/admin/*; 403 (no 401) para rol insuficiente.
+  apply_safeguard: confirmReplaceAll:true obligatorio (400 si falta) + previsualización de impacto dry-run (offer codes, rules/params a borrar e insertar); snapshot previo se conserva.
+  snapshot_integrity: HMAC-SHA256 (node:crypto, sin dependencia nueva) con SNAPSHOT_HMAC_SECRET (fallback a JWT_SECRET); columna checksum NVARCHAR(64) NULL; snapshots legados (NULL) = no verificables (aviso, sin bloqueo).
+
+artifacts:
+  proposal: rule_set/openspec/changes/rbac-and-config-safeguards/proposal.md
+  specs:
+    admin-rbac: rule_set/openspec/changes/rbac-and-config-safeguards/specs/admin-rbac/spec.md
+    config-apply-safeguard: rule_set/openspec/changes/rbac-and-config-safeguards/specs/config-apply-safeguard/spec.md
+    snapshot-integrity: rule_set/openspec/changes/rbac-and-config-safeguards/specs/snapshot-integrity/spec.md
+  design: rule_set/openspec/changes/rbac-and-config-safeguards/design.md
+  tasks: rule_set/openspec/changes/rbac-and-config-safeguards/tasks.md
+
+exploration_input: docs/seguridad/informe-owasp-top10-2026-07-10.md
+
+open_questions:
+  - ~~Gate de rol también sobre /api/workflow/*~~ Resuelto: sí, incluido (ver specs/admin-rbac).
+  - ~~Previsualización como endpoint separado o flag dryRun~~ Resuelto: endpoint separado POST /admin/config/apply/preview (ver specs/config-apply-safeguard).
+  - ~~SNAPSHOT_HMAC_SECRET obligatorio u opcional~~ Resuelto: opcional, fallback a JWT_SECRET (ver specs/snapshot-integrity).
+  - ~~Ocultar navegación admin a viewer~~ Resuelto: sí, incluido (ver specs/admin-rbac).
+  - ~~Redacción final en español de los mensajes de error (403 / 400 confirmReplaceAll / 409 integridad)~~ Resuelto en design (ver design.md § Códigos y textos de error).
+
+risks:
+  - Riesgo de lockout por rol si no existe ningún usuario admin al activar el gate (mitigado por default role='admin').
+  - Tamaño confirmado >400 líneas (~871 estimado; backend x3 + SQL + Angular) — 4 PRs encadenados (RBAC / apply safeguard / snapshot integrity / frontend polish), chain_strategy=stacked-to-main (confirmado por el usuario 2026-07-11), cada PR se mergea a main en orden.
+
+chain_plan:
+  strategy: stacked-to-main
+  pr_order:
+    - pr: 1
+      name: rbac
+      work_units: [WU-1, WU-2, WU-3, WU-4]
+      status: applied
+    - pr: 2
+      name: apply-safeguard
+      work_units: [WU-5, WU-6, WU-7, WU-8]
+      status: pending
+    - pr: 3
+      name: snapshot-integrity
+      work_units: [WU-9, WU-10, WU-11, WU-12]
+      status: pending
+    - pr: 4
+      name: frontend-polish
+      work_units: [WU-13]
+      status: pending
+
+next_action: review + open PR1 (rbac, WU-1..WU-4) on branch feat/rbac-and-config-safeguards-rbac; then sdd-apply (PR2 — apply-safeguard, WU-5..WU-8)

@@ -8,7 +8,15 @@ import { AuthService } from "../services/auth.service";
 /**
  * Functional HttpInterceptorFn that:
  * - Attaches Authorization: Bearer <token> to every request except POST /api/auth/login.
- * - On 401 response (except login), calls auth.logout() and redirects to /login.
+ * - On 401 response (except login), calls auth.logout() and redirects to /login —
+ *   a 401 means the session itself is invalid/expired.
+ * - On 403 response, does NOT log out or redirect — a 403 means the session is
+ *   valid but the role lacks permission (e.g. a "viewer" hitting an admin-only
+ *   route). The error is re-thrown unchanged so the calling component's own
+ *   `error:` handler can surface a permission message (see e.g.
+ *   login-page.component.ts's error-handling pattern) instead of the user
+ *   being silently kicked back to /login for a problem re-authenticating
+ *   would not fix.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -28,6 +36,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (err.status === 401 && !isLogin) {
         auth.logout();
         router.navigate(["/login"]);
+      } else if (err.status === 403) {
+        // Not a session problem — do not log out, do not redirect. Fall
+        // through to the re-throw below so the caller can show a message.
       }
       return throwError(() => err);
     }),
