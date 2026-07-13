@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule } from "@angular/forms";
 
 import { AdminOffer, AdminSnapshotContentResponse, AdminSnapshotItem, AdminSnapshotListQuery, RestoreIntegrity } from "../models/admin.models";
-import { AdminApiService } from "../services/admin-api.service";
+import { AdminApiError, AdminApiService } from "../services/admin-api.service";
 
 @Component({
   selector: "app-snapshots-page",
@@ -251,9 +251,9 @@ export class SnapshotsPageComponent {
           }
           this.applyFilters(false);
         },
-        error: (err: Error) => {
+        error: (err: AdminApiError) => {
           this.restoring.set(false);
-          this.actionErrorKind.set(this.isIntegrityError(err.message) ? "integrity" : "generic");
+          this.actionErrorKind.set(this.isIntegrityError(err) ? "integrity" : "generic");
           this.actionError.set(err.message);
         },
       });
@@ -267,9 +267,20 @@ export class SnapshotsPageComponent {
       : " Integridad verificada (checksum coincide).";
   }
 
-  /** OWASP-10: matches the exact 409 message text from design.md § "Códigos y textos de error". */
-  private isIntegrityError(message: string): boolean {
-    return /integridad del snapshot/i.test(message);
+  /**
+   * OWASP-10 (Fix 2, code review PR3 2026-07-14): detects the snapshot-integrity
+   * rejection primarily by the real HTTP status (409 — the only status
+   * restoreSnapshot uses for this rejection, per admin_service.js), which
+   * `AdminApiError` now propagates end-to-end instead of being discarded by
+   * `handleError`. This makes detection independent of the exact Spanish
+   * message text (previously duplicated here via regex from design.md, and
+   * liable to drift if either side's wording changed). The message regex is
+   * kept ONLY as a defensive fallback for the unlikely case the status is
+   * missing (e.g. a client-side/network error with no HttpErrorResponse.status).
+   */
+  private isIntegrityError(err: AdminApiError): boolean {
+    if (err.status === 409) return true;
+    return /integridad del snapshot/i.test(err.message);
   }
 
   protected openSnapshotWfDialog(): void {

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { of, throwError } from "rxjs";
 
 import { SnapshotsPageComponent } from "./snapshots-page.component";
-import { AdminApiService } from "../services/admin-api.service";
+import { AdminApiError, AdminApiService } from "../services/admin-api.service";
 import { AdminSnapshotItem } from "../models/admin.models";
 
 /**
@@ -107,9 +107,11 @@ describe("SnapshotsPageComponent — integrity verdict (WU-12)", () => {
 
   it("restore rechazado por integridad (409) muestra un mensaje distinto al de un error generico", async () => {
     const integrityMessage =
-      "La integridad del snapshot no se pudo verificar: el contenido no coincide con su checksum. Restauración cancelada.";
+      "La integridad del snapshot no se pudo verificar: el contenido no coincide con su checksum. " +
+      "Restauración cancelada. Esto puede deberse a manipulación del contenido o a una rotación " +
+      "reciente de SNAPSHOT_HMAC_SECRET/JWT_SECRET sin migrar los checksums existentes.";
     const mock = buildAdminApiMock({
-      restoreSnapshot: () => throwError(() => new Error(integrityMessage)),
+      restoreSnapshot: () => throwError(() => new AdminApiError(integrityMessage, 409)),
     });
     await setupTestBed(mock);
     const fixture = createComponent();
@@ -126,7 +128,7 @@ describe("SnapshotsPageComponent — integrity verdict (WU-12)", () => {
 
   it("restore rechazado por un error generico (no integridad) NO marca el mensaje como error de integridad", async () => {
     const mock = buildAdminApiMock({
-      restoreSnapshot: () => throwError(() => new Error("Error inesperado de red.")),
+      restoreSnapshot: () => throwError(() => new AdminApiError("Error inesperado de red.", 500)),
     });
     await setupTestBed(mock);
     const fixture = createComponent();
@@ -139,5 +141,21 @@ describe("SnapshotsPageComponent — integrity verdict (WU-12)", () => {
     const errorEl = fixture.nativeElement.querySelector(".state.error") as HTMLElement | null;
     expect(errorEl).toBeTruthy();
     expect(errorEl!.classList.contains("integrity-error")).toBeFalse();
+  });
+
+  it("restore rechazado con status 409 pero un mensaje COMPLETAMENTE DISTINTO al texto de integridad TAMBIEN marca error de integridad (deteccion basada en status, Fix 2)", async () => {
+    const mock = buildAdminApiMock({
+      restoreSnapshot: () => throwError(() => new AdminApiError("Un conflicto totalmente distinto, sin relacion con checksums.", 409)),
+    });
+    await setupTestBed(mock);
+    const fixture = createComponent();
+    const component = fixture.componentInstance;
+    component["confirmRestore"](makeSnapshot());
+    component["executeRestore"]();
+    fixture.detectChanges();
+
+    const errorEl = fixture.nativeElement.querySelector(".state.error") as HTMLElement | null;
+    expect(errorEl).toBeTruthy();
+    expect(errorEl!.classList.contains("integrity-error")).toBeTrue();
   });
 });
