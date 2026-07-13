@@ -268,7 +268,8 @@ Factory `requireRole(...roles)`, montado como segundo middleware en el único pu
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/admin/export` | Export all rules + params as JSON |
-| POST | `/admin/config/apply` | Replace rules (and optionally params) in DB. Creates a snapshot automatically. Requires `comment`. |
+| POST | `/admin/config/apply/preview` | **Read-only** impact preview: offer codes afectados, reglas/params a borrar e insertar. No escribe en BD, no crea snapshot. No requiere `comment` ni `confirmReplaceAll`. |
+| POST | `/admin/config/apply` | Replace rules (and optionally params) in DB. Creates a snapshot automatically. Requires `comment` y `confirmReplaceAll: true`. |
 
 #### `POST /admin/config/apply` payload
 
@@ -277,13 +278,50 @@ Factory `requireRole(...roles)`, montado como segundo middleware en el único pu
   "rules": [ ...AdminRuleItem[] ],
   "params": [ ...AdminParamsItem[] ],   // optional — omit to keep existing params
   "comment": "Motivo del cambio",       // required
+  "confirmReplaceAll": true,            // required — confirmación explícita del reemplazo total (OWASP-02)
   "createdBy": "nombre.usuario"         // optional
 }
 ```
 
+Si `confirmReplaceAll` falta o es `false`, la API responde `400` con
+`"Debes confirmar el reemplazo total de la configuración (confirmReplaceAll)."`
+antes de crear ningún snapshot o tocar la BD.
+
 Response includes `snapshot_id` of the pre-apply backup snapshot.
 
 > **Scope behavior**: "Grabar configuración" calls `applyConfig` with `deleteAllPeriods: true`, which deletes rules and params for the affected offer codes across **all** `offer_date_id` periods before inserting. Snapshot restore calls `applyConfig` without that flag, so the delete is scoped to only the `offer_date_id` values present in the payload — other periods are not touched.
+
+#### `POST /admin/config/apply/preview` payload
+
+```json
+{
+  "rules": [ ...AdminRuleItem[] ],
+  "params": [ ...AdminParamsItem[] ]   // optional — same shape as /config/apply, sin comment ni confirmReplaceAll
+}
+```
+
+Respuesta (`ApplyImpact`):
+
+```json
+{
+  "offerCodes": ["OFERTA_A", "OFERTA_B"],
+  "rulesToDelete": 4,
+  "paramsToDelete": 2,
+  "rulesToInsert": 5,
+  "paramsToInsert": 3,
+  "perOffer": [
+    { "offerCode": "OFERTA_A", "rulesToDelete": 2, "paramsToDelete": 1, "rulesToInsert": 3, "paramsToInsert": 2 }
+  ]
+}
+```
+
+`computeApplyImpact` (servicio detrás de este endpoint) reutiliza la misma
+derivación de scope que `applyConfig` (`deriveApplyScope`) y los mismos
+resolvers de `ruleset_id` por offerCode, para que el preview y el apply real
+nunca puedan discrepar en qué offerCodes/periodos están en alcance. El
+frontend ("Grabar configuración") llama a este endpoint al abrir el diálogo
+de confirmación y mantiene el botón de confirmar deshabilitado hasta que el
+preview resuelve.
 
 ### Admin — snapshots
 
@@ -321,9 +359,13 @@ The configurator page exposes three actions in the config operations bar:
 
 2. **Importar configuración** — opens a file picker. The selected JSON must have a `rules` array; `params` is optional (if absent, existing DB params are left untouched). After import, the tables show the imported data for review and a yellow banner indicates the config is "pending save".
 
-3. **Grabar configuración** — saves the imported config to DB. Opens a confirmation dialog that requires:
-   - **Motivo** (required) — reason for the change, stored in the snapshot
-   - **Usuario** (optional) — name or identifier
+3. **Grabar configuración** — saves the imported config to DB. Opens a confirmation dialog that:
+   - Calls `POST /admin/config/apply/preview` immediately on open and renders a read-only impact
+     summary (offer codes affected, rules/params to delete and insert per offer). The confirm
+     button stays disabled until this preview resolves (OWASP-02 informed-consent safeguard).
+   - Requires **Motivo** (required) — reason for the change, stored in the snapshot.
+   - **Usuario** (optional) — name or identifier.
+   - On confirm, sends `confirmReplaceAll: true` alongside the payload to `POST /admin/config/apply`.
 
    Before applying, a snapshot of the current DB state is saved automatically.
 

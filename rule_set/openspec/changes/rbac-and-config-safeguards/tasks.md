@@ -10,6 +10,17 @@
 > gate (see WU-3 note below); (2) added fail-fast validation to `requireRole(...)` for unrecognized
 > role arguments; (3) pulled T-13a (interceptor 403 handling) forward from PR4 into PR1. See
 > `apply-progress.md` for the full findings/fixes log.
+>
+> **Amendment (2026-07-14)**: a second fresh-context code review of PR2 (WU-5..WU-8) surfaced 3
+> more findings, fixed on the same branch (`feat/rbac-and-config-safeguards-apply-safeguard`)
+> before opening the PR: (1) `computeApplyImpact`'s ruleset-id resolver diverged from
+> `applyConfig`'s real write path for offer codes present only in `payload.params` with a
+> disabled ruleset (preview 404'd, real apply would have succeeded); (2) extracted a shared
+> `dedupeParamsByKey` helper to remove the hand-duplicated `seenKeys` dedup logic between
+> `applyConfig` and `computeApplyImpact`; (3) documented `confirmReplaceAll` and
+> `POST /admin/config/apply/preview` in the root `CLAUDE.md` (previously undocumented). PR2 is
+> now `reviewed_fixed` in `state.yaml`. See `apply-progress.md` § "Code-review findings and
+> fixes round 2 (2026-07-14)" for the full findings/fixes log.
 
 ---
 

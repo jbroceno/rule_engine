@@ -232,16 +232,17 @@ test("deriveApplyScope: 'params' referencia un offerCode ausente en 'rules' -> p
 // Integration (skip sin SQL) — seed helpers
 // ---------------------------------------------------------------------------
 
-async function seedRuleset(tx, code, rank = 1) {
+async function seedRuleset(tx, code, rank = 1, enabled = 1) {
   const req = tx.request();
   req.input("code", sql.NVarChar(50), code);
   req.input("name", sql.NVarChar(200), `Test Oferta ${code}`);
   req.input("rank", sql.Int, rank);
   req.input("ofertaId", sql.Int, 0);
+  req.input("enabled", sql.Bit, enabled);
   const result = await req.query(`
     INSERT INTO dbo.cfg_offer_ruleset (code, name, offer_rank, enabled, oferta_id)
     OUTPUT INSERTED.ruleset_id
-    VALUES (@code, @name, @rank, 1, @ofertaId)
+    VALUES (@code, @name, @rank, @enabled, @ofertaId)
   `);
   return result.recordset[0].ruleset_id;
 }
@@ -590,6 +591,186 @@ test(
       }
       if (rulesetIdParamsOnly) {
         await cleanupRuleset(pool, rulesetIdParamsOnly).catch(() => {});
+      }
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Integration (skip sin SQL) — Code review fix 1 (2026-07-14): computeApplyImpact's
+// preview resolver diverged from applyConfig's real write path.
+//
+// computeApplyImpact resolved EVERY offerCode in `allOfferCodes` via
+// findRulesetIdByOfferCode (WHERE enabled = 1, 404 otherwise). But applyConfig's
+// params disable/insert loops resolve offerCodes drawn from `payload.params` via
+// resolveRulesetId (no enabled filter). Consequence: a payload whose `params`
+// references an offerCode with NO corresponding `payload.rules` entries, whose
+// ruleset currently has enabled = 0, made the preview 404 while the real apply
+// would succeed — permanently blocking a legitimate save, since the frontend
+// gates the confirm button on the preview succeeding.
+//
+// Fix: computeApplyImpact now resolves a code present in `offerCodes` (i.e. it
+// has rules in the payload) via findRulesetIdByOfferCode (matches applyConfig's
+// rulesetIdCache build loop, which 404s on disabled offers with rules), and a
+// code present ONLY in `paramOfferCodes` via resolveRulesetId (matches
+// applyConfig's params-only resolution, which does not filter on enabled).
+// ---------------------------------------------------------------------------
+
+test(
+  "computeApplyImpact: offerCode solo en 'params' con ruleset enabled=0 NO debe dar 404 (Fix 1, preview/apply resolver divergence)",
+  { skip: !hasSqlCredentials() },
+  async () => {
+    const { computeApplyImpact } = await import("../api/services/admin_service.js");
+    const pool = await getSqlPool();
+    const codeWithRules = `TEST_FIX1_RULES_${Date.now()}`;
+    const codeParamsOnlyDisabled = `TEST_FIX1_DISABLED_${Date.now()}`;
+    let rulesetIdRules = null;
+    let rulesetIdDisabled = null;
+
+    try {
+      const tx = new sql.Transaction(pool);
+      await tx.begin();
+      rulesetIdRules = await seedRuleset(tx, codeWithRules, 5, 1);
+      // enabled = 0 — this offer is disabled, but only referenced via `params`,
+      // never via `rules`, in the payload below.
+      rulesetIdDisabled = await seedRuleset(tx, codeParamsOnlyDisabled, 6, 0);
+      const offerDateId = await seedOfferDate(tx, "2099-08-01");
+      await seedRule(tx, rulesetIdRules, offerDateId, "_existing");
+      await seedParam(tx, rulesetIdDisabled, offerDateId, "EXISTING_PARAM_DISABLED");
+      await tx.commit();
+
+      const payload = {
+        rules: [validRule(codeWithRules)],
+        params: [
+          {
+            offerCode: codeParamsOnlyDisabled,
+            paramValues: [{ key: "NEW_PARAM", value: "1", value_type: "NUMBER" }],
+          },
+        ],
+      };
+
+      // Must NOT throw — applyConfig would succeed for this same payload
+      // (its params loop resolves codeParamsOnlyDisabled via resolveRulesetId,
+      // which has no enabled filter).
+      const impact = await computeApplyImpact(payload, { deleteAllPeriods: true });
+
+      const disabledEntry = impact.perOffer.find((o) => o.offerCode === codeParamsOnlyDisabled);
+      assert.ok(disabledEntry, "la oferta deshabilitada (solo-params) debe aparecer en perOffer, no dar 404");
+      assert.equal(disabledEntry.paramsToDelete, 1, "debe contar el param existente habilitado de la oferta deshabilitada");
+      assert.equal(disabledEntry.paramsToInsert, 1);
+    } finally {
+      if (rulesetIdRules) {
+        await cleanupRuleset(pool, rulesetIdRules).catch(() => {});
+      }
+      if (rulesetIdDisabled) {
+        await cleanupRuleset(pool, rulesetIdDisabled).catch(() => {});
+      }
+    }
+  }
+);
+
+test(
+  "computeApplyImpact: offerCode inexistente presente SOLO en 'params' (ninguna ruleset con ese code) sigue propagando 404 (Fix 1 regression guard)",
+  { skip: !hasSqlCredentials() },
+  async () => {
+    const { computeApplyImpact } = await import("../api/services/admin_service.js");
+    const payload = {
+      rules: [validRule(`TEST_FIX1_EXISTS_${Date.now()}`)],
+      params: [
+        {
+          offerCode: `NO_EXISTE_PARAMS_ONLY_${Date.now()}`,
+          paramValues: [{ key: "K", value: "1", value_type: "NUMBER" }],
+        },
+      ],
+    };
+    // The rules-referenced offer above also doesn't exist in the DB in this
+    // test (no seeding), so this exercises the "truly not found, neither in
+    // rules nor params, anywhere" 404 path for both resolvers used by
+    // computeApplyImpact — must still 404, same as applyConfig would.
+    await assert.rejects(
+      () => computeApplyImpact(payload, { deleteAllPeriods: true }),
+      (err) => err instanceof AppError && err.statusCode === 404
+    );
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Code review fix 2 (2026-07-14): the "dedupe params by key within a group,
+// first-seen wins" logic was hand-duplicated as two separate inline
+// `seenKeys` blocks (applyConfig's insert loop, computeApplyImpact's count
+// loop). Extracted into a single shared `dedupeParamsByKey` helper, called
+// from both. Pure/sync — no SQL — genuinely environment-independent.
+// ---------------------------------------------------------------------------
+
+test("dedupeParamsByKey: conserva el primer valor visto por key y descarta duplicados posteriores", async () => {
+  const { dedupeParamsByKey } = await import("../api/services/admin_service.js");
+  const paramValues = [
+    { key: "A", value: "first" },
+    { key: "B", value: "only" },
+    { key: "A", value: "duplicate-should-be-dropped" },
+  ];
+  const result = dedupeParamsByKey(paramValues);
+  assert.equal(result.length, 2);
+  assert.deepEqual(result.map((p) => p.key), ["A", "B"]);
+  assert.equal(result[0].value, "first", "el primer valor visto para una key duplicada debe ganar");
+});
+
+test("dedupeParamsByKey: array vacio o ausente no lanza y devuelve []", async () => {
+  const { dedupeParamsByKey } = await import("../api/services/admin_service.js");
+  assert.deepEqual(dedupeParamsByKey([]), []);
+  assert.deepEqual(dedupeParamsByKey(undefined), []);
+});
+
+// ---------------------------------------------------------------------------
+// Integration (skip sin SQL) — regression guard: applyConfig (real write) and
+// computeApplyImpact (preview) must agree on the deduped param count for the
+// SAME payload, now that both delegate to the shared dedupeParamsByKey helper.
+// A future re-divergence (e.g. someone re-inlining a slightly different
+// seenKeys block in only one of the two call sites) would make this fail.
+// ---------------------------------------------------------------------------
+
+test(
+  "applyConfig y computeApplyImpact coinciden en el conteo de params deduplicados para el mismo payload (Fix 2 regression guard)",
+  { skip: !hasSqlCredentials() },
+  async () => {
+    const { applyConfig, computeApplyImpact } = await import("../api/services/admin_service.js");
+    const pool = await getSqlPool();
+    const code = `TEST_FIX2_DEDUPE_${Date.now()}`;
+    let rulesetId = null;
+
+    try {
+      const tx = new sql.Transaction(pool);
+      await tx.begin();
+      rulesetId = await seedRuleset(tx, code, 5);
+      await tx.commit();
+
+      const payload = {
+        rules: [validRule(code)],
+        params: [
+          {
+            offerCode: code,
+            paramValues: [
+              { key: "P_A", value: "1", value_type: "NUMBER" },
+              { key: "P_B", value: "2", value_type: "NUMBER" },
+              { key: "P_A", value: "1-dup", value_type: "NUMBER" },
+              { key: "P_A", value: "1-dup2", value_type: "NUMBER" },
+            ],
+          },
+        ],
+      };
+
+      const impact = await computeApplyImpact(payload, { deleteAllPeriods: true });
+      const applyResult = await applyConfig(payload, { deleteAllPeriods: true });
+
+      assert.equal(impact.paramsToInsert, 2, "preview debe deduplicar 4 valores (2 duplicados de P_A) a 2");
+      assert.equal(
+        applyResult.applied.params,
+        impact.paramsToInsert,
+        "applyConfig y computeApplyImpact deben coincidir en el conteo deduplicado"
+      );
+    } finally {
+      if (rulesetId) {
+        await cleanupRuleset(pool, rulesetId).catch(() => {});
       }
     }
   }

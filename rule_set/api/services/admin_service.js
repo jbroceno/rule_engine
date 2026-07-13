@@ -1627,6 +1627,29 @@ export function deriveApplyScope(payload, options = {}) {
   };
 }
 
+/**
+ * Dedupe param values within a single offer's `paramValues` array by `key`,
+ * first-seen wins. WF snapshots may include the same param key from multiple
+ * vigencia periods, which would otherwise violate cfg_offer_param's unique
+ * index. Shared by applyConfig's insert loop and computeApplyImpact's count
+ * loop so the two can never silently re-diverge (code review, 2026-07-14 —
+ * previously each maintained its own hand-copied `seenKeys` block).
+ *
+ * @param {Array<{key?: any}>} [paramValues]
+ * @returns {Array} the deduped subset, in original order
+ */
+export function dedupeParamsByKey(paramValues) {
+  const seenKeys = new Set();
+  const result = [];
+  for (const param of (paramValues ?? [])) {
+    const key = String(param?.key ?? "");
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    result.push(param);
+  }
+  return result;
+}
+
 export async function applyConfig(payload, options = {}) {
   // payload.rules : AdminRuleItem[] — rule_id ignored, new ones assigned
   // payload.params: AdminParamsItem[] | undefined — if absent, DB params untouched
@@ -1742,11 +1765,8 @@ export async function applyConfig(payload, options = {}) {
         const rulesetId = await resolveRulesetId(tx, group.offerCode);
         // Deduplicate params by key within each group — WF snapshots may include the same
         // param key from multiple vigencia periods, which would violate the unique index.
-        const seenKeys = new Set();
-        for (const param of (group.paramValues ?? [])) {
+        for (const param of dedupeParamsByKey(group.paramValues)) {
           const paramKey = String(param.key ?? "");
-          if (seenKeys.has(paramKey)) continue;
-          seenKeys.add(paramKey);
           const insertParamReq = tx.request();
           insertParamReq.input("rulesetId", sql.Int, rulesetId);
           insertParamReq.input("key", sql.NVarChar(100), paramKey);
@@ -1801,6 +1821,19 @@ export async function applyConfig(payload, options = {}) {
  *    applyConfig's rule-delete loop never touches it) plus its real param
  *    counts.
  *
+ * Bug fix (code review, 2026-07-14):
+ *  - The ruleset-id resolver used to be findRulesetIdByOfferCode (WHERE
+ *    enabled = 1, 404 otherwise) unconditionally for EVERY offer in the
+ *    union above. But applyConfig's params disable/insert loops resolve
+ *    `paramOfferCodes` via resolveRulesetId, which has no `enabled` filter.
+ *    A payload whose `params` referenced an offerCode with no corresponding
+ *    `payload.rules` entries, and whose ruleset had `enabled = 0`, made this
+ *    preview 404 while the real apply would succeed. Now a code present in
+ *    `offerCodes` resolves via findRulesetIdByOfferCode (matches
+ *    applyConfig's rulesetIdCache build loop) and a code present only in
+ *    `paramOfferCodes` resolves via resolveRulesetId (matches applyConfig's
+ *    params-only resolution) — same resolver, same code path, per offerCode.
+ *
  * @param {{rules: Array, params?: Array}} payload
  * @param {{deleteAllPeriods?: boolean}} [options]
  * @returns {Promise<{
@@ -1834,19 +1867,13 @@ export async function computeApplyImpact(payload, options = {}) {
     rulesToInsertByOffer.set(code, (rulesToInsertByOffer.get(code) ?? 0) + 1);
   }
 
-  // paramsToInsert per offer, deduplicated by key — mirrors applyConfig's seenKeys.
+  // paramsToInsert per offer, deduplicated by key — shares dedupeParamsByKey
+  // with applyConfig's insert loop so the two counts can never re-diverge.
   const paramsToInsertByOffer = new Map();
   if (hasParams) {
     for (const group of payload.params) {
       const code = String(group.offerCode);
-      const seenKeys = new Set();
-      let count = 0;
-      for (const param of (group.paramValues ?? [])) {
-        const key = String(param.key ?? "");
-        if (seenKeys.has(key)) continue;
-        seenKeys.add(key);
-        count++;
-      }
+      const count = dedupeParamsByKey(group.paramValues).length;
       paramsToInsertByOffer.set(code, (paramsToInsertByOffer.get(code) ?? 0) + count);
     }
   }
@@ -1857,7 +1884,18 @@ export async function computeApplyImpact(payload, options = {}) {
   let paramsToDelete = 0;
 
   for (const offerCode of allOfferCodes) {
-    const rulesetId = await findRulesetIdByOfferCode(pool, offerCode);
+    // Resolve with the SAME resolver applyConfig's real write path uses for
+    // this offerCode: codes present in `offerCodes` (i.e. they have rules in
+    // the payload) go through the enabled-filtering findRulesetIdByOfferCode,
+    // matching applyConfig's rulesetIdCache build loop; codes present ONLY in
+    // `paramOfferCodes` go through the non-filtering resolveRulesetId,
+    // matching applyConfig's params disable/insert loops. Previously this
+    // used findRulesetIdByOfferCode unconditionally for every code, so a
+    // disabled offer referenced only via `params` 404'd in the preview while
+    // the real apply would succeed (code review finding, 2026-07-14).
+    const rulesetId = offerCodeSet.has(offerCode)
+      ? await findRulesetIdByOfferCode(pool, offerCode)
+      : await resolveRulesetId(pool, offerCode);
 
     // Only offers that actually have rules in the payload get a rules-count
     // query — matches applyConfig, whose rule-delete loop is scoped to
