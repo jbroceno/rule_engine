@@ -88,8 +88,13 @@ chain_plan:
     - pr: 4
       name: frontend-polish
       work_units: [WU-13]
-      status: in_progress
+      status: applied
       branch: feat/rbac-and-config-safeguards-frontend-polish
+      note: >
+        T-13b (role/isAdmin decode) + T-13c (nav hiding) implemented via TDD (RED confirmed via
+        compile errors on missing role/isAdmin, then GREEN). T-13a already merged in PR1. Full
+        Karma suite: 158/158 passing (no regressions). See apply-progress.md § "PR4 —
+        frontend-polish (WU-13, remainder: T-13b + T-13c)".
 
 pr_verify:
   pr1:
@@ -114,4 +119,4 @@ note_late_docs: >-
   meantime; this commit only adds the missing verify-report file and fixes the open_questions
   line, it does not touch anything PR2/PR3 already updated here.
 
-next_action: PR1, PR2, and PR3 are merged to main (in that order except PR2 merged after PR3 — see chain_plan). Remaining: PR4 (frontend polish, WU-13); then a full change-level sdd-verify once all 4 PRs are in main; then sdd-archive.
+next_action: PR1, PR2, and PR3 are merged to main (in that order except PR2 merged after PR3 — see chain_plan). PR4 (frontend polish, WU-13/T-13b+T-13c) is implemented and committed on feat/rbac-and-config-safeguards-frontend-polish (not yet merged/PR'd). Remaining: open PR4, merge to main; then a full change-level sdd-verify once all 4 PRs are in main; then sdd-archive.

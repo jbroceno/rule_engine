@@ -5,10 +5,18 @@ import { App } from './app';
 import { AuthService } from './services/auth.service';
 
 describe('App', () => {
-  let authStub: { isAuthenticated: ReturnType<typeof signal<boolean>>; logout: jasmine.Spy };
+  let authStub: {
+    isAuthenticated: ReturnType<typeof signal<boolean>>;
+    isAdmin: ReturnType<typeof signal<boolean>>;
+    logout: jasmine.Spy;
+  };
 
-  function configure(authenticated: boolean): void {
-    authStub = { isAuthenticated: signal(authenticated), logout: jasmine.createSpy('logout') };
+  function configure(authenticated: boolean, admin: boolean = true): void {
+    authStub = {
+      isAuthenticated: signal(authenticated),
+      isAdmin: signal(admin),
+      logout: jasmine.createSpy('logout')
+    };
 
     TestBed.configureTestingModule({
       imports: [App],
@@ -63,5 +71,41 @@ describe('App', () => {
     button.click();
     expect(authStub.logout).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['/login']);
+  });
+
+  // -------------------------------------------------------------------------
+  // T-13c — admin-only nav links hidden for non-admin (UI defense only)
+  // -------------------------------------------------------------------------
+  it('hides admin-only nav links (Periodos, Configurador, Snapshots) when isAdmin() is false', async () => {
+    configure(true, false);
+    await TestBed.compileComponents();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const navText = compiled.querySelector('nav')?.textContent ?? '';
+
+    expect(navText).not.toContain('Períodos');
+    expect(navText).not.toContain('Configurador');
+    expect(navText).not.toContain('Snapshots');
+
+    // Non-admin-only links remain visible.
+    expect(navText).toContain('Ofertas');
+    expect(navText).toContain('Configuracion');
+    expect(navText).toContain('Simulador INIT');
+  });
+
+  it('shows the complete navigation (including admin-only links) when isAdmin() is true', async () => {
+    configure(true, true);
+    await TestBed.compileComponents();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const navText = compiled.querySelector('nav')?.textContent ?? '';
+
+    expect(navText).toContain('Períodos');
+    expect(navText).toContain('Configurador');
+    expect(navText).toContain('Snapshots');
+    expect(navText).toContain('Ofertas');
+    expect(navText).toContain('Configuracion');
   });
 });

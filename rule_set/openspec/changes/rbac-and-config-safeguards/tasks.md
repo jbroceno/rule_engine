@@ -217,8 +217,8 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
   (`karma-chrome-launcher` fails with "Cannot find the binary ... Please set env variable
   CHROME_BIN"). Verify in an environment with a browser before merging PR1.
   - **Spec ref**: admin-rbac "403 no desloguea al usuario", "401 conserva el comportamiento de logout".
-- [ ] **T-13b** `auth.service.ts`: decode JWT payload client-side (base64url) to expose `role` and `isAdmin` computed signal (UI defense only, no signature check needed client-side). **Still in PR4.**
-- [ ] **T-13c** `app.ts`/`app.html`: hide `/configurador`, `/snapshots`, `/offer-dates` nav links when `!authService.isAdmin()`. **Still in PR4.**
+- [x] **T-13b** `auth.service.ts`: decode JWT payload client-side (base64url) to expose `role` and `isAdmin` computed signal (UI defense only, no signature check needed client-side). **Completed in PR4** (TDD: `auth.service.spec.ts` RED confirmed via compile error on missing `role`/`isAdmin`, then GREEN).
+- [x] **T-13c** `app.ts`/`app.html`: hide `/configurador`, `/snapshots`, `/offer-dates` nav links when `!authService.isAdmin()`. **Completed in PR4** (TDD: `app.spec.ts` RED confirmed, then GREEN). Full Karma suite: 158/158 passing, no regressions.
   - **Spec ref**: admin-rbac "Viewer no ve enlaces de administración", "Admin ve la navegación completa".
 
 ---

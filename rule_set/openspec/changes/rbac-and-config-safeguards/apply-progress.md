@@ -929,3 +929,100 @@ Changes" (amended rows for `admin_service.js`, `admin_workflow_service.js`,
 None beyond the already-documented sandbox limitation (no live SQL Server reachable to execute the
 `T-WF-checksum-e` integration test end-to-end) — same category of limitation already present and
 accepted in PR1 (24 pre-existing failures), PR2 (+5 more), and PR3's original batch (+3 more).
+
+---
+
+## PR4 — frontend-polish (WU-13, remainder: T-13b + T-13c)
+
+> Change: `rbac-and-config-safeguards`
+> Phase: apply
+> This document's PR4 section covers **PR4 of 4 (final)** — the remaining part of WU-13:
+> client-side JWT `role`/`isAdmin` decode (T-13b) and admin-only nav hiding (T-13c). T-13a
+> (interceptor 403 handling) was already completed and merged as part of PR1 — untouched here.
+> WU-1..WU-12 (RBAC, apply safeguard, snapshot integrity) were already merged into `main` from
+> PR1/PR2/PR3.
+
+### Branch
+
+`feat/rbac-and-config-safeguards-frontend-polish` (pre-existing, checked out, branched from
+`main` which already contains PR1/PR2/PR3 merged — no new branch created, no push, no PR
+opened per instructions; PR creation is a separate step).
+
+### Work units completed
+
+| WU | Task | Status |
+|----|------|--------|
+| WU-13 (part 2) | T-13b — RED+GREEN: `auth.service.ts` decodes JWT payload client-side to expose `role`/`isAdmin` computed signals | Done |
+| WU-13 (part 3) | T-13c — RED+GREEN: `app.html` hides `/offer-dates`, `/configurador`, `/snapshots` nav links when `!authService.isAdmin()` | Done |
+
+### Files modified
+
+- `rule_set/web/src/app/services/auth.service.ts` — new `role` computed signal, derived by
+  decoding the JWT's payload segment (base64url: `-`→`+`, `_`→`/`, re-pad to a multiple of 4,
+  `atob`, `JSON.parse`) and reading the `role` claim; returns `null` (not throwing) if there's
+  no token, the token doesn't have 3 dot-separated segments, or the payload isn't valid
+  base64url/JSON. New `isAdmin` computed signal (`role() === "admin"`). Both are UI-defense
+  only, per `design.md`'s "Exponer `role` en frontend" decision row — no signature
+  verification client-side; the real gate remains the server's `requireRole` middleware
+  (merged in PR1).
+- `rule_set/web/src/app/services/auth.service.spec.ts` — 4 new tests: `role()`/`isAdmin()`
+  falsy with no token stored; `role()` returns `"admin"` and `isAdmin()` true for a valid
+  admin-role token; `role()` returns `"viewer"` and `isAdmin()` false for a valid viewer-role
+  token; `role()`/`isAdmin()` falsy (and don't throw) for a malformed token (`"not-a-valid-jwt"`).
+  Added a local `makeToken(payload)` test helper (base64url-encodes header+payload, no real
+  signature needed) — confirmed via search (`atob`/`jwt-decode`/`decodeJwt`/`base64`) that no
+  JWT-decode utility existed anywhere else in `web/src/app` before this change.
+- `rule_set/web/src/app/app.html` — wrapped the 3 admin-only nav `<a>` elements
+  (`/offer-dates` "Períodos", `/configurador` "Configurador", `/snapshots` "Snapshots") in
+  `@if (authService.isAdmin())` blocks, matching this file's existing `@if`/`@else` control-flow
+  syntax (already used for the period chips) rather than introducing `*ngIf`. `/ofertas`,
+  `/configuracion`, and the 3 simulator links are unaffected — the spec/design only name these
+  3 routes as admin-only.
+- `rule_set/web/src/app/app.spec.ts` — extended the `authStub` with an `isAdmin` signal
+  (defaulting to `true` in the pre-existing `configure(authenticated)` calls, so the 5
+  pre-existing tests keep their original behavior unchanged); added 2 new tests: admin-only
+  links absent from `nav`'s `textContent` when `isAdmin()` is `false` (while `/ofertas`,
+  `/configuracion`, and simulator links remain present), and present when `isAdmin()` is `true`.
+
+### TDD cycle evidence
+
+1. **RED**: ran `CHROME_BIN="/c/Program Files/Google/Chrome/Application/chrome.exe" npx ng
+   test --watch=false --browsers=ChromeHeadless` with the 6 new test cases in place (4 in
+   `auth.service.spec.ts`, 2 in `app.spec.ts`) but BEFORE touching `auth.service.ts`/`app.html`
+   — build failed with `TS2339: Property 'role' does not exist on type 'AuthService'` and
+   `TS2339: Property 'isAdmin' does not exist on type 'AuthService'` (8 compile errors across
+   the two new spec files referencing these not-yet-existing members). Confirmed failing for
+   the right reason (symbols genuinely didn't exist yet), not a test/typo bug.
+2. **GREEN**: after implementing the `role`/`isAdmin` computed signals in `auth.service.ts` and
+   the 3 `@if (authService.isAdmin())` wraps in `app.html`, re-ran the full suite: **158 of 158
+   SUCCESS** (152 from PR3's end state + 4 new `auth.service.spec.ts` cases + 2 new
+   `app.spec.ts` cases).
+
+### Full-suite regression check
+
+- **Frontend** (`CHROME_BIN="/c/Program Files/Google/Chrome/Application/chrome.exe" npx ng
+  test --watch=false --browsers=ChromeHeadless` from `rule_set/web/`): **158 of 158 SUCCESS**
+  (152 from PR3's end state + 6 new cases: 4 in `auth.service.spec.ts`, 2 in `app.spec.ts`). No
+  failures, no regressions.
+- **Backend**: not run — this PR is frontend-only (no backend files touched); `npm test` from
+  `rule_set/` is unaffected by this batch.
+
+### Deviations from design
+
+None. `role`/`isAdmin` computed signals, the base64url-decode-of-the-payload-segment approach
+(no signature check client-side), and hiding exactly `/offer-dates`, `/configurador`, and
+`/snapshots` when `!isAdmin()` all match `design.md`'s "Frontend" bullet in Technical Approach,
+the "Exponer `role` en frontend" Architecture Decisions row, and `specs/admin-rbac/spec.md`'s
+"Navegación admin oculta para `viewer`" requirement/scenarios exactly.
+
+### Issues found
+
+None.
+
+### Scope note
+
+T-13b and T-13c are now checked `[x]` in `tasks.md`. T-13a was already `[x]` from PR1 (untouched
+by this batch). This completes WU-13 and, with PR1/PR2/PR3 already merged to `main`, all Work
+Units (WU-1 through WU-13) in `tasks.md` are now `[x]`. `state.yaml`'s PR4 `chain_plan` entry
+updated to `status: applied`. A full change-level `sdd-verify` across all 4 merged PRs, followed
+by `sdd-archive`, remain as the next steps per `state.yaml § next_action`.
