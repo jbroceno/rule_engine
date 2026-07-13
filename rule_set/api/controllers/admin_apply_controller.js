@@ -1,15 +1,12 @@
-import { applyConfig, createSnapshot } from "../services/admin_service.js";
+import { applyConfig, computeApplyImpact, createSnapshot } from "../services/admin_service.js";
 import { AppError } from "../utils/app_error.js";
 
-function validateApplyPayload(payload) {
+function validateRulesShape(payload) {
   if (!payload || !Array.isArray(payload.rules)) {
     throw new AppError('El payload debe contener un campo "rules" de tipo array.', 400);
   }
   if (payload.rules.length === 0) {
     throw new AppError('El campo "rules" no puede estar vacio.', 400);
-  }
-  if (!payload.comment || typeof payload.comment !== "string" || !payload.comment.trim()) {
-    throw new AppError('El motivo (comment) es requerido para grabar la configuracion.', 400);
   }
   if (payload.params !== undefined && !Array.isArray(payload.params)) {
     throw new AppError('El campo "params" debe ser un array o estar ausente.', 400);
@@ -28,6 +25,28 @@ function validateApplyPayload(payload) {
     if (!Array.isArray(rule.actions)) {
       throw new AppError(`rules[${i}].actions debe ser un array.`, 400);
     }
+  }
+}
+
+// Exported for unit testing (T-05) — validates the shape shared by both the
+// real apply and its read-only preview, WITHOUT requiring comment/confirmReplaceAll.
+export function validatePreviewPayload(payload) {
+  validateRulesShape(payload);
+}
+
+// Exported for unit testing (T-05). Requires everything validatePreviewPayload
+// requires, PLUS the comment and the explicit confirmReplaceAll:true gate
+// (OWASP-02) — both MUST run before any snapshot/DB write.
+export function validateApplyPayload(payload) {
+  validateRulesShape(payload);
+  if (payload.confirmReplaceAll !== true) {
+    throw new AppError(
+      "Debes confirmar el reemplazo total de la configuración (confirmReplaceAll).",
+      400
+    );
+  }
+  if (!payload.comment || typeof payload.comment !== "string" || !payload.comment.trim()) {
+    throw new AppError('El motivo (comment) es requerido para grabar la configuracion.', 400);
   }
 }
 
@@ -50,6 +69,22 @@ export async function postAdminApply(req, res, next) {
     const result = await applyConfig({ rules, params }, { deleteAllPeriods: true });
 
     res.status(200).json({ ...result, snapshot_id: snapshotId });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Read-only preview of what postAdminApply's applyConfig({deleteAllPeriods:true})
+// would delete/insert — no comment/confirmReplaceAll required, no DB write, no
+// snapshot created (OWASP-02).
+export async function postAdminApplyPreview(req, res, next) {
+  try {
+    validatePreviewPayload(req.body);
+
+    const { rules, params } = req.body;
+    const impact = await computeApplyImpact({ rules, params }, { deleteAllPeriods: true });
+
+    res.status(200).json(impact);
   } catch (error) {
     next(error);
   }

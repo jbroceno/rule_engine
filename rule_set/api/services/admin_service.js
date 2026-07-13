@@ -1675,6 +1675,121 @@ export async function applyConfig(payload, options = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// computeApplyImpact — read-only preview (OWASP-02)
+// ---------------------------------------------------------------------------
+
+/**
+ * Read-only preview of what applyConfig(payload, options) would delete/insert.
+ * Mirrors applyConfig's own scope derivation (offerCodes from payload.rules,
+ * offer_date_id scoping unless deleteAllPeriods) but performs SELECT COUNT
+ * instead of DELETE/INSERT, and opens no transaction — advisory only, never
+ * called by the real applyConfig (see design.md § "Cálculo de impacto (preview)").
+ *
+ * @param {{rules: Array, params?: Array}} payload
+ * @param {{deleteAllPeriods?: boolean}} [options]
+ * @returns {Promise<{
+ *   offerCodes: string[],
+ *   rulesToDelete: number, paramsToDelete: number,
+ *   rulesToInsert: number, paramsToInsert: number,
+ *   perOffer: Array<{offerCode: string, rulesToDelete: number, paramsToDelete: number, rulesToInsert: number, paramsToInsert: number}>
+ * }>}
+ */
+export async function computeApplyImpact(payload, options = {}) {
+  const { deleteAllPeriods = false } = options;
+  const offerCodes = [...new Set(payload.rules.map((r) => String(r.offerCode)))];
+
+  const rulePeriodIds = deleteAllPeriods
+    ? null
+    : [...new Set(payload.rules.map((r) => r.offer_date_id).filter((id) => id != null && Number(id) > 0))];
+  const rulePeriodIdsCsv = rulePeriodIds !== null ? rulePeriodIds.join(",") : "";
+
+  const paramPeriodIds = deleteAllPeriods || !Array.isArray(payload.params)
+    ? null
+    : [...new Set(
+        payload.params.flatMap((g) =>
+          (g.paramValues ?? []).map((p) => p.offer_date_id).filter((id) => id != null && Number(id) > 0)
+        )
+      )];
+  const paramPeriodIdsCsv = paramPeriodIds !== null ? paramPeriodIds.join(",") : "";
+
+  // rulesToInsert per offer — length of payload.rules grouped by offerCode.
+  const rulesToInsertByOffer = new Map();
+  for (const rule of payload.rules) {
+    const code = String(rule.offerCode);
+    rulesToInsertByOffer.set(code, (rulesToInsertByOffer.get(code) ?? 0) + 1);
+  }
+
+  // paramsToInsert per offer, deduplicated by key — mirrors applyConfig's seenKeys.
+  const paramsToInsertByOffer = new Map();
+  if (Array.isArray(payload.params)) {
+    for (const group of payload.params) {
+      const code = String(group.offerCode);
+      const seenKeys = new Set();
+      let count = 0;
+      for (const param of (group.paramValues ?? [])) {
+        const key = String(param.key ?? "");
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        count++;
+      }
+      paramsToInsertByOffer.set(code, (paramsToInsertByOffer.get(code) ?? 0) + count);
+    }
+  }
+
+  const directScopeClause = rulePeriodIdsCsv
+    ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@rulePeriodIdsCsv, ','))"
+    : "";
+  const paramScopeClause = paramPeriodIdsCsv
+    ? "AND offer_date_id IN (SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@paramPeriodIdsCsv, ','))"
+    : "";
+
+  const pool = await getSqlPool();
+  const perOffer = [];
+  let rulesToDelete = 0;
+  let paramsToDelete = 0;
+
+  for (const offerCode of offerCodes) {
+    const rulesetId = await findRulesetIdByOfferCode(pool, offerCode);
+
+    const rulesCountReq = pool.request();
+    rulesCountReq.input("rulesetId", sql.Int, rulesetId);
+    if (rulePeriodIdsCsv) rulesCountReq.input("rulePeriodIdsCsv", sql.NVarChar(sql.MAX), rulePeriodIdsCsv);
+    const rulesCountResult = await rulesCountReq.query(`
+      SELECT COUNT(*) AS cnt
+      FROM dbo.cfg_offer_rule
+      WHERE ruleset_id = @rulesetId ${directScopeClause}
+    `);
+    const offerRulesToDelete = Number(rulesCountResult.recordset?.[0]?.cnt ?? 0);
+
+    const paramsCountReq = pool.request();
+    paramsCountReq.input("rulesetId", sql.Int, rulesetId);
+    if (paramPeriodIdsCsv) paramsCountReq.input("paramPeriodIdsCsv", sql.NVarChar(sql.MAX), paramPeriodIdsCsv);
+    const paramsCountResult = await paramsCountReq.query(`
+      SELECT COUNT(*) AS cnt
+      FROM dbo.cfg_offer_param
+      WHERE ruleset_id = @rulesetId AND enabled = 1 ${paramScopeClause}
+    `);
+    const offerParamsToDelete = Number(paramsCountResult.recordset?.[0]?.cnt ?? 0);
+
+    rulesToDelete += offerRulesToDelete;
+    paramsToDelete += offerParamsToDelete;
+
+    perOffer.push({
+      offerCode,
+      rulesToDelete: offerRulesToDelete,
+      paramsToDelete: offerParamsToDelete,
+      rulesToInsert: rulesToInsertByOffer.get(offerCode) ?? 0,
+      paramsToInsert: paramsToInsertByOffer.get(offerCode) ?? 0,
+    });
+  }
+
+  const rulesToInsert = payload.rules.length;
+  const paramsToInsert = Array.from(paramsToInsertByOffer.values()).reduce((sum, n) => sum + n, 0);
+
+  return { offerCodes, rulesToDelete, paramsToDelete, rulesToInsert, paramsToInsert, perOffer };
+}
+
+// ---------------------------------------------------------------------------
 // Seed reset (D4-EXT — full-scope reset to the 6-offer seed configuration)
 // ---------------------------------------------------------------------------
 
