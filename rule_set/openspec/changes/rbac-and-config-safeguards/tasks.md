@@ -150,7 +150,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `test/snapshot_integrity.test.js` — CREATE
 
-- [ ] **T-09** Write failing tests:
+- [x] **T-09** Write failing tests:
   - Unit (no DB): `computeSnapshotChecksum` deterministic (same input → same hex64); different content → different hex.
   - Unit: `verifySnapshotChecksum` → `"verified"` on match, `"failed"` on 1-byte alteration, `"legacy"` on `storedChecksum == null`.
   - Integration (skip w/o SQL): create snapshot → `checksum` populated; alter `rules_json` in DB post-creation → `restoreSnapshot` throws `AppError 409`, no DB mutation, no pre-restore snapshot created.
@@ -163,7 +163,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `sql/snapshots_checksum.sql` — CREATE
 
-- [ ] **T-10** Idempotent `IF NOT EXISTS (...) ALTER TABLE dbo.cfg_config_snapshot ADD checksum NVARCHAR(64) NULL`.
+- [x] **T-10** Idempotent `IF NOT EXISTS (...) ALTER TABLE dbo.cfg_config_snapshot ADD checksum NVARCHAR(64) NULL`.
   - **Acceptance**: running twice is a no-op; existing rows get `checksum = NULL`.
   - **Spec ref**: snapshot-integrity "Columna `checksum` en `cfg_config_snapshot`".
 
@@ -173,7 +173,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `api/utils/snapshot_integrity.js` — CREATE; `api/config/env.js` — MODIFY; `api/services/admin_service.js` — MODIFY
 
-- [ ] **T-11** `computeSnapshotChecksum(rulesJson, paramsJson, secret)` (HMAC-SHA256 hex64 over `rulesJson + "\0" + paramsJson`) and `verifySnapshotChecksum({...})` (returns `verified|legacy|failed`, uses `crypto.timingSafeEqual` with length guard) — single canonicalization source. `env.snapshot.hmacSecret = SNAPSHOT_HMAC_SECRET || JWT_SECRET || ""`. `createSnapshot`: compute+persist checksum using the exact same `rulesJson`/`paramsJson` variables passed to the INSERT (no re-stringify). `restoreSnapshot`: `SELECT` includes `checksum`; verify BEFORE `transformWfToPoc`/`applyConfig`; 409 on `failed`; `console.warn` + continue on `legacy`; response includes `integrity: {status, checksumPresent}`.
+- [x] **T-11** `computeSnapshotChecksum(rulesJson, paramsJson, secret)` (HMAC-SHA256 hex64 over `rulesJson + "\0" + paramsJson`) and `verifySnapshotChecksum({...})` (returns `verified|legacy|failed`, uses `crypto.timingSafeEqual` with length guard) — single canonicalization source. `env.snapshot.hmacSecret = SNAPSHOT_HMAC_SECRET || JWT_SECRET || ""`. `createSnapshot`: compute+persist checksum using the exact same `rulesJson`/`paramsJson` variables passed to the INSERT (no re-stringify). `restoreSnapshot`: `SELECT` includes `checksum`; verify BEFORE `transformWfToPoc`/`applyConfig`; 409 on `failed`; `console.warn` + continue on `legacy`; response includes `integrity: {status, checksumPresent}`.
   - **Acceptance**: WU-9 tests pass.
   - **Spec ref**: snapshot-integrity "Creación de snapshot calcula checksum...", "Restauración de snapshot verifica el checksum...", "Secreto HMAC con fallback".
 
@@ -183,7 +183,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `web/src/app/models/admin.models.ts` — MODIFY; `web/src/app/pages/snapshots-page.component.ts` — MODIFY; `web/src/app/pages/snapshots-page.component.html` — MODIFY
 
-- [ ] **T-12** `RestoreIntegrity` type (`status: "verified"|"legacy"`, `checksumPresent`). On restore success, show verdict ("verificado" / "legado / no verificable"); on 409, show a specific integrity-failure message distinct from generic server errors.
+- [x] **T-12** `RestoreIntegrity` type (`status: "verified"|"legacy"`, `checksumPresent`). On restore success, show verdict ("verificado" / "legado / no verificable"); on 409, show a specific integrity-failure message distinct from generic server errors.
   - **Spec ref**: snapshot-integrity "Veredicto de integridad propagado al frontend".
 
 ---
