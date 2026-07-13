@@ -693,3 +693,85 @@ test(
     );
   }
 );
+
+// ---------------------------------------------------------------------------
+// Code review fix 2 (2026-07-14): the "dedupe params by key within a group,
+// first-seen wins" logic was hand-duplicated as two separate inline
+// `seenKeys` blocks (applyConfig's insert loop, computeApplyImpact's count
+// loop). Extracted into a single shared `dedupeParamsByKey` helper, called
+// from both. Pure/sync — no SQL — genuinely environment-independent.
+// ---------------------------------------------------------------------------
+
+test("dedupeParamsByKey: conserva el primer valor visto por key y descarta duplicados posteriores", async () => {
+  const { dedupeParamsByKey } = await import("../api/services/admin_service.js");
+  const paramValues = [
+    { key: "A", value: "first" },
+    { key: "B", value: "only" },
+    { key: "A", value: "duplicate-should-be-dropped" },
+  ];
+  const result = dedupeParamsByKey(paramValues);
+  assert.equal(result.length, 2);
+  assert.deepEqual(result.map((p) => p.key), ["A", "B"]);
+  assert.equal(result[0].value, "first", "el primer valor visto para una key duplicada debe ganar");
+});
+
+test("dedupeParamsByKey: array vacio o ausente no lanza y devuelve []", async () => {
+  const { dedupeParamsByKey } = await import("../api/services/admin_service.js");
+  assert.deepEqual(dedupeParamsByKey([]), []);
+  assert.deepEqual(dedupeParamsByKey(undefined), []);
+});
+
+// ---------------------------------------------------------------------------
+// Integration (skip sin SQL) — regression guard: applyConfig (real write) and
+// computeApplyImpact (preview) must agree on the deduped param count for the
+// SAME payload, now that both delegate to the shared dedupeParamsByKey helper.
+// A future re-divergence (e.g. someone re-inlining a slightly different
+// seenKeys block in only one of the two call sites) would make this fail.
+// ---------------------------------------------------------------------------
+
+test(
+  "applyConfig y computeApplyImpact coinciden en el conteo de params deduplicados para el mismo payload (Fix 2 regression guard)",
+  { skip: !hasSqlCredentials() },
+  async () => {
+    const { applyConfig, computeApplyImpact } = await import("../api/services/admin_service.js");
+    const pool = await getSqlPool();
+    const code = `TEST_FIX2_DEDUPE_${Date.now()}`;
+    let rulesetId = null;
+
+    try {
+      const tx = new sql.Transaction(pool);
+      await tx.begin();
+      rulesetId = await seedRuleset(tx, code, 5);
+      await tx.commit();
+
+      const payload = {
+        rules: [validRule(code)],
+        params: [
+          {
+            offerCode: code,
+            paramValues: [
+              { key: "P_A", value: "1", value_type: "NUMBER" },
+              { key: "P_B", value: "2", value_type: "NUMBER" },
+              { key: "P_A", value: "1-dup", value_type: "NUMBER" },
+              { key: "P_A", value: "1-dup2", value_type: "NUMBER" },
+            ],
+          },
+        ],
+      };
+
+      const impact = await computeApplyImpact(payload, { deleteAllPeriods: true });
+      const applyResult = await applyConfig(payload, { deleteAllPeriods: true });
+
+      assert.equal(impact.paramsToInsert, 2, "preview debe deduplicar 4 valores (2 duplicados de P_A) a 2");
+      assert.equal(
+        applyResult.applied.params,
+        impact.paramsToInsert,
+        "applyConfig y computeApplyImpact deben coincidir en el conteo deduplicado"
+      );
+    } finally {
+      if (rulesetId) {
+        await cleanupRuleset(pool, rulesetId).catch(() => {});
+      }
+    }
+  }
+);

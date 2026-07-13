@@ -1580,6 +1580,29 @@ export function deriveApplyScope(payload, options = {}) {
   };
 }
 
+/**
+ * Dedupe param values within a single offer's `paramValues` array by `key`,
+ * first-seen wins. WF snapshots may include the same param key from multiple
+ * vigencia periods, which would otherwise violate cfg_offer_param's unique
+ * index. Shared by applyConfig's insert loop and computeApplyImpact's count
+ * loop so the two can never silently re-diverge (code review, 2026-07-14 —
+ * previously each maintained its own hand-copied `seenKeys` block).
+ *
+ * @param {Array<{key?: any}>} [paramValues]
+ * @returns {Array} the deduped subset, in original order
+ */
+export function dedupeParamsByKey(paramValues) {
+  const seenKeys = new Set();
+  const result = [];
+  for (const param of (paramValues ?? [])) {
+    const key = String(param?.key ?? "");
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    result.push(param);
+  }
+  return result;
+}
+
 export async function applyConfig(payload, options = {}) {
   // payload.rules : AdminRuleItem[] — rule_id ignored, new ones assigned
   // payload.params: AdminParamsItem[] | undefined — if absent, DB params untouched
@@ -1695,11 +1718,8 @@ export async function applyConfig(payload, options = {}) {
         const rulesetId = await resolveRulesetId(tx, group.offerCode);
         // Deduplicate params by key within each group — WF snapshots may include the same
         // param key from multiple vigencia periods, which would violate the unique index.
-        const seenKeys = new Set();
-        for (const param of (group.paramValues ?? [])) {
+        for (const param of dedupeParamsByKey(group.paramValues)) {
           const paramKey = String(param.key ?? "");
-          if (seenKeys.has(paramKey)) continue;
-          seenKeys.add(paramKey);
           const insertParamReq = tx.request();
           insertParamReq.input("rulesetId", sql.Int, rulesetId);
           insertParamReq.input("key", sql.NVarChar(100), paramKey);
@@ -1800,19 +1820,13 @@ export async function computeApplyImpact(payload, options = {}) {
     rulesToInsertByOffer.set(code, (rulesToInsertByOffer.get(code) ?? 0) + 1);
   }
 
-  // paramsToInsert per offer, deduplicated by key — mirrors applyConfig's seenKeys.
+  // paramsToInsert per offer, deduplicated by key — shares dedupeParamsByKey
+  // with applyConfig's insert loop so the two counts can never re-diverge.
   const paramsToInsertByOffer = new Map();
   if (hasParams) {
     for (const group of payload.params) {
       const code = String(group.offerCode);
-      const seenKeys = new Set();
-      let count = 0;
-      for (const param of (group.paramValues ?? [])) {
-        const key = String(param.key ?? "");
-        if (seenKeys.has(key)) continue;
-        seenKeys.add(key);
-        count++;
-      }
+      const count = dedupeParamsByKey(group.paramValues).length;
       paramsToInsertByOffer.set(code, (paramsToInsertByOffer.get(code) ?? 0) + count);
     }
   }
