@@ -1017,7 +1017,19 @@ the "Exponer `role` en frontend" Architecture Decisions row, and `specs/admin-rb
 
 ### Issues found
 
-None.
+None during the batch above. A fresh-context adversarial code review of PR4 (before opening
+the PR) confirmed 1 finding, fixed on the same branch:
+
+**Finding — `isAdmin()` didn't normalize casing (commit `b38a6e7`)**: `isAdmin` compared
+`role() === "admin"` with no normalization, while the backend's `normalizeRole()`
+(`api/utils/rule_catalogs.js`, already merged) trims and lowercases before comparing —
+`dbo.cfg_user.role` has no DB-level constraint enforcing exact casing. A `role` value of
+`"Admin"`/`"ADMIN"` would be correctly authorized server-side (`requireRole`) but would
+incorrectly hide the admin nav links client-side (UI-only inconsistency, not a security
+gap — the real gate is server-side). **Fix (TDD)**: added a failing test asserting
+`isAdmin()` is `true` for `role: "Admin"`, confirmed RED, then changed `isAdmin` to
+`this.role()?.trim().toLowerCase() === "admin"`, confirmed GREEN. Full Karma suite re-run:
+**159 of 159 SUCCESS** (158 + 1 new test).
 
 ### Scope note
 
