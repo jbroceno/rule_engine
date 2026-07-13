@@ -49,7 +49,7 @@ artifacts:
 exploration_input: docs/seguridad/informe-owasp-top10-2026-07-10.md
 
 open_questions:
-  - ~~Gate de rol también sobre /api/workflow/*~~ Resuelto: sí, incluido (ver specs/admin-rbac).
+  - ~~Gate de rol también sobre /api/workflow/*~~ Resuelto (revertido 2026-07-13, revisión de código PR1): NO incluido — /api/workflow/* queda sin gate de rol (ver specs/admin-rbac § Amendment, apply-progress.md § Finding 1).
   - ~~Previsualización como endpoint separado o flag dryRun~~ Resuelto: endpoint separado POST /admin/config/apply/preview (ver specs/config-apply-safeguard).
   - ~~SNAPSHOT_HMAC_SECRET obligatorio u opcional~~ Resuelto: opcional, fallback a JWT_SECRET (ver specs/snapshot-integrity).
   - ~~Ocultar navegación admin a viewer~~ Resuelto: sí, incluido (ver specs/admin-rbac).
@@ -81,4 +81,27 @@ chain_plan:
       work_units: [WU-13]
       status: pending
 
-next_action: review + open PR3 (snapshot-integrity, WU-9..WU-12) on branch feat/rbac-and-config-safeguards-snapshot-integrity (stacked on feat/rbac-and-config-safeguards-apply-safeguard); then sdd-apply (PR4 — frontend polish, WU-13)
+pr_verify:
+  pr1:
+    name: rbac
+    status: pass_with_warnings
+    report: rule_set/openspec/changes/rbac-and-config-safeguards/verify-report-pr1.md
+    verified_commit: 3acd38c
+    verified_branch: feat/rbac-and-config-safeguards-rbac
+    verified_at: '2026-07-14'
+    critical_issues: 0
+    warning_issues: 4
+    suggestion_issues: 2
+    note: >-
+      Per-PR verify pass for PR1 only (WU-1..WU-4 + T-13a). This does NOT satisfy the
+      change-level verify phase — phases_done/phases_pending are unchanged; PR2-4 still
+      need their own verify passes before the final change-level verify-report.md runs.
+
+note_late_docs: >-
+  This commit backfills the PR1 verify-report and a small state.yaml correction that were
+  produced right after PR1 merged but never made it to main (the feat/rbac-and-config-safeguards-rbac
+  branch was deleted post-merge before this file was pushed). PR2 and PR3 merged to main in the
+  meantime; this commit only adds the missing verify-report file and fixes the open_questions
+  line, it does not touch anything PR2/PR3 already updated here.
+
+next_action: PR1, PR2, and PR3 are merged to main (in that order except PR2 merged after PR3 — see chain_plan). Remaining: PR4 (frontend polish, WU-13); then a full change-level sdd-verify once all 4 PRs are in main; then sdd-archive.
