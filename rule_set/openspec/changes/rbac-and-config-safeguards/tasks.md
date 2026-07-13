@@ -49,7 +49,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `test/require_role.test.js` — CREATE
 
-- [ ] **T-01** Write failing tests for `requireRole(...roles)`:
+- [x] **T-01** Write failing tests for `requireRole(...roles)`:
   - 403 with fake `req.user.role = "viewer"` against `requireRole("admin")`.
   - `next()` called (no error) with `req.user.role = "admin"`.
   - 401 (defensive) when `req.user` is absent.
@@ -63,7 +63,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `api/middleware/require_role.js` — CREATE; `api/utils/rule_catalogs.js` — MODIFY
 
-- [ ] **T-02** Create `requireRole(...roles)` factory (pattern: `createAuthMiddleware`): 403 `AppError` if `req.user.role` ∉ `roles`; 401 `AppError` if `!req.user`. Add `ALLOWED_ROLES = ["admin","viewer"]` + `normalizeRole(v)` in `rule_catalogs.js`.
+- [x] **T-02** Create `requireRole(...roles)` factory (pattern: `createAuthMiddleware`): 403 `AppError` if `req.user.role` ∉ `roles`; 401 `AppError` if `!req.user`. Add `ALLOWED_ROLES = ["admin","viewer"]` + `normalizeRole(v)` in `rule_catalogs.js`.
   - **Acceptance**: WU-1 tests pass.
   - **Spec ref**: admin-rbac "Middleware factory `requireRole`", "Catálogo de roles permitidos".
 
@@ -73,7 +73,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `api/routes/index.js` — MODIFY
 
-- [ ] **T-03** `router.use("/admin", requireRole("admin"), adminRoutes)` and `router.use("/workflow", requireRole("admin"), workflowRoutes)`. No change to `/simulate/*`, `/config`, `/health`, `/auth/login`.
+- [x] **T-03** `router.use("/admin", requireRole("admin"), adminRoutes)` and `router.use("/workflow", requireRole("admin"), workflowRoutes)`. No change to `/simulate/*`, `/config`, `/health`, `/auth/login`.
   - **Acceptance**: manual/integration check — `/api/simulate/*` and `GET /api/config` unaffected; `/api/admin/*` and `/api/workflow/*` now 403 for non-admin.
   - **Spec ref**: admin-rbac "Usuario admin accede con normalidad", "Rutas no administrativas no exigen rol".
 
@@ -83,7 +83,7 @@ Each work unit = one commit. Per Strict TDD, RED (failing test) commits precede 
 
 **Files**: `sql/users.sql` — MODIFY; `rule_set/CLAUDE.md` — MODIFY
 
-- [ ] **T-04** Document `ALLOWED_ROLES` catalog and `node scripts/seed_user.mjs --role viewer` usage.
+- [x] **T-04** Document `ALLOWED_ROLES` catalog and `node scripts/seed_user.mjs --role viewer` usage.
   - **Spec ref**: admin-rbac "Catálogo referenciado por el seed de usuarios".
 
 ---

@@ -65,7 +65,7 @@ chain_plan:
     - pr: 1
       name: rbac
       work_units: [WU-1, WU-2, WU-3, WU-4]
-      status: pending
+      status: applied
     - pr: 2
       name: apply-safeguard
       work_units: [WU-5, WU-6, WU-7, WU-8]
@@ -79,4 +79,4 @@ chain_plan:
       work_units: [WU-13]
       status: pending
 
-next_action: sdd-apply (PR1 — rbac, WU-1..WU-4)
+next_action: review + open PR1 (rbac, WU-1..WU-4) on branch feat/rbac-and-config-safeguards-rbac; then sdd-apply (PR2 — apply-safeguard, WU-5..WU-8)
