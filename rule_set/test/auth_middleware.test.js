@@ -141,3 +141,80 @@ test("GET /api/health with wrong method (POST) → 401 (method-scoped bypass)", 
   assert.ok(err instanceof AppError, "POST /api/health is not a public path");
   assert.equal(err.statusCode, 401);
 });
+
+// ---------------------------------------------------------------------------
+// Configurable auth modes — permissive-mode public allowlist
+// (sdd/configurable-auth-modes — design.md ADR-D2)
+// ---------------------------------------------------------------------------
+
+const PERMISSIVE_ONLY_ROUTES = [
+  { method: "GET", path: "/api/config" },
+  { method: "POST", path: "/api/simulate/init" },
+  { method: "POST", path: "/api/simulate/pre" },
+  { method: "POST", path: "/api/simulate/final" },
+  { method: "POST", path: "/api/workflow/condiciones-hipotecas" },
+];
+
+for (const route of PERMISSIVE_ONLY_ROUTES) {
+  test(`permissive mode: ${route.method} ${route.path} bypasses auth — no token → next() with no error`, async () => {
+    const mw = createAuthMiddleware({
+      verify: () => { throw new Error("should not reach"); },
+      mode: "permissive",
+    });
+    const { err } = await runMiddleware(mw, { method: route.method, path: route.path });
+    assert.equal(err, undefined, `${route.method} ${route.path} should bypass auth in permissive mode`);
+  });
+}
+
+test("default mode (no 'mode' option) stays secure: GET /api/config without token → 401 (regression)", async () => {
+  const mw = createAuthMiddleware({ verify: () => { throw new Error("should not reach"); } });
+  const { err } = await runMiddleware(mw, { method: "GET", path: "/api/config" });
+  assert.ok(err instanceof AppError, "expected AppError — default mode must stay secure");
+  assert.equal(err.statusCode, 401);
+});
+
+test("explicit mode:'secure' behaves identically to unset: POST /api/workflow/condiciones-hipotecas without token → 401", async () => {
+  const mw = createAuthMiddleware({
+    verify: () => { throw new Error("should not reach"); },
+    mode: "secure",
+  });
+  const { err } = await runMiddleware(mw, {
+    method: "POST",
+    path: "/api/workflow/condiciones-hipotecas",
+  });
+  assert.ok(err instanceof AppError, "expected AppError — explicit secure must behave like default");
+  assert.equal(err.statusCode, 401);
+});
+
+test("admin-never-public: permissive mode + POST /api/admin/config/apply without token → still 401", async () => {
+  const mw = createAuthMiddleware({
+    verify: () => { throw new Error("should not reach"); },
+    mode: "permissive",
+  });
+  const { err } = await runMiddleware(mw, {
+    method: "POST",
+    path: "/api/admin/config/apply",
+  });
+  assert.ok(err instanceof AppError, "expected AppError — /api/admin/* must never be public, any mode");
+  assert.equal(err.statusCode, 401);
+});
+
+test("exact-match safety in permissive mode: GET /api/configuration (not /api/config) without token → 401", async () => {
+  const mw = createAuthMiddleware({
+    verify: () => { throw new Error("should not reach"); },
+    mode: "permissive",
+  });
+  const { err } = await runMiddleware(mw, { method: "GET", path: "/api/configuration" });
+  assert.ok(err instanceof AppError, "expected AppError — /api/configuration is NOT the allowlisted /api/config");
+  assert.equal(err.statusCode, 401);
+});
+
+test("exact-match safety in permissive mode: GET /api/simulate/init (wrong method) without token → 401", async () => {
+  const mw = createAuthMiddleware({
+    verify: () => { throw new Error("should not reach"); },
+    mode: "permissive",
+  });
+  const { err } = await runMiddleware(mw, { method: "GET", path: "/api/simulate/init" });
+  assert.ok(err instanceof AppError, "expected AppError — only POST /api/simulate/init is allowlisted, not GET");
+  assert.equal(err.statusCode, 401);
+});

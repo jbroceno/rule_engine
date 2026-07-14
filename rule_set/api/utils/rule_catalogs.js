@@ -15,6 +15,7 @@ export const ALLOWED_OPERATORS = new Set([
 ]);
 export const ALLOWED_ACTION_TYPES = new Set(["SET", "ADD", "APPEND", "SET_DICTAMEN"]);
 export const ALLOWED_ROLES = new Set(["admin", "viewer"]);
+export const ALLOWED_AUTH_MODES = new Set(["permissive", "secure"]);
 
 export function normalizeStage(value) {
   return typeof value === "string" ? value.trim().toUpperCase() : "";
@@ -43,5 +44,9 @@ export function normalizeActionType(actionType) {
 }
 
 export function normalizeRole(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+export function normalizeAuthMode(value) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }

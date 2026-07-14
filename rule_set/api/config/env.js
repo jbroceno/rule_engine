@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { ALLOWED_AUTH_MODES, normalizeAuthMode } from "../utils/rule_catalogs.js";
 
 dotenv.config({ path: new URL("../.env", import.meta.url) });
 
@@ -18,6 +19,34 @@ function asBoolean(value, defaultValue) {
 // relying on process.env/dotenv reload timing, which is fragile — dotenv.config()
 // can repopulate a deleted process.env var from a local .env file on re-import.
 export { asBoolean };
+
+/**
+ * Resolve AUTH_MODE from a raw env value.
+ * - Unset/empty (falsy) -> "secure" (safe default, never crashes on import).
+ * - Set -> normalizeAuthMode(raw), even if the result is NOT a valid mode.
+ *   An invalid-but-set value is intentionally left uncoerced (not silently
+ *   defaulted to "secure") so assertAuthMode() can fail loudly at boot
+ *   instead of masking a typo'd AUTH_MODE — see design.md ADR-D3.
+ * Exported (mirrors the asBoolean precedent) so tests can call it directly
+ * instead of fighting process.env/dotenv import-timing.
+ */
+export function resolveAuthMode(raw) {
+  return raw ? normalizeAuthMode(raw) : "secure";
+}
+
+/**
+ * Fail-fast guard for AUTH_MODE — call this from assertAuthConfig().
+ * Exported as a pure function (mirrors resolveAuthMode/asBoolean) so the
+ * boot-crash behavior is unit-testable without spinning up server.js.
+ */
+export function assertAuthMode(mode) {
+  if (!ALLOWED_AUTH_MODES.has(mode)) {
+    throw new Error(
+      `AUTH_MODE inválido: "${mode}". Valores permitidos: permissive, secure. ` +
+        "Déjalo sin definir para el modo seguro por defecto."
+    );
+  }
+}
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
@@ -48,6 +77,10 @@ export const env = {
   auth: {
     jwtSecret: process.env.JWT_SECRET || "",
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || "8h",
+    // Configurable authentication mode ("secure" | "permissive"). Unset ->
+    // "secure" (safe default). Set-but-invalid is left uncoerced here and
+    // caught by assertAuthMode() in assertAuthConfig() below — see ADR-D3.
+    mode: resolveAuthMode(process.env.AUTH_MODE),
   },
   // OWASP-10: HMAC secret for snapshot integrity checksums. Falls back to
   // JWT_SECRET when SNAPSHOT_HMAC_SECRET is not set — intentionally NOT
@@ -94,4 +127,8 @@ export function assertAuthConfig() {
       "JWT_SECRET no configurado. Define JWT_SECRET en rule_set/api/.env antes de arrancar el API."
     );
   }
+  // AUTH_MODE: unset already resolved to "secure" above (never throws here).
+  // A SET-but-invalid value (e.g. "permisive") must crash boot loudly rather
+  // than silently falling back — see design.md ADR-D3.
+  assertAuthMode(env.auth.mode);
 }
