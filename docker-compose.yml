@@ -119,6 +119,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en el fichero .env}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
       ENABLE_SEED_RESET: ${ENABLE_SEED_RESET:-false}
+      AUTH_MODE: ${AUTH_MODE:-secure}
       # Si ambos ficheros existen dentro del volumen /certs, server.js arranca en
       # HTTPS; si no, sirve HTTP normal (comportamiento actual sin cambios).
       SSL_FULLCHAIN_PATH: /certs/fullchain.pem

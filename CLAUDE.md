@@ -472,6 +472,7 @@ The winner is selected as the eligible offer with the **highest `offer_rank`**.
 |----------|-----------|---------|-------|
 | `JWT_SECRET` | **Sí** | — | **Fail-fast**: la API se niega a arrancar si no está definida (`assertAuthConfig()` en `server.js`). |
 | `JWT_EXPIRES_IN` | No | `8h` | Cualquier valor válido para `jsonwebtoken` (`"1h"`, `"24h"`, etc.). |
+| `AUTH_MODE` | No | `secure` | `permissive` \| `secure`. En `permissive`, `GET /api/config`, `POST /api/simulate/*` y `POST /api/workflow/condiciones-hipotecas` no requieren JWT; `/api/admin/*` sigue **siempre** exigiendo JWT + rol `admin` en ambos modos. Valor no reconocido → **fail-fast** en arranque (mismo mecanismo que `JWT_SECRET`). Ver `api/utils/rule_catalogs.js` (`ALLOWED_AUTH_MODES`/`normalizeAuthMode`) y `api/middleware/auth_middleware.js`. |
 
 ### Gotcha — import CJS bajo `type:module`
 
