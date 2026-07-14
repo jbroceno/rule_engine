@@ -35,6 +35,11 @@ import bcrypt from "bcryptjs"; // default import required — CJS interop
 // without any extra dotenv.config() call here.
 import { getSqlPool, sql } from "../api/db/sql_client.js";
 
+// Validate --role against the same catalog used by requireRole — a typo here
+// would create a user whose role never matches any gate, so they could never
+// authenticate to admin endpoints (silent lockout).
+import { ALLOWED_ROLES, normalizeRole } from "../api/utils/rule_catalogs.js";
+
 // ---------------------------------------------------------------------------
 // Argument parsing
 // ---------------------------------------------------------------------------
@@ -91,7 +96,18 @@ async function main() {
     process.exit(1);
   }
 
-  const role = args.role ?? "admin";
+  // Validate role against ALLOWED_ROLES — normalizeRole trims + lowercases,
+  // matching the same transform used by requireRole at runtime.
+  const roleRaw = args.role ?? "admin";
+  const role = normalizeRole(roleRaw);
+  if (!ALLOWED_ROLES.has(role)) {
+    const valid = [...ALLOWED_ROLES].join(", ");
+    console.error(
+      `Error: rol inválido '${roleRaw}'. Valores permitidos: ${valid}.`
+    );
+    process.exit(1);
+  }
+
   const BCRYPT_COST = 10;
 
   console.log(`Generando hash bcrypt (cost ${BCRYPT_COST})…`);
