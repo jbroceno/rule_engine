@@ -1,18 +1,19 @@
 change: rbac-and-config-safeguards
 title: RBAC efectivo y salvaguardas de integridad de configuración (OWASP-01/02/10)
-status: proposed
+status: archived
 created_at: '2026-07-10'
+archived_at: '2026-07-14'
 
 phases_done:
   - proposal
   - spec
   - design
   - tasks
-
-phases_pending:
   - apply
   - verify
   - archive
+
+phases_pending: []
 
 summary:
   description: >
@@ -45,6 +46,8 @@ artifacts:
     snapshot-integrity: rule_set/openspec/changes/rbac-and-config-safeguards/specs/snapshot-integrity/spec.md
   design: rule_set/openspec/changes/rbac-and-config-safeguards/design.md
   tasks: rule_set/openspec/changes/rbac-and-config-safeguards/tasks.md
+  apply_progress: rule_set/openspec/changes/rbac-and-config-safeguards/apply-progress.md
+  verify_report: rule_set/openspec/changes/rbac-and-config-safeguards/verify-report.md
 
 exploration_input: docs/seguridad/informe-owasp-top10-2026-07-10.md
 
@@ -58,6 +61,7 @@ open_questions:
 risks:
   - Riesgo de lockout por rol si no existe ningún usuario admin al activar el gate (mitigado por default role='admin').
   - Tamaño confirmado >400 líneas (~871 estimado; backend x3 + SQL + Angular) — 4 PRs encadenados (RBAC / apply safeguard / snapshot integrity / frontend polish), chain_strategy=stacked-to-main (confirmado por el usuario 2026-07-11), cada PR se mergea a main en orden.
+  - 3 WARNINGs abiertos, sin cerrar tras el verify de cambio completo (ver verify_report): falta test HTTP-level (supertest) para el gate /admin, falta test de regresión para /workflow sin gate, y scripts/seed_user.mjs no valida --role contra ALLOWED_ROLES. Ninguno bloquea el archive; candidatos a fast-follow.
 
 chain_plan:
   strategy: stacked-to-main
@@ -88,13 +92,15 @@ chain_plan:
     - pr: 4
       name: frontend-polish
       work_units: [WU-13]
-      status: applied
+      status: merged
+      merge_commit: 3699ca8
       branch: feat/rbac-and-config-safeguards-frontend-polish
       note: >
         T-13b (role/isAdmin decode) + T-13c (nav hiding) implemented via TDD (RED confirmed via
         compile errors on missing role/isAdmin, then GREEN). T-13a already merged in PR1. Full
-        Karma suite: 158/158 passing (no regressions). See apply-progress.md § "PR4 —
-        frontend-polish (WU-13, remainder: T-13b + T-13c)".
+        Karma suite: 159/159 passing (no regressions, incl. a casing-normalization fix found in
+        PR4's own code review). Merged as GitHub PR #4 (commit 3699ca8). See apply-progress.md
+        § "PR4 — frontend-polish (WU-13, remainder: T-13b + T-13c)".
 
 pr_verify:
   pr1:
@@ -108,9 +114,26 @@ pr_verify:
     warning_issues: 4
     suggestion_issues: 2
     note: >-
-      Per-PR verify pass for PR1 only (WU-1..WU-4 + T-13a). This does NOT satisfy the
-      change-level verify phase — phases_done/phases_pending are unchanged; PR2-4 still
-      need their own verify passes before the final change-level verify-report.md runs.
+      Per-PR verify pass for PR1 only (WU-1..WU-4 + T-13a). Superseded by the change-level
+      verify below — 3 of its 4 warnings remain open (carried forward), 1 was resolved
+      (stale state.yaml open_questions line).
+
+verify:
+  status: pass_with_warnings
+  report: rule_set/openspec/changes/rbac-and-config-safeguards/verify-report.md
+  verified_commit: 3699ca8
+  verified_branch: main
+  verified_at: '2026-07-14'
+  critical_issues: 0
+  warning_issues: 3
+  suggestion_issues: 3
+  scope: >-
+    Change-level verify across all 4 merged PRs (rbac, apply-safeguard, snapshot-integrity,
+    frontend-polish). Supersedes pr_verify.pr1 (narrower, PR1-only pass). Confirms all 15
+    tasks (T-01..T-13c) implemented and matching code; all 3 OWASP findings (01/02/10)
+    genuinely closed; backend suite 295 pass/36 fail (all pre-existing SQL-connectivity
+    environment limitations)/2 skip; frontend suite 159/159 SUCCESS. 3 WARNINGs carried
+    forward from pr_verify.pr1 remain open (non-blocking); 1 was resolved.
 
 note_late_docs: >-
   This commit backfills the PR1 verify-report and a small state.yaml correction that were
@@ -119,4 +142,18 @@ note_late_docs: >-
   meantime; this commit only adds the missing verify-report file and fixes the open_questions
   line, it does not touch anything PR2/PR3 already updated here.
 
-next_action: PR1, PR2, and PR3 are merged to main (in that order except PR2 merged after PR3 — see chain_plan). PR4 (frontend polish, WU-13/T-13b+T-13c) is implemented and committed on feat/rbac-and-config-safeguards-frontend-polish (not yet merged/PR'd). Remaining: open PR4, merge to main; then a full change-level sdd-verify once all 4 PRs are in main; then sdd-archive.
+archive:
+  report: rule_set/openspec/changes/rbac-and-config-safeguards/archive-report.md
+  fast_follow_resolved:
+    - W1: test/rbac_http_integration.test.js (HTTP integration test for /admin gate)
+    - W2: test/rbac_http_integration.test.js (regression test for /workflow ungated)
+    - W3: scripts/seed_user.mjs (validates --role against ALLOWED_ROLES before DB insert)
+  post_fix_tests:
+    pass: 301
+    fail: 36
+    skip: 2
+    total: 339
+
+next_action: >-
+  Ciclo SDD completado. Cambio archivado. Los 3 WARNINGs del verify fueron resueltos en
+  fast-follow (mismo día, 2026-07-14). Sin tareas pendientes.
