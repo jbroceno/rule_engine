@@ -28,9 +28,9 @@ La migración la completará un desarrollador especialista en Workflow y queda f
 ### RT02 - Migración de base de datos
 
 Scripts con las definiciones en  @rule_set/sql/workflow_deploy. Incluye:
-- Nuevo modelo de datos debe cambiar para adaptarse a la nomenclatura de la nueva herramiente. En la tabla de reglas se han quitado los nombres de reglas ya que se definen en la tabla HIPO_OFERTA. El campo que las relaciona es OFERTA_ID. La estructura de la tabla es:
+- Nuevo modelo de datos debe cambiar para adaptarse a la nomenclatura de la nueva herramiente. En la tabla de reglas se han quitado los nombres de reglas ya que se definen en la tabla OFERTA. El campo que las relaciona es OFERTA_ID. La estructura de la tabla es:
 ~~~ sql
-    CREATE TABLE [dbo].[HIPO_OFERTA](
+    CREATE TABLE [dbo].[OFERTA](
         [OFERTA_ID] [int] NOT NULL,
         [ALTA_USR] [int] NULL,
         [ALTA_DT] [datetime] NULL,

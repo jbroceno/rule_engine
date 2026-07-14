@@ -16,11 +16,13 @@ Se establecerá una estructura de precios basado en distintas ofertas cubiertas 
 ## Criterios de Elegibilidad
 
 Para obtener el precio que corresponde a un expediente se realizará una evaluación en tres pasos. 
-Se creará un motor de reglas capaz que, dada una configuración de conjuntos de reglas (cada uno aplicado a una oferta) y de parámetros, permitirá obtener las ofertas elegibles y los límites a aplicar.
+Se creará un motor de reglas para que, dada una configuración de conjuntos de reglas (cada uno aplicado a una oferta) y de parámetros, permitirá obtener las ofertas elegibles y los límites a aplicar. Cada regla definirá el conjunto de condiciones que provocarán que la oferta no sea elegible. En estas condiciones se podrán usar parámetros en lugar de valores fijos para facilitar la configuración. Se expresarán con la sintaxis *PARAM:Nombre_Parametro*.
+
+Se detalla una configuración completa de ofertas/reglas/parámetros en @..\rule_set\docs\offer-settings.md
 
 ### Proceso de elegibilidad
 
-Se establecen los primeros campos:
+Se establecen los campos:
 
 Variable|Cálculo
 -|-
@@ -80,99 +82,5 @@ La evaluación nos ofrecerá las ofertas elegibles que, a su vez, limitarán los
 
 Estos campos estarán restringidos según los límites devueltos en el cálculo de elegibilidad.
 
-Si se produce algún cambio en las variables de la fase 1, deberá volverse a calcular los límites. El *importe de la hipoteca*, el *plazo* se ajustarán automáticamente para no superar los rangos de *plazo* y *LTV* permitidos ni quedar fuera de los *importes mínimo/máximos de la hipoteca*. ⚠️❓Los *años a fijo* no se pueden inferir, se cargará el selector con las posibles opciones que tenga configurada la oferta en el catálogo de precios
-
-# Anexo I - Motor de reglas
-
-## Modelo de datos
-
-```mermaid
-erDiagram
-  CFG_OFFER_RULESET ||--o{ CFG_OFFER_RULE : has
-  CFG_OFFER_RULE ||--o{ CFG_OFFER_RULE_CONDITION : has
-  CFG_OFFER_RULE ||--o{ CFG_OFFER_RULE_ACTION : has
-  CFG_OFFER_RULESET ||--o{ CFG_OFFER_PARAM : configures
-
-  CFG_OFFER_RULESET {
-    int     ruleset_id PK
-    string  code "OfferCode (único)"
-    string  name "Nombre oferta"
-    int     offer_rank "Ranking (más alto = más restrictiva/ganadora)"
-    bit     enabled
-    datetime valid_from
-    datetime valid_to
-    datetime created_at
-    string  created_by
-    datetime updated_at
-    string  updated_by
-  }
-
-  CFG_OFFER_RULE {
-    int     rule_id PK
-    int     ruleset_id FK
-    string  name
-    int     priority "Mayor = evalúa antes"
-    bit     stop_processing "Corta evaluación si aplica"
-    bit     enabled
-    datetime valid_from
-    datetime valid_to
-    datetime created_at
-    string  created_by
-    datetime updated_at
-    string  updated_by
-  }
-
-  CFG_OFFER_RULE_CONDITION {
-    int     cond_id PK
-    int     rule_id FK
-    int     group_id "OR entre grupos; AND dentro del grupo"
-    string  field "campo del input o 'PARAM:XXX'"
-    string  operator "EQ,GT,IN,NOT_IN,BETWEEN..."
-    string  value_type "NUMBER|STRING|BOOL|JSON"
-    string  value1 "literal o 'PARAM:XXX'"
-    string  value2 "para BETWEEN"
-    string  in_values_json "opcional: array JSON si IN embebido"
-    datetime created_at
-    string  created_by
-    datetime updated_at
-    string  updated_by
-  }
-
-  CFG_OFFER_RULE_ACTION {
-    int     action_id PK
-    int     rule_id FK
-    string  action_type "SET|APPEND|ADD"
-    string  field "campo destino en dictamen"
-    string  value "literal o 'PARAM:XXX'"
-    string  value_type "NUMBER|STRING|BOOL|JSON"
-    datetime created_at
-    string  created_by
-    datetime updated_at
-    string  updated_by
-  }
-
-  CFG_OFFER_PARAM {
-    int     param_id PK
-    string  offer_code "FK lógico a CFG_OFFER_RULESET.code"
-    string  stage "PRE|FINAL|ANY"
-    string  param_key
-    string  value_type "NUMBER|STRING|BOOL|JSON"
-    string  value "valor en texto (p.ej. 0.80 o ['A','B'])"
-    bit     enabled
-    datetime valid_from
-    datetime valid_to
-    datetime created_at
-    string  created_by
-    datetime updated_at
-    string  updated_by
-  }
-```
-
-Tabla|Finalidad
--|-
-CFG_OFFER_RULESET|define cada “oferta” o conjunto de reglas (código, nombre, rank).
-CFG_OFFER_RULE|reglas dentro de una oferta, con priority y stop_processing.
-CFG_OFFER_RULE_CONDITION|condiciones de disparo de cada regla.<br/>group_id: modela lógica OR entre grupos y AND dentro del grupo.<br/>field puede ser un campo del input (ltv, edadMax, tipoAlta) o un parámetro (PARAM:REQUIERE_PRIMERA_VIVIENDA).<br/>value1/value2 aceptan literales o referencias PARAM:....<br/>Para IN/NOT_IN, o bien usas in_values_json (embebido) o value1=PARAM:LISTA.
-CFG_OFFER_RULE_ACTION|acciones al aplicar la regla (SET/APPEND/ADD) sobre el “dictamen”.
-CFG_OFFER_PARAM|parámetros por oferta y stage (PRE/FINAL/ANY) y con vigencia.
+Si se produce algún cambio en las variables de la fase 1, deberá volverse a calcular los límites. El *importe de la hipoteca*, el *plazo* se ajustarán automáticamente para no superar los rangos de *plazo* y *LTV* permitidos ni quedar fuera de los *importes mínimo/máximos de la hipoteca*. 
 
