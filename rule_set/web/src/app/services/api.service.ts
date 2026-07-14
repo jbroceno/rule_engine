@@ -16,6 +16,25 @@ import {
   PreSimulationResponse,
 } from "../models/api.models";
 
+/**
+ * Fix (code review follow-up, 2026-07-15): a plain `Error` thrown by
+ * `handleError` used to carry ONLY the server's translated message,
+ * discarding `HttpErrorResponse.status` entirely — callers that need to
+ * distinguish a specific HTTP status (e.g. 401, already handled end-to-end
+ * by `authInterceptor`'s logout+redirect) had no way to do so without
+ * regex-matching message text. Mirrors `AdminApiError`
+ * (admin-api.service.ts, code review PR3 2026-07-14) for this service.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 @Injectable({ providedIn: "root" })
 export class ApiService {
   private readonly baseUrl = "/api";
@@ -67,7 +86,7 @@ export class ApiService {
 
   private handleError(error: HttpErrorResponse) {
     const message = this.extractErrorMessage(error);
-    return throwError(() => new Error(message));
+    return throwError(() => new ApiError(message, error.status));
   }
 
   private extractErrorMessage(error: HttpErrorResponse): string {

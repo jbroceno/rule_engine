@@ -17,16 +17,25 @@ export const routes: Routes = [
   // Redirects — these resolve to a guarded route, which triggers authGuard.
   { path: '', pathMatch: 'full', redirectTo: 'offer-dates' },
 
-  // Protected routes — all require authentication.
+  // Admin routes — always require authentication, in both auth modes
+  // (backed up server-side by requireRole("admin") regardless).
   { path: 'ofertas',        component: OfertasPageComponent,          canActivate: [authGuard] },
   { path: 'configurador',   component: ConfiguratorPageComponent,      canActivate: [authGuard] },
-  { path: 'configuracion',  component: ConfigPageComponent,            canActivate: [authGuard] },
   { path: 'snapshots',      component: SnapshotsPageComponent,         canActivate: [authGuard] },
   { path: 'offer-dates',    component: OfferDatesPageComponent,        canActivate: [authGuard] },
-  { path: 'simulador-init', component: InitSimulatorPageComponent,     canActivate: [authGuard] },
-  { path: 'simulador-pre',  component: PreSimulatorPageComponent,      canActivate: [authGuard] },
-  { path: 'simulador-final',component: FinalSimulatorPageComponent,    canActivate: [authGuard] },
 
-  // Catch-all — redirects to configurador (which then hits authGuard).
-  { path: '**', redirectTo: 'configurador' }
+  // Read-only routes — no client-side guard. Anonymous access is allowed
+  // when the backend runs AUTH_MODE=permissive; when the backend runs in
+  // (default) secure mode, the page's data call 401s and the existing
+  // authInterceptor logs out + redirects to /login. No mode-discovery
+  // endpoint is used — the backend is the single source of truth.
+  { path: 'configuracion',  component: ConfigPageComponent },
+  { path: 'simulador-init', component: InitSimulatorPageComponent },
+  { path: 'simulador-pre',  component: PreSimulatorPageComponent },
+  { path: 'simulador-final',component: FinalSimulatorPageComponent },
+
+  // Catch-all — redirects to the read-only configuracion page, which degrades
+  // gracefully for anonymous users in permissive mode instead of bouncing to
+  // /login.
+  { path: '**', redirectTo: 'configuracion' }
 ];
