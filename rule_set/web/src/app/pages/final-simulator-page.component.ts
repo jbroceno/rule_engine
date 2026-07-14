@@ -4,7 +4,7 @@ import { Component, computed, inject, signal } from "@angular/core";
 import { FinalSimulationEnvelope, FinalSimulationInput, OfferConfig, PreEligibleOffer, PreSimulationInput, WfCompareResult } from "../models/api.models";
 import { SimulationTraceLogComponent } from "../shared/simulation-trace-log.component";
 import { SimulatorFormComponent, SimulatorFormSubmit } from "../shared/simulator-form/simulator-form.component";
-import { ApiService } from "../services/api.service";
+import { ApiError, ApiService } from "../services/api.service";
 import { WfValidationService } from "../services/wf-validation.service";
 import { environment } from "../../environments/environment";
 import { DictamenEntry, extraDictamenEntries } from "../util/dictamen-extra";
@@ -31,7 +31,16 @@ export class FinalSimulatorPageComponent {
   constructor() {
     this.apiService.getConfig().subscribe({
       next: (config) => this.offers.set(config.offers ?? []),
-      error: (error: Error) => this.error.set(`No se pudieron cargar las ofertas: ${error.message}`),
+      error: (error: ApiError) => {
+        // Fix (code review follow-up, 2026-07-15): a 401 here is already
+        // handled end-to-end by authInterceptor (logout + redirect to
+        // /login) — setting the local error banner too would race the
+        // async redirect and could flash a stale error message on screen.
+        // Any other error status still surfaces normally.
+        if (error.status !== 401) {
+          this.error.set(`No se pudieron cargar las ofertas: ${error.message}`);
+        }
+      },
     });
   }
 
@@ -142,8 +151,15 @@ export class FinalSimulatorPageComponent {
         this.wfCompare.set(response.wfCompare ?? null);
         this.loading.set(false);
       },
-      error: (error: Error) => {
-        this.error.set(error.message);
+      error: (error: ApiError) => {
+        // Fix (code review follow-up, 2026-07-15): a 401 here is already
+        // handled end-to-end by authInterceptor (logout + redirect to
+        // /login) — setting the local error banner too would race the
+        // async redirect and could flash a stale error message on screen.
+        // Any other error status still surfaces normally.
+        if (error.status !== 401) {
+          this.error.set(error.message);
+        }
         this.loading.set(false);
       },
     });

@@ -2,7 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, OnInit, computed, signal } from "@angular/core";
 
 import { ConfigResponse } from "../models/api.models";
-import { ApiService } from "../services/api.service";
+import { ApiError, ApiService } from "../services/api.service";
 
 @Component({
   selector: "app-config-page",
@@ -39,8 +39,15 @@ export class ConfigPageComponent implements OnInit {
         this.config.set(response);
         this.loading.set(false);
       },
-      error: (error: Error) => {
-        this.error.set(error.message);
+      error: (error: ApiError) => {
+        // Fix (code review follow-up, 2026-07-15): a 401 here is already
+        // handled end-to-end by authInterceptor (logout + redirect to
+        // /login) — setting the local error banner too would race the
+        // async redirect and could flash a stale error message on screen.
+        // Any other error status still surfaces normally.
+        if (error.status !== 401) {
+          this.error.set(error.message);
+        }
         this.loading.set(false);
       },
     });
