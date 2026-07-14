@@ -75,3 +75,77 @@ test("AUTH_MODE=permissive: GET /api/config WITHOUT token → NOT 401 (newly-pub
     "GET /api/config must bypass auth entirely in permissive mode, even without a token"
   );
 });
+
+// ---------------------------------------------------------------------------
+// Read-only Configurador + Períodos in permissive mode
+// (sdd/permissive-config-readonly — design.md ADR-CR1/CR2/CR7)
+//
+// New sibling read surface: GET /api/config/{rules,params,offers,fechas}.
+// Proves (a) the negative invariant — opening these 4 reads did NOT open any
+// /api/admin/* write verb — and (b) the positive full-chain for the 4 new
+// routes themselves, in both auth modes, for anon + admin.
+// ---------------------------------------------------------------------------
+
+const NEW_CONFIG_READ_PATHS = [
+  "/api/config/rules",
+  "/api/config/params",
+  "/api/config/offers",
+  "/api/config/fechas",
+];
+
+const ADMIN_WRITE_VERBS = [
+  { method: "post", path: "/api/admin/rules", body: {} },
+  { method: "put", path: "/api/admin/rules/1", body: {} },
+  { method: "delete", path: "/api/admin/rules/1" },
+  { method: "post", path: "/api/admin/params", body: {} },
+  { method: "post", path: "/api/admin/offers", body: {} },
+  { method: "post", path: "/api/admin/config/apply", body: {} },
+  { method: "patch", path: "/api/admin/rules/reorder", body: {} },
+  { method: "patch", path: "/api/admin/offers/OFERTA_A/enabled", body: { enabled: true } },
+];
+
+for (const verb of ADMIN_WRITE_VERBS) {
+  test(`AUTH_MODE=permissive: ${verb.method.toUpperCase()} ${verb.path} WITHOUT token → still 401 (opening reads did not open writes)`, async () => {
+    let req = agent[verb.method](verb.path);
+    if (verb.body !== undefined) req = req.send(verb.body);
+    const res = await req;
+    assert.equal(res.status, 401, `expected 401, got ${res.status}`);
+  });
+
+  test(`AUTH_MODE=permissive: ${verb.method.toUpperCase()} ${verb.path} WITH viewer token → still 403 (role gate unaffected)`, async () => {
+    let req = agent[verb.method](verb.path).set("Authorization", `Bearer ${signToken("viewer")}`);
+    if (verb.body !== undefined) req = req.send(verb.body);
+    const res = await req;
+    assert.equal(res.status, 403, `expected 403, got ${res.status}`);
+  });
+}
+
+for (const path of NEW_CONFIG_READ_PATHS) {
+  test(`AUTH_MODE=permissive: GET ${path} WITHOUT token → NOT 401 (new public read surface)`, async () => {
+    const res = await agent.get(path);
+    assert.notEqual(res.status, 401, `${path} must bypass auth entirely in permissive mode`);
+  });
+
+  test(`AUTH_MODE=permissive: GET ${path} WITH admin token → NOT 401/403 (admin unaffected)`, async () => {
+    const res = await agent.get(path).set("Authorization", `Bearer ${signToken("admin")}`);
+    assert.notEqual(res.status, 401, "admin must not receive 401 from the auth gate");
+    assert.notEqual(res.status, 403, "admin must not receive 403 (no role gate on this surface)");
+  });
+}
+
+// Non-goals stay fully admin-gated in permissive mode (regression, not new surface).
+const ADMIN_NON_GOAL_ROUTES = [
+  { method: "get", path: "/api/admin/export" },
+  { method: "get", path: "/api/admin/snapshots" },
+  { method: "get", path: "/api/admin/snapshots/1/content" },
+  { method: "post", path: "/api/admin/validate", body: {} },
+];
+
+for (const route of ADMIN_NON_GOAL_ROUTES) {
+  test(`AUTH_MODE=permissive: ${route.method.toUpperCase()} ${route.path} WITHOUT token → still 401 (non-goal, stays admin-gated)`, async () => {
+    let req = agent[route.method](route.path);
+    if (route.body !== undefined) req = req.send(route.body);
+    const res = await req;
+    assert.equal(res.status, 401, `expected 401, got ${res.status}`);
+  });
+}
