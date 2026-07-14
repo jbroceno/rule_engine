@@ -51,14 +51,36 @@ describe('App', () => {
     expect(compiled.querySelector('.logout-button')).not.toBeNull();
   });
 
-  it('hides the nav and logout button when not authenticated', async () => {
-    configure(false);
+  // -------------------------------------------------------------------------
+  // configurable-auth-modes (PR 2, frontend) — nav is now ALWAYS rendered
+  // (read-only links visible to anyone); only the admin links and the
+  // login/logout affordance are gated by auth/role state.
+  // -------------------------------------------------------------------------
+  it('shows the read-only nav links and a login link (no logout button) when not authenticated', async () => {
+    // An anonymous user is never an admin — pass admin: false explicitly
+    // rather than relying on the helper's default.
+    configure(false, false);
     await TestBed.compileComponents();
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('nav')).toBeNull();
+    const nav = compiled.querySelector('nav');
+    expect(nav).not.toBeNull();
+
+    const navText = nav?.textContent ?? '';
+    expect(navText).toContain('Configuracion');
+    expect(navText).toContain('Simulador INIT');
+    expect(navText).toContain('Simulador PRE');
+    expect(navText).toContain('Simulador FINAL');
+
+    // Admin links must not be visible to an anonymous user.
+    expect(navText).not.toContain('Períodos');
+    expect(navText).not.toContain('Ofertas');
+    expect(navText).not.toContain('Configurador');
+    expect(navText).not.toContain('Snapshots');
+
     expect(compiled.querySelector('.logout-button')).toBeNull();
+    expect(compiled.querySelector('a[routerLink="/login"]')).not.toBeNull();
   });
 
   it('clears the session and navigates to /login on logout click', async () => {
@@ -76,7 +98,7 @@ describe('App', () => {
   // -------------------------------------------------------------------------
   // T-13c — admin-only nav links hidden for non-admin (UI defense only)
   // -------------------------------------------------------------------------
-  it('hides admin-only nav links (Periodos, Configurador, Snapshots) when isAdmin() is false', async () => {
+  it('hides admin-only nav links (Periodos, Ofertas, Configurador, Snapshots) when isAdmin() is false', async () => {
     configure(true, false);
     await TestBed.compileComponents();
     const fixture = TestBed.createComponent(App);
@@ -87,11 +109,16 @@ describe('App', () => {
     expect(navText).not.toContain('Períodos');
     expect(navText).not.toContain('Configurador');
     expect(navText).not.toContain('Snapshots');
+    // Regression check for the pre-existing isAdmin() gating bug: a
+    // non-admin authenticated user ("viewer") must NOT see /ofertas either.
+    expect(navText).not.toContain('Ofertas');
 
-    // Non-admin-only links remain visible.
-    expect(navText).toContain('Ofertas');
+    // Read-only links remain visible, and the authenticated user gets the
+    // logout affordance (not the login link).
     expect(navText).toContain('Configuracion');
     expect(navText).toContain('Simulador INIT');
+    expect(compiled.querySelector('.logout-button')).not.toBeNull();
+    expect(compiled.querySelector('a[routerLink="/login"]')).toBeNull();
   });
 
   it('shows the complete navigation (including admin-only links) when isAdmin() is true', async () => {

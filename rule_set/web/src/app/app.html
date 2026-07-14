@@ -21,27 +21,33 @@
         }
       </span>
     </div>
-    @if (authService.isAuthenticated()) {
-      <div class="topbar-actions">
-        <nav aria-label="Navegacion principal">
-          @if (authService.isAdmin()) {
-            <a routerLink="/offer-dates" routerLinkActive="active">Períodos</a>
-          }
+    <div class="topbar-actions">
+      <nav aria-label="Navegacion principal">
+        <!-- Read-only surface: always visible, even to anonymous users. In
+             AUTH_MODE=secure the underlying data calls 401 and the
+             authInterceptor redirects to /login; in AUTH_MODE=permissive
+             these pages render normally for anonymous users. -->
+        <a routerLink="/configuracion" routerLinkActive="active">Configuracion</a>
+        <a routerLink="/simulador-init" routerLinkActive="active">Simulador INIT</a>
+        <a routerLink="/simulador-pre" routerLinkActive="active">Simulador PRE</a>
+        <a routerLink="/simulador-final" routerLinkActive="active">Simulador FINAL</a>
+
+        <!-- Admin-only surface: requires role=admin in both auth modes. -->
+        @if (authService.isAdmin()) {
+          <a routerLink="/offer-dates" routerLinkActive="active">Períodos</a>
           <a routerLink="/ofertas" routerLinkActive="active">Ofertas</a>
-          @if (authService.isAdmin()) {
-            <a routerLink="/configurador" routerLinkActive="active">Configurador</a>
-          }
-          <a routerLink="/configuracion" routerLinkActive="active">Configuracion</a>
-          @if (authService.isAdmin()) {
-            <a routerLink="/snapshots" routerLinkActive="active">Snapshots</a>
-          }
-          <a routerLink="/simulador-init" routerLinkActive="active">Simulador INIT</a>
-          <a routerLink="/simulador-pre" routerLinkActive="active">Simulador PRE</a>
-          <a routerLink="/simulador-final" routerLinkActive="active">Simulador FINAL</a>
+          <a routerLink="/configurador" routerLinkActive="active">Configurador</a>
+          <a routerLink="/snapshots" routerLinkActive="active">Snapshots</a>
+        }
+
+        <!-- Auth affordance. -->
+        @if (authService.isAuthenticated()) {
           <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
-        </nav>
-      </div>
-    }
+        } @else {
+          <a routerLink="/login" routerLinkActive="active">Iniciar sesión</a>
+        }
+      </nav>
+    </div>
   </header>
 
   <main>
