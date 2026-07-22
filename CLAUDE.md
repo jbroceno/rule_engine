@@ -223,7 +223,7 @@ Protege **todas** las rutas `/api/*` excepto exactamente `GET /api/health` y `PO
 El middleware se monta en `app.js` **después** de `express.json()` y **antes** de `app.use("/api", apiRoutes)`. La comprobación de rutas públicas usa method+path exactos (`GET /api/health`, `POST /api/auth/login`) para evitar que `/api/healthcheck` o futuros `/api/auth/refresh` queden accidentalmente expuestos.
 
 **Middleware RBAC** (`api/middleware/require_role.js`):
-Factory `requireRole(...roles)`, montado como segundo middleware en el único punto de montaje del router admin (`api/routes/index.js`): `router.use("/admin", requireRole("admin"), adminRoutes)`. Como `authMiddleware` ya garantiza `req.user` para estas rutas, `requireRole` solo lee `req.user.role`: `403` si el rol no está en la lista permitida (rol insuficiente o no reconocido — nunca un 5xx), `401` defensivo si `req.user` faltara. `requireRole(...roles)` también falla rápido (lanza `Error` síncrono en tiempo de construcción, no de petición) si alguno de los `roles` pasados como argumento no está en `ALLOWED_ROLES` — evita que un typo en un call site produzca en silencio un middleware que 403 todo para siempre. Catálogo `ALLOWED_ROLES = new Set(["admin", "viewer"])` + `normalizeRole(v)` en `api/utils/rule_catalogs.js`, siguiendo la misma convención que `ALLOWED_STAGES`/`normalizeStage`. Rutas públicas, `/api/simulate/*`, `GET /api/config` y **`/api/workflow/*`** no llevan este gate — **solo `/api/admin/*` lo exige**. `/api/workflow/*` (`workflow_routes.js`) expone únicamente `POST /workflow/condiciones-hipotecas`, una consulta de elegibilidad en tiempo real par de `/api/simulate/*` (no una acción de administración/publicación); las acciones reales de publicación a WF (`postWorkflowSnapshot`, `postWorkflowPublicar`) ya viven bajo `/api/admin/workflow/*`, dentro de `adminRoutes`, y por tanto ya están cubiertas por el gate `/admin` de arriba.
+Factory `requireRole(...roles)`, montado como segundo middleware en el único punto de montaje del router admin (`api/routes/index.js`): `router.use("/admin", requireRole("admin"), adminRoutes)`. Como `authMiddleware` ya garantiza `req.user` para estas rutas, `requireRole` solo lee `req.user.role`: `403` si el rol no está en la lista permitida (rol insuficiente o no reconocido — nunca un 5xx), `401` defensivo si `req.user` faltara. `requireRole(...roles)` también falla rápido (lanza `Error` síncrono en tiempo de construcción, no de petición) si alguno de los `roles` pasados como argumento no está en `ALLOWED_ROLES` — evita que un typo en un call site produzca en silencio un middleware que 403 todo para siempre. Catálogo `ALLOWED_ROLES = new Set(["admin", "viewer"])` + `normalizeRole(v)` en `api/utils/rule_catalogs.js`, siguiendo la misma convención que `ALLOWED_STAGES`/`normalizeStage`. Rutas públicas, `/api/simulate/*`, `GET /api/config`, **`/api/config/{rules,params,offers,fechas}`** y **`/api/workflow/*`** no llevan este gate — **solo `/api/admin/*` lo exige**. `/api/workflow/*` (`workflow_routes.js`) expone únicamente `POST /workflow/condiciones-hipotecas`, una consulta de elegibilidad en tiempo real par de `/api/simulate/*` (no una acción de administración/publicación); las acciones reales de publicación a WF (`postWorkflowSnapshot`, `postWorkflowPublicar`) ya viven bajo `/api/admin/workflow/*`, dentro de `adminRoutes`, y por tanto ya están cubiertas por el gate `/admin` de arriba.
 
 ### Simulation & config
 
@@ -234,6 +234,19 @@ Factory `requireRole(...roles)`, montado como segundo middleware en el único pu
 | POST | `/simulate/init` | Run INIT simulation |
 | POST | `/simulate/pre` | Run PRE simulation |
 | POST | `/simulate/final` | Run FINAL simulation |
+
+### Public-adjacent config reads (`api/routes/public_config_routes.js`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/config/rules` | List rules — re-registers `admin_rules_controller.js`'s `getRules` |
+| GET | `/config/params` | List params — re-registers `admin_params_controller.js`'s `getParams` |
+| GET | `/config/offers` | List offers — re-registers `admin_offers_controller.js`'s `getOffers` |
+| GET | `/config/fechas` | List períodos (`cfg_offer_dates`) — re-registers the same controller used by `/api/admin/fechas` |
+
+Mounted at `/api/config/*`, distinct from the narrower `GET /api/config` (normalized offers config for simulators) above. These four routes reuse the existing admin GET controllers directly (no duplicated logic) so they can never drift from `/api/admin/{rules,params,offers,fechas}`'s read behavior. Public only when `AUTH_MODE=permissive` (added to `auth_middleware.js`'s `PERMISSIVE_ONLY_PUBLIC` allowlist, additive-only — no change to the middleware's matching logic or to `require_role.js`); `401` in `secure` mode, same as the rest of this section. Every write verb under `/api/admin/*` (including `/admin/rules`, `/admin/params`, `/admin/offers`, `/admin/fechas` themselves) remains gated by `requireRole("admin")` in **both** modes — this surface only adds read paths, never opens a write verb. `/admin/export`, `/admin/snapshots*`, and `POST /admin/validate` are deliberately **not** mirrored here and stay fully admin-gated in both modes.
+
+Frontend: `PublicConfigApiService` (`web/src/app/services/`) calls these four endpoints and is used for reads in `configurator-page` and `offer-dates-page` regardless of role (admin included — only the read URL differs, writes still go through `AdminApiService`). Both pages remain reachable without login when the backend runs `AUTH_MODE=permissive` (see Angular navigation below); every write control in each page's template is wrapped in `@if (authService.isAdmin())` as client-side defense-in-depth on top of the always-enforced backend gate.
 
 ### Admin — offers (base: `/api/admin`)
 
@@ -472,7 +485,7 @@ The winner is selected as the eligible offer with the **highest `offer_rank`**.
 |----------|-----------|---------|-------|
 | `JWT_SECRET` | **Sí** | — | **Fail-fast**: la API se niega a arrancar si no está definida (`assertAuthConfig()` en `server.js`). |
 | `JWT_EXPIRES_IN` | No | `8h` | Cualquier valor válido para `jsonwebtoken` (`"1h"`, `"24h"`, etc.). |
-| `AUTH_MODE` | No | `secure` | `permissive` \| `secure`. En `permissive`, `GET /api/config`, `POST /api/simulate/*` y `POST /api/workflow/condiciones-hipotecas` no requieren JWT; `/api/admin/*` sigue **siempre** exigiendo JWT + rol `admin` en ambos modos. Valor no reconocido → **fail-fast** en arranque (mismo mecanismo que `JWT_SECRET`). Ver `api/utils/rule_catalogs.js` (`ALLOWED_AUTH_MODES`/`normalizeAuthMode`) y `api/middleware/auth_middleware.js`. |
+| `AUTH_MODE` | No | `secure` | `permissive` \| `secure`. En `permissive`, `GET /api/config`, `GET /api/config/{rules,params,offers,fechas}`, `POST /api/simulate/*` y `POST /api/workflow/condiciones-hipotecas` no requieren JWT; `/api/admin/*` sigue **siempre** exigiendo JWT + rol `admin` en ambos modos. Valor no reconocido → **fail-fast** en arranque (mismo mecanismo que `JWT_SECRET`). Ver `api/utils/rule_catalogs.js` (`ALLOWED_AUTH_MODES`/`normalizeAuthMode`) y `api/middleware/auth_middleware.js`. |
 
 ### Gotcha — import CJS bajo `type:module`
 
@@ -537,15 +550,16 @@ el sistema queda bloqueado (no hay forma de obtener un token).
 | Route | Component | Guard | Description |
 |-------|-----------|-------|-------------|
 | `/login` | LoginPageComponent | — | Formulario de login (ruta pública) |
-| `/offer-dates` | OfferDatesPageComponent | `authGuard` | cfg_offer_dates CRUD + active period selector (home) |
-| `/configurador` | ConfiguratorPageComponent | `authGuard` | Offer/Rule/Param CRUD + export/import/apply |
-| `/configuracion` | ConfigPageComponent | `authGuard` | Read-only config view (load from DB) |
+| `/ofertas` | OfertasPageComponent | `authGuard` | Offer CRUD (create/edit/delete/enable) |
 | `/snapshots` | SnapshotsPageComponent | `authGuard` | Snapshot browser + restore |
-| `/simulador-init` | InitSimulatorPageComponent | `authGuard` | INIT-stage simulation form |
-| `/simulador-pre` | PreSimulatorPageComponent | `authGuard` | PRE-stage simulation form |
-| `/simulador-final` | FinalSimulatorPageComponent | `authGuard` | FINAL-stage simulation form |
+| `/offer-dates` | OfferDatesPageComponent | — | cfg_offer_dates: navegable sin login (home); acciones de escritura (crear/editar/duplicar/eliminar período) gateadas en plantilla con `@if (authService.isAdmin())` |
+| `/configurador` | ConfiguratorPageComponent | — | Offer/Rule/Param: navegable sin login; toda acción de escritura (CRUD, toggles, reorder, export/import/grabar, reset-seed, snapshot POC, publicar a Workflow) gateada en plantilla con `@if (authService.isAdmin())` |
+| `/configuracion` | ConfigPageComponent | — | Read-only config view (load from DB) |
+| `/simulador-init` | InitSimulatorPageComponent | — | INIT-stage simulation form |
+| `/simulador-pre` | PreSimulatorPageComponent | — | PRE-stage simulation form |
+| `/simulador-final` | FinalSimulatorPageComponent | — | FINAL-stage simulation form |
 
-Las 8 rutas protegidas llevan `canActivate: [authGuard]`. Las entradas de redirección (`''`, `'**'`) no llevan guard propio — redirigen a una ruta protegida que lo aplica.
+Solo `/ofertas` y `/snapshots` llevan `canActivate: [authGuard]` — requieren login en ambos modos de auth, sin excepción. Las 6 rutas restantes (incluidos `/configurador` y `/offer-dates`, que antes también llevaban guard) son navegables sin login: en `AUTH_MODE=secure` sus llamadas de datos devuelven `401` y el `authInterceptor` existente redirige a `/login`; en `AUTH_MODE=permissive` renderizan con datos reales. `/configurador` y `/offer-dates` combinan esto con el gateo de escritura en plantilla descrito arriba — la lectura es siempre pública en modo permissive, la escritura nunca lo es (el backend sigue exigiendo `requireRole("admin")` en ambos modos como única fuente real de seguridad). Las entradas de redirección (`''`, `'**'`) no llevan guard propio — redirigen a una ruta sin guard.
 
 **Piezas de autenticación frontend** (`web/src/app/`):
 
