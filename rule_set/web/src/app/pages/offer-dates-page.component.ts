@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { AdminFechaItem, AdminFechaPayload } from "../models/admin.models";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminApiService } from "../services/admin-api.service";
+import { AuthService } from "../services/auth.service";
 import { PublicConfigApiService } from "../services/public-config-api.service";
 
 type DialogMode = "create" | "edit";
@@ -18,9 +19,17 @@ type DialogMode = "create" | "edit";
 })
 export class OfferDatesPageComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
+  // permissive-config-readonly (ADR-CR5): dedicated read-only client for the
+  // public-adjacent /api/config/* surface. loadFechas() reads through this
+  // service so anon/viewer sessions can load períodos in AUTH_MODE=permissive.
+  // All writes below (create/update/delete/duplicate) stay on adminApi.
   private readonly publicConfigApi = inject(PublicConfigApiService);
   private readonly fb = inject(FormBuilder);
   readonly activePeriodService = inject(ActivePeriodService);
+  // permissive-config-readonly (PR 4, ADR-CR6): every write-capable control in
+  // this component's template is wrapped in `@if (authService.isAdmin())`.
+  // Reads (above) are role-agnostic; only write affordances are gated here.
+  readonly authService = inject(AuthService);
 
   readonly activeRulesId = computed(() => this.activePeriodService.activePeriodRules()?.offer_date_id ?? null);
   readonly activeParamsId = computed(() => this.activePeriodService.activePeriodParams()?.offer_date_id ?? null);
