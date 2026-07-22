@@ -218,3 +218,57 @@ test("exact-match safety in permissive mode: GET /api/simulate/init (wrong metho
   assert.ok(err instanceof AppError, "expected AppError — only POST /api/simulate/init is allowlisted, not GET");
   assert.equal(err.statusCode, 401);
 });
+
+// ---------------------------------------------------------------------------
+// Read-only Configurador + Períodos in permissive mode
+// (sdd/permissive-config-readonly — design.md ADR-CR2)
+//
+// Four new sibling-of-/api/config read routes: rules, params, offers, fechas.
+// Same exact-match, mode-scoped model as PERMISSIVE_ONLY_PUBLIC above —
+// /api/admin/* must never be reachable through this list, in any mode.
+// ---------------------------------------------------------------------------
+
+const NEW_CONFIG_READ_ROUTES = [
+  { method: "GET", path: "/api/config/rules" },
+  { method: "GET", path: "/api/config/params" },
+  { method: "GET", path: "/api/config/offers" },
+  { method: "GET", path: "/api/config/fechas" },
+];
+
+for (const route of NEW_CONFIG_READ_ROUTES) {
+  test(`permissive mode: ${route.method} ${route.path} bypasses auth — no token → next() with no error`, async () => {
+    const mw = createAuthMiddleware({
+      verify: () => { throw new Error("should not reach"); },
+      mode: "permissive",
+    });
+    const { err } = await runMiddleware(mw, { method: route.method, path: route.path });
+    assert.equal(err, undefined, `${route.method} ${route.path} should bypass auth in permissive mode`);
+  });
+
+  test(`secure mode (and default): ${route.method} ${route.path} without token → 401 (regression, not newly public in secure)`, async () => {
+    const mw = createAuthMiddleware({ verify: () => { throw new Error("should not reach"); } });
+    const { err } = await runMiddleware(mw, { method: route.method, path: route.path });
+    assert.ok(err instanceof AppError, `expected AppError — ${route.path} must require auth in secure mode`);
+    assert.equal(err.statusCode, 401);
+  });
+}
+
+test("exact-match safety in permissive mode: GET /api/config/ruless (typo, not /api/config/rules) without token → 401", async () => {
+  const mw = createAuthMiddleware({
+    verify: () => { throw new Error("should not reach"); },
+    mode: "permissive",
+  });
+  const { err } = await runMiddleware(mw, { method: "GET", path: "/api/config/ruless" });
+  assert.ok(err instanceof AppError, "expected AppError — /api/config/ruless is NOT the allowlisted /api/config/rules");
+  assert.equal(err.statusCode, 401);
+});
+
+test("exact-match safety in permissive mode: POST /api/config/rules (wrong method) without token → 401", async () => {
+  const mw = createAuthMiddleware({
+    verify: () => { throw new Error("should not reach"); },
+    mode: "permissive",
+  });
+  const { err } = await runMiddleware(mw, { method: "POST", path: "/api/config/rules" });
+  assert.ok(err instanceof AppError, "expected AppError — only GET /api/config/rules is allowlisted, not POST");
+  assert.equal(err.statusCode, 401);
+});

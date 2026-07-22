@@ -109,3 +109,31 @@ test("W2 — POST /api/workflow/condiciones-hipotecas con token admin → NO 403
     .send({});
   assert.notEqual(res.status, 403, `admin no debe recibir 403 en /workflow, obtenido ${res.status}`);
 });
+
+// ---------------------------------------------------------------------------
+// Warning 3 — new public-adjacent read surface (sdd/permissive-config-readonly)
+// stays guarded in SECURE mode (this file's default AUTH_MODE, since only
+// JWT_SECRET is set above, not AUTH_MODE) — real HTTP-level regression check,
+// complementing the unit-level secure-mode assertions in
+// test/auth_middleware.test.js.
+// ---------------------------------------------------------------------------
+
+const NEW_CONFIG_READ_PATHS_SECURE = [
+  "/api/config/rules",
+  "/api/config/params",
+  "/api/config/offers",
+  "/api/config/fechas",
+];
+
+for (const path of NEW_CONFIG_READ_PATHS_SECURE) {
+  test(`W3 — GET ${path} sin token en modo secure (default) → 401 (no es público fuera de permissive)`, async () => {
+    const res = await agent.get(path);
+    assert.equal(res.status, 401, `esperado 401, obtenido ${res.status}`);
+  });
+
+  test(`W3 — GET ${path} con token admin en modo secure → NO 401/403 (admin no afectado)`, async () => {
+    const res = await agent.get(path).set("Authorization", `Bearer ${signToken("admin")}`);
+    assert.notEqual(res.status, 401, "admin no debe recibir 401");
+    assert.notEqual(res.status, 403, "admin no debe recibir 403 (sin gate de rol en esta superficie)");
+  });
+}

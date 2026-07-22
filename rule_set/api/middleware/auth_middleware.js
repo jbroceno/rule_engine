@@ -43,6 +43,13 @@ const PERMISSIVE_ONLY_PUBLIC = [
   { method: "POST", path: "/api/simulate/pre" },
   { method: "POST", path: "/api/simulate/final" },
   { method: "POST", path: "/api/workflow/condiciones-hipotecas" },
+  // sdd/permissive-config-readonly — design.md ADR-CR2: additive-only entries
+  // for the new sibling-of-/api/config read surface (public_config_routes.js).
+  // Additive data, not a logic change — buildPublicSet/exact-match unchanged.
+  { method: "GET", path: "/api/config/rules" },
+  { method: "GET", path: "/api/config/params" },
+  { method: "GET", path: "/api/config/offers" },
+  { method: "GET", path: "/api/config/fechas" },
 ];
 
 function toKey({ method, path }) {
