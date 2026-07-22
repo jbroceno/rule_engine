@@ -5,6 +5,7 @@ import { of, Subject } from "rxjs";
 
 import { ConfiguratorPageComponent } from "./configurator-page.component";
 import { AdminApiService } from "../services/admin-api.service";
+import { PublicConfigApiService } from "../services/public-config-api.service";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminFechaItem, AdminRuleItem, ApplyImpact } from "../models/admin.models";
 import { environment } from "../../environments/environment";
@@ -86,6 +87,24 @@ function buildAdminApiMock() {
   };
 }
 
+// ---------------------------------------------------------------------------
+// permissive-config-readonly (PR 2, frontend infra) — ADR-CR5: read call
+// sites (loadOffers/loadPeriodOffers/loadRules/loadParams/loadFechas) must go
+// through the new public-adjacent PublicConfigApiService, not AdminApiService.
+// AdminApiService.getRules() is still used internally by verifyUpdatedRule()
+// (post-save verification, only reachable from the admin-gated saveRule()
+// flow) — that one call site intentionally stays on AdminApiService per the
+// design's explicit repoint list, which does not include it.
+// ---------------------------------------------------------------------------
+function buildPublicConfigApiMock() {
+  return {
+    getOffers: (_offerDateId?: number) => of({ items: [makeOffer("OFERTA_A"), makeOffer("OFERTA_B")] }),
+    getRules: () => of({ items: [], pagination: { total: 0, page: 1, pageSize: 25 } }),
+    getParams: () => of({ items: [] }),
+    getFechas: () => of({ items: [] }),
+  };
+}
+
 // Writable signals for ActivePeriodService mock
 let mockActivePeriodRules = signal<AdminFechaItem | null>(null);
 let mockActivePeriodParams = signal<AdminFechaItem | null>(null);
@@ -112,6 +131,7 @@ async function setupTestBed() {
     providers: [
       provideRouter([]),
       { provide: AdminApiService, useValue: buildAdminApiMock() },
+      { provide: PublicConfigApiService, useValue: buildPublicConfigApiMock() },
       { provide: ActivePeriodService, useValue: buildActivePeriodMock() },
     ],
   }).compileComponents();
@@ -135,6 +155,49 @@ describe("ConfiguratorPageComponent", () => {
   it("WU-01 smoke: should create component without errors", () => {
     const fixture = createComponent();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  // ---------------------------------------------------------------------------
+  // permissive-config-readonly (PR 2, frontend infra) — ADR-CR5
+  // ---------------------------------------------------------------------------
+  describe("permissive-config-readonly: reads go through PublicConfigApiService", () => {
+    it("ngOnInit's loadOffers/loadPeriodOffers/loadFechas/loadRules/loadParams call PublicConfigApiService, not AdminApiService", () => {
+      const publicConfigApi = TestBed.inject(PublicConfigApiService);
+      const adminApi = TestBed.inject(AdminApiService);
+      const getOffersSpy = spyOn(publicConfigApi, "getOffers").and.callThrough();
+      const getRulesSpy = spyOn(publicConfigApi, "getRules").and.callThrough();
+      const getParamsSpy = spyOn(publicConfigApi, "getParams").and.callThrough();
+      const getFechasSpy = spyOn(publicConfigApi, "getFechas").and.callThrough();
+      const adminGetOffersSpy = spyOn(adminApi, "getOffers").and.callThrough();
+      const adminGetParamsSpy = spyOn(adminApi, "getParams").and.callThrough();
+      const adminGetFechasSpy = spyOn(adminApi, "getFechas").and.callThrough();
+
+      mockActivePeriodRules.set(makePeriod(3));
+      createComponent();
+
+      expect(getOffersSpy).toHaveBeenCalled();
+      expect(getRulesSpy).toHaveBeenCalled();
+      expect(getParamsSpy).toHaveBeenCalled();
+      expect(getFechasSpy).toHaveBeenCalled();
+      expect(adminGetOffersSpy).not.toHaveBeenCalled();
+      expect(adminGetParamsSpy).not.toHaveBeenCalled();
+      expect(adminGetFechasSpy).not.toHaveBeenCalled();
+    });
+
+    it("refreshParams() reads via PublicConfigApiService.getParams, not AdminApiService.getParams", () => {
+      const publicConfigApi = TestBed.inject(PublicConfigApiService);
+      const adminApi = TestBed.inject(AdminApiService);
+      const getParamsSpy = spyOn(publicConfigApi, "getParams").and.callThrough();
+      const adminGetParamsSpy = spyOn(adminApi, "getParams").and.callThrough();
+
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      getParamsSpy.calls.reset();
+      component["refreshParams"]();
+
+      expect(getParamsSpy).toHaveBeenCalled();
+      expect(adminGetParamsSpy).not.toHaveBeenCalled();
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -918,7 +981,10 @@ describe("ConfiguratorPageComponent", () => {
       const component = fixture.componentInstance;
       const adminApi = TestBed.inject(AdminApiService);
       const resetSpy = spyOn(adminApi, "resetSeed").and.callThrough();
-      const getRulesSpy = spyOn(adminApi, "getRules").and.callThrough();
+      // permissive-config-readonly: applyFilters()'s loadRules() now reads via
+      // PublicConfigApiService, not AdminApiService — spy on the new service.
+      const publicConfigApi = TestBed.inject(PublicConfigApiService);
+      const getRulesSpy = spyOn(publicConfigApi, "getRules").and.callThrough();
       fixture.detectChanges();
       const rulesCallsBefore = getRulesSpy.calls.count();
       component["openResetSeedDialog"]();
