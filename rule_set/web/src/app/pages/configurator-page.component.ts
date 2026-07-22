@@ -30,6 +30,7 @@ import {
 import { normalizeRuleOperator } from "../shared/rule-operators";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminApiService } from "../services/admin-api.service";
+import { PublicConfigApiService } from "../services/public-config-api.service";
 import { environment } from "../../environments/environment";
 import { RuleActionPayloadTableComponent } from "./configurator/rule-action-payload-table.component";
 import { RuleConditionsTableComponent } from "./configurator/rule-conditions-table.component";
@@ -135,6 +136,14 @@ type ConfirmDialogState =
 export class ConfiguratorPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly adminApiService = inject(AdminApiService);
+  // permissive-config-readonly (ADR-CR5): dedicated read-only client for the
+  // public-adjacent /api/config/* surface. Reads (loadOffers/loadPeriodOffers/
+  // loadRules/loadParams/loadFechas) go through this service so anon/viewer
+  // sessions can load config data in AUTH_MODE=permissive. All writes stay on
+  // adminApiService — including verifyUpdatedRule()'s post-save GET, which is
+  // only reachable from the admin-gated saveRule() update flow and is left on
+  // adminApiService intentionally (not in the design's explicit repoint list).
+  private readonly publicConfigApi = inject(PublicConfigApiService);
   readonly activePeriodService = inject(ActivePeriodService);
 
   protected readonly filtersForm = this.fb.nonNullable.group({
@@ -1433,7 +1442,7 @@ export class ConfiguratorPageComponent implements OnInit {
   }
 
   private loadOffers(): void {
-    this.adminApiService.getOffers().subscribe({
+    this.publicConfigApi.getOffers().subscribe({
       next: (response) => {
         this.offers.set(response.items);
       },
@@ -1451,7 +1460,7 @@ export class ConfiguratorPageComponent implements OnInit {
     }
     this.periodOffersLoading.set(true);
     this.periodOffersError.set(null);
-    this.adminApiService.getOffers(activePeriod.offer_date_id).subscribe({
+    this.publicConfigApi.getOffers(activePeriod.offer_date_id).subscribe({
       next: (response) => {
         this.periodOffers.set(response.items);
         this.periodOffersLoading.set(false);
@@ -1506,7 +1515,7 @@ export class ConfiguratorPageComponent implements OnInit {
     this.rulesLoading.set(true);
     this.rulesError.set(null);
 
-    this.adminApiService.getRules(query).subscribe({
+    this.publicConfigApi.getRules(query).subscribe({
       next: (response) => {
         this.rules.set(response.items);
         this.rulesTotal.set(response.pagination.total);
@@ -1582,7 +1591,7 @@ export class ConfiguratorPageComponent implements OnInit {
 
   private loadFechas(): void {
     this.fechasLoading.set(true);
-    this.adminApiService.getFechas().subscribe({
+    this.publicConfigApi.getFechas().subscribe({
       next: (resp) => {
         this.fechas.set(resp.items);
         this.fechasLoading.set(false);
@@ -1649,7 +1658,7 @@ export class ConfiguratorPageComponent implements OnInit {
     this.paramsLoading.set(true);
     this.paramsError.set(null);
 
-    this.adminApiService.getParams(query).subscribe({
+    this.publicConfigApi.getParams(query).subscribe({
       next: (response) => {
         this.params.set(response.items);
         this.paramsLoading.set(false);

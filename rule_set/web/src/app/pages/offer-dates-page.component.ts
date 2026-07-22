@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { AdminFechaItem, AdminFechaPayload } from "../models/admin.models";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminApiService } from "../services/admin-api.service";
+import { PublicConfigApiService } from "../services/public-config-api.service";
 
 type DialogMode = "create" | "edit";
 
@@ -17,6 +18,7 @@ type DialogMode = "create" | "edit";
 })
 export class OfferDatesPageComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
+  private readonly publicConfigApi = inject(PublicConfigApiService);
   private readonly fb = inject(FormBuilder);
   readonly activePeriodService = inject(ActivePeriodService);
 
@@ -82,7 +84,10 @@ export class OfferDatesPageComponent implements OnInit {
   loadFechas(): void {
     this.loading.set(true);
     this.errorMsg.set(null);
-    this.adminApi.getFechas().subscribe({
+    // permissive-config-readonly (ADR-CR5): reads go through the public
+    // /api/config/* surface so anonymous/viewer sessions can load períodos
+    // in AUTH_MODE=permissive. All writes below remain on AdminApiService.
+    this.publicConfigApi.getFechas().subscribe({
       next: (resp) => {
         this.fechas.set(resp.items);
         this.loading.set(false);

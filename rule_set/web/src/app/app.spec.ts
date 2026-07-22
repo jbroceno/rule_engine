@@ -55,8 +55,14 @@ describe('App', () => {
   // configurable-auth-modes (PR 2, frontend) — nav is now ALWAYS rendered
   // (read-only links visible to anyone); only the admin links and the
   // login/logout affordance are gated by auth/role state.
+  //
+  // permissive-config-readonly (PR 2, frontend infra) — ADR-CR6/spec "Nav
+  // split — Configurador and Períodos join the always-visible bucket":
+  // Configurador and Períodos are no longer admin-only nav links; they are
+  // visible to anonymous users too. Ofertas and Snapshots remain admin-only
+  // (out of scope, unchanged).
   // -------------------------------------------------------------------------
-  it('shows the read-only nav links and a login link (no logout button) when not authenticated', async () => {
+  it('shows the read-only nav links (including Configurador and Periodos) and a login link (no logout button) when not authenticated', async () => {
     // An anonymous user is never an admin — pass admin: false explicitly
     // rather than relying on the helper's default.
     configure(false, false);
@@ -73,10 +79,13 @@ describe('App', () => {
     expect(navText).toContain('Simulador PRE');
     expect(navText).toContain('Simulador FINAL');
 
-    // Admin links must not be visible to an anonymous user.
-    expect(navText).not.toContain('Períodos');
+    // permissive-config-readonly: Configurador and Periodos are now
+    // always-visible read-only links, even to an anonymous user.
+    expect(navText).toContain('Períodos');
+    expect(navText).toContain('Configurador');
+
+    // Ofertas and Snapshots remain admin-only — out of scope, unchanged.
     expect(navText).not.toContain('Ofertas');
-    expect(navText).not.toContain('Configurador');
     expect(navText).not.toContain('Snapshots');
 
     expect(compiled.querySelector('.logout-button')).toBeNull();
@@ -97,8 +106,12 @@ describe('App', () => {
 
   // -------------------------------------------------------------------------
   // T-13c — admin-only nav links hidden for non-admin (UI defense only)
+  //
+  // permissive-config-readonly: Periodos and Configurador are no longer
+  // admin-only — a "viewer" (authenticated, non-admin) now sees them.
+  // Ofertas and Snapshots remain hidden — out of scope, unchanged.
   // -------------------------------------------------------------------------
-  it('hides admin-only nav links (Periodos, Ofertas, Configurador, Snapshots) when isAdmin() is false', async () => {
+  it('hides admin-only nav links (Ofertas, Snapshots) but shows Periodos/Configurador when isAdmin() is false', async () => {
     configure(true, false);
     await TestBed.compileComponents();
     const fixture = TestBed.createComponent(App);
@@ -106,12 +119,15 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const navText = compiled.querySelector('nav')?.textContent ?? '';
 
-    expect(navText).not.toContain('Períodos');
-    expect(navText).not.toContain('Configurador');
     expect(navText).not.toContain('Snapshots');
     // Regression check for the pre-existing isAdmin() gating bug: a
     // non-admin authenticated user ("viewer") must NOT see /ofertas either.
     expect(navText).not.toContain('Ofertas');
+
+    // permissive-config-readonly: Periodos and Configurador are now
+    // always-visible read-only links, shown to a non-admin viewer too.
+    expect(navText).toContain('Períodos');
+    expect(navText).toContain('Configurador');
 
     // Read-only links remain visible, and the authenticated user gets the
     // logout affordance (not the login link).

@@ -30,8 +30,28 @@ describe("routes", () => {
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // permissive-config-readonly (PR 2, frontend infra) — ADR-CR4: "configurador"
+  // and "offer-dates" move from the always-guarded admin bucket into the
+  // read-only bucket. Anonymous users can now reach them; in AUTH_MODE=secure
+  // the data call still 401s and the existing authInterceptor redirects to
+  // /login (no client-side mode-discovery — backend is the single source of
+  // truth). "ofertas" and "snapshots" are explicitly out of scope and remain
+  // always-guarded.
+  // ---------------------------------------------------------------------------
+  describe("permissive-config-readonly: configurador and offer-dates have no canActivate guard", () => {
+    const nowReadOnlyPaths = ["configurador", "offer-dates"];
+
+    for (const path of nowReadOnlyPaths) {
+      it(`"${path}" has no canActivate`, () => {
+        const route = findRoute(path);
+        expect(route.canActivate).toBeUndefined();
+      });
+    }
+  });
+
   describe("admin routes keep the authGuard in both modes", () => {
-    const adminPaths = ["ofertas", "configurador", "snapshots", "offer-dates"];
+    const adminPaths = ["ofertas", "snapshots"];
 
     for (const path of adminPaths) {
       it(`"${path}" has canActivate: [authGuard]`, () => {
