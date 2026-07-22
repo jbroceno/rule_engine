@@ -17,6 +17,7 @@ import { OfferDatesPageComponent } from "./offer-dates-page.component";
 import { AdminApiService } from "../services/admin-api.service";
 import { PublicConfigApiService } from "../services/public-config-api.service";
 import { ActivePeriodService } from "../services/active-period.service";
+import { AuthService } from "../services/auth.service";
 import { AdminFechaItem } from "../models/admin.models";
 
 // ---------------------------------------------------------------------------
@@ -75,6 +76,23 @@ function buildActivePeriodMock() {
 }
 
 // ---------------------------------------------------------------------------
+// permissive-config-readonly (PR 4) — AuthService mock. Defaults to
+// isAdmin()=true so every pre-existing test (written before this PR, none of
+// which reference auth state) keeps passing unchanged; tests that exercise
+// the new gating explicitly flip `mockIsAdmin.set(false)`. Mirrors the same
+// pattern established in configurator-page.component.spec.ts (PR 3).
+// ---------------------------------------------------------------------------
+let mockIsAdmin = signal<boolean>(true);
+let mockIsAuthenticated = signal<boolean>(true);
+
+function buildAuthServiceMock() {
+  return {
+    isAdmin: mockIsAdmin,
+    isAuthenticated: mockIsAuthenticated,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
 
@@ -84,6 +102,8 @@ let mockPublicConfigApi: ReturnType<typeof buildPublicConfigApiMock>;
 async function setupTestBed() {
   mockActivePeriodRules = signal<AdminFechaItem | null>(null);
   mockActivePeriodParams = signal<AdminFechaItem | null>(null);
+  mockIsAdmin = signal<boolean>(true);
+  mockIsAuthenticated = signal<boolean>(true);
   mockAdminApi = buildAdminApiMock();
   mockPublicConfigApi = buildPublicConfigApiMock();
 
@@ -93,6 +113,7 @@ async function setupTestBed() {
       { provide: AdminApiService, useValue: mockAdminApi },
       { provide: PublicConfigApiService, useValue: mockPublicConfigApi },
       { provide: ActivePeriodService, useValue: buildActivePeriodMock() },
+      { provide: AuthService, useValue: buildAuthServiceMock() },
     ],
   }).compileComponents();
 }
@@ -287,6 +308,145 @@ describe("OfferDatesPageComponent", () => {
       // Angular date pipe with 'dd/MM/yyyy HH:mm:ss' and input "2026-03-15T14:32:07"
       // should produce "15/03/2026 14:32:07"
       expect(desdeTd.textContent).toContain("14:32:07");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // permissive-config-readonly (PR 4) — write-action gating.
+  // Every write-capable control (crear/editar/duplicar/borrar período, and
+  // their dialogs) must be absent from the DOM when isAdmin() is false (both
+  // anon and viewer harnesses use the same mock shape) and present when
+  // isAdmin() is true. Read-only controls (períodos table, active-period
+  // badges, activarReglas/activarParams) must remain visible regardless of
+  // role. Mirrors configurator-page.component.spec.ts's PR3 gating suite.
+  // ---------------------------------------------------------------------------
+  describe("PR4: write-action gating with @if (authService.isAdmin())", () => {
+    it("keeps the active-period badges and the períodos table visible when isAdmin() is false", () => {
+      mockIsAdmin.set(false);
+      const fixture = createComponent();
+      const component = fixture.componentInstance;
+      component["fechas"].set([makeFecha()]);
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector(".active-periods-bar")).not.toBeNull();
+      expect(root.querySelector("table.table-compact")).not.toBeNull();
+      expect(root.querySelectorAll("tbody tr").length).toBeGreaterThan(0);
+    });
+
+    describe("'+ Nuevo período' button (openCreate)", () => {
+      it("is absent when isAdmin() is false", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        fixture.detectChanges();
+        const buttons = Array.from(
+          fixture.nativeElement.querySelectorAll(".page-header button"),
+        ) as HTMLButtonElement[];
+        expect(buttons.some((b) => b.textContent?.includes("Nuevo período"))).toBeFalse();
+      });
+
+      it("is present when isAdmin() is true", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        fixture.detectChanges();
+        const buttons = Array.from(
+          fixture.nativeElement.querySelectorAll(".page-header button"),
+        ) as HTMLButtonElement[];
+        expect(buttons.some((b) => b.textContent?.includes("Nuevo período"))).toBeTrue();
+      });
+    });
+
+    describe("row actions — Editar / Duplicar / Eliminar buttons", () => {
+      beforeEach(() => {
+        // no beforeEach state needed; each test sets fechas explicitly
+      });
+
+      it("are absent when isAdmin() is false", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["fechas"].set([makeFecha()]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector(".actions-cell button")).toBeNull();
+        expect(fixture.nativeElement.querySelector(".btn-duplicate")).toBeNull();
+      });
+
+      it("are present when isAdmin() is true", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["fechas"].set([makeFecha()]);
+        fixture.detectChanges();
+        const actionButtons = fixture.nativeElement.querySelectorAll(".actions-cell button");
+        expect(actionButtons.length).toBe(3);
+        expect(fixture.nativeElement.querySelector(".btn-duplicate")).not.toBeNull();
+      });
+
+      it("keeps the activarReglas/activarParams buttons visible regardless of role", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["fechas"].set([makeFecha({ tipo_cd: "AMBOS" })]);
+        fixture.detectChanges();
+        const activateButtons = fixture.nativeElement.querySelectorAll(".activate-cell button");
+        expect(activateButtons.length).toBe(2);
+      });
+    });
+
+    describe("dialogs — crear/editar, duplicar, borrar (defense-in-depth)", () => {
+      it("the create/edit dialog does not render when isAdmin() is false, even if dialogOpen is forced true", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["dialogOpen"].set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBe(0);
+      });
+
+      it("the create/edit dialog renders when isAdmin() is true and dialogOpen is true", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["openCreate"]();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBeGreaterThan(0);
+      });
+
+      it("the duplicate dialog does not render when isAdmin() is false, even if duplicateDialogOpen is forced true", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["duplicateSource"].set(makeFecha());
+        component["duplicateDialogOpen"].set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBe(0);
+      });
+
+      it("the duplicate dialog renders when isAdmin() is true and openDuplicate is called", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["openDuplicate"](makeFecha());
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBeGreaterThan(0);
+      });
+
+      it("the delete confirm dialog does not render when isAdmin() is false, even if deleteTarget is forced set", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["deleteTarget"].set(makeFecha());
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBe(0);
+      });
+
+      it("the delete confirm dialog renders when isAdmin() is true and openDeleteConfirm is called", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["openDeleteConfirm"](makeFecha());
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBeGreaterThan(0);
+      });
     });
   });
 });
