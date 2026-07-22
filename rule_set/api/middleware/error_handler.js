@@ -6,6 +6,10 @@ export function errorHandler(error, _req, res, _next) {
   const statusCode = isKnown ? error.statusCode : 500;
   const isProd = env.nodeEnv === "production";
 
+  if (!isKnown) {
+    console.error("[unhandled error]", error.stack || error.message || error);
+  }
+
   const payload = {
     message: isKnown ? error.message : "Error interno inesperado.",
   };

@@ -40,6 +40,15 @@ run -Q "IF DB_ID('$DB') IS NULL CREATE DATABASE [$DB];"
 echo "[db-init] Aplicando tabla de usuarios (idempotente) en [$DB]..."
 run -d "$DB" -i "$SQLDIR/users.sql"                # tabla cfg_user (autenticación JWT)
 
+# snapshots_checksum.sql es auto-idempotente (IF NOT EXISTS + guard sobre
+# OBJECT_ID(...) IS NOT NULL, así que no falla si cfg_config_snapshot aún no
+# existe en un primer arranque). Se aplica aquí, fuera del guard de abajo, para
+# que una BD ya inicializada antes de que existiera la columna checksum
+# (OWASP-10) también la reciba en el siguiente arranque; ver la segunda
+# invocación más abajo para el caso de instalación limpia.
+echo "[db-init] Aplicando columna checksum de snapshots (idempotente) en [$DB]..."
+run -d "$DB" -i "$SQLDIR/snapshots_checksum.sql"    # columna checksum en cfg_config_snapshot
+
 # Idempotencia: si la tabla principal ya existe, asumimos que el resto del
 # esquema (no auto-guardado) ya está inicializado.
 ALREADY=$(run -d "$DB" -h -1 -W -Q \
@@ -55,6 +64,7 @@ echo "[db-init] Aplicando esquema y semilla en [$DB]..."
 run -d "$DB" -i "$SQLDIR/data_model.sql"          # tablas + SP cfg_get_offers_and_params_json
 run -d "$DB" -i "$SQLDIR/sp_rules_params.sql"      # SP cfg_get_rules_json (fallback)
 run -d "$DB" -i "$SQLDIR/snapshots.sql"            # tabla cfg_config_snapshot
+run -d "$DB" -i "$SQLDIR/snapshots_checksum.sql"    # columna checksum en cfg_config_snapshot (instalación limpia)
 run -d "$DB" -i "$SQLDIR/sp_cached_wrapper.sql"    # SP cfg_get_offers_and_params_json_cached (demo)
 run -d "$DB" -i "$SQLDIR/seed_offers.sql"          # semilla: ofertas + reglas + parámetros
 
