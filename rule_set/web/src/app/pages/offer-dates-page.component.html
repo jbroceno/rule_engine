@@ -1,7 +1,11 @@
 <div class="page-container">
   <div class="page-header">
     <h1>Motor de Fechas</h1>
-    <button class="btn btn-primary" (click)="openCreate()">+ Nuevo período</button>
+    <!-- permissive-config-readonly (PR 4, ADR-CR6): creating a período is a
+         write action — gated behind isAdmin(). -->
+    @if (authService.isAdmin()) {
+      <button class="btn btn-primary" (click)="openCreate()">+ Nuevo período</button>
+    }
   </div>
 
   <div class="active-periods-bar">
@@ -92,9 +96,13 @@
               }
             </td>
             <td class="actions-cell">
-              <button class="btn btn-ghost btn-sm" (click)="openEdit(f)" title="Editar">✏️</button>
-              <button class="btn btn-ghost btn-sm btn-duplicate" (click)="openDuplicate(f)" title="Duplicar período">⧉</button>
-              <button class="btn btn-ghost btn-sm btn-danger" (click)="openDeleteConfirm(f)" title="Eliminar">🗑️</button>
+              <!-- permissive-config-readonly (PR 4, ADR-CR6): editar/duplicar/
+                   borrar período are write actions — gated behind isAdmin(). -->
+              @if (authService.isAdmin()) {
+                <button class="btn btn-ghost btn-sm" (click)="openEdit(f)" title="Editar">✏️</button>
+                <button class="btn btn-ghost btn-sm btn-duplicate" (click)="openDuplicate(f)" title="Duplicar período">⧉</button>
+                <button class="btn btn-ghost btn-sm btn-danger" (click)="openDeleteConfirm(f)" title="Eliminar">🗑️</button>
+              }
             </td>
           </tr>
         } @empty {
@@ -105,8 +113,10 @@
   }
 </div>
 
-<!-- Dialog: crear / editar -->
-@if (dialogOpen()) {
+<!-- Dialog: crear / editar. permissive-config-readonly (PR 4, ADR-CR6):
+     defense-in-depth — this dialog is only ever opened from an already-gated
+     trigger (openCreate/openEdit), but gate the dialog itself too. -->
+@if (dialogOpen() && authService.isAdmin()) {
   <div class="confirm-backdrop" (click)="closeDialog()"></div>
   <div class="confirm-modal">
     <h3>{{ dialogMode() === 'create' ? 'Nuevo período' : 'Editar período' }}</h3>
@@ -158,8 +168,9 @@
   </div>
 }
 
-<!-- Dialog: duplicar período -->
-@if (duplicateDialogOpen()) {
+<!-- Dialog: duplicar período. permissive-config-readonly (PR 4, ADR-CR6):
+     defense-in-depth — only reachable from the gated openDuplicate() trigger. -->
+@if (duplicateDialogOpen() && authService.isAdmin()) {
   <div class="confirm-backdrop" (click)="cancelDuplicate()"></div>
   <div class="confirm-modal">
     <h3>Duplicar período</h3>
@@ -198,8 +209,9 @@
   </div>
 }
 
-<!-- Dialog: confirmar borrado -->
-@if (deleteTarget(); as f) {
+<!-- Dialog: confirmar borrado. permissive-config-readonly (PR 4, ADR-CR6):
+     defense-in-depth — only reachable from the gated openDeleteConfirm() trigger. -->
+@if (authService.isAdmin() && deleteTarget(); as f) {
   <div class="confirm-backdrop" (click)="cancelDelete()"></div>
   <div class="confirm-modal">
     <h3>Eliminar período</h3>
