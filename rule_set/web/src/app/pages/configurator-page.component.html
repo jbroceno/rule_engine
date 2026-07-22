@@ -84,86 +84,91 @@
     </div>
   </form>
 
-  <div class="config-ops-bar">
-    <div class="config-ops-actions">
-      <button
-        type="button"
-        class="btn"
-        [disabled]="configOpLoading()"
-        (click)="exportConfig()"
-        title="Descargar configuracion actual de BD como fichero JSON"
-      >
-        <span class="btn-spinner" *ngIf="configOpLoading() && !importedConfig()" aria-hidden="true"></span>
-        Exportar configuracion
-      </button>
-      <button
-        type="button"
-        class="btn"
-        [disabled]="configOpLoading()"
-        (click)="triggerImportFile()"
-        title="Cargar configuracion desde un fichero JSON"
-      >
-        Importar configuracion
-      </button>
-      <button
-        type="button"
-        class="btn btn-warning"
-        *ngIf="importedConfig()"
-        [disabled]="configOpLoading()"
-        (click)="openApplyConfigDialog()"
-        title="Guardar la configuracion importada en la base de datos"
-      >
-        <span class="btn-spinner" *ngIf="configOpLoading()" aria-hidden="true"></span>
-        {{ configOpLoading() ? "Grabando..." : "Grabar configuracion" }}
-      </button>
-      <button
-        type="button"
-        class="btn btn-ghost"
-        *ngIf="importedConfig()"
-        [disabled]="configOpLoading()"
-        (click)="clearImportedConfig()"
-        title="Descartar importacion y recargar datos de BD"
-      >
-        Descartar importacion
-      </button>
-      <button
-        type="button"
-        class="btn"
-        [disabled]="configOpLoading() || pocSnapshotLoading()"
-        (click)="openPocSnapshotDialog()"
-        title="Guardar snapshot del estado actual de la POC"
-      >
-        <span class="btn-spinner" *ngIf="pocSnapshotLoading()" aria-hidden="true"></span>
-        {{ pocSnapshotLoading() ? 'Guardando...' : 'Snapshot POC' }}
-      </button>
-      <button
-        type="button"
-        class="btn btn-warning btn-reset-seed"
-        *ngIf="enableSeedReset"
-        [disabled]="configOpLoading()"
-        (click)="openResetSeedDialog()"
-        title="Restaurar la configuracion de las ofertas semilla base a su estado inicial"
-      >
-        <span class="btn-spinner" *ngIf="configOpLoading()" aria-hidden="true"></span>
-        Restaurar configuracion semilla
-      </button>
-      <button
-        type="button"
-        class="btn btn-primary"
-        [disabled]="configOpLoading() || publicarLoading()"
-        (click)="openPublicarDialog()"
-        title="Publicar configuración POC en Workflow"
-      >
-        <span class="btn-spinner" *ngIf="publicarLoading()" aria-hidden="true"></span>
-        Publicar en Workflow
-      </button>
+  <!-- permissive-config-readonly (ADR-CR6): the entire config ops bar is a
+       write-only surface (export/import/apply/discard/POC snapshot/seed
+       reset/publish to Workflow) — gated behind isAdmin() as a whole. -->
+  @if (authService.isAdmin()) {
+    <div class="config-ops-bar">
+      <div class="config-ops-actions">
+        <button
+          type="button"
+          class="btn"
+          [disabled]="configOpLoading()"
+          (click)="exportConfig()"
+          title="Descargar configuracion actual de BD como fichero JSON"
+        >
+          <span class="btn-spinner" *ngIf="configOpLoading() && !importedConfig()" aria-hidden="true"></span>
+          Exportar configuracion
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="configOpLoading()"
+          (click)="triggerImportFile()"
+          title="Cargar configuracion desde un fichero JSON"
+        >
+          Importar configuracion
+        </button>
+        <button
+          type="button"
+          class="btn btn-warning"
+          *ngIf="importedConfig()"
+          [disabled]="configOpLoading()"
+          (click)="openApplyConfigDialog()"
+          title="Guardar la configuracion importada en la base de datos"
+        >
+          <span class="btn-spinner" *ngIf="configOpLoading()" aria-hidden="true"></span>
+          {{ configOpLoading() ? "Grabando..." : "Grabar configuracion" }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          *ngIf="importedConfig()"
+          [disabled]="configOpLoading()"
+          (click)="clearImportedConfig()"
+          title="Descartar importacion y recargar datos de BD"
+        >
+          Descartar importacion
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [disabled]="configOpLoading() || pocSnapshotLoading()"
+          (click)="openPocSnapshotDialog()"
+          title="Guardar snapshot del estado actual de la POC"
+        >
+          <span class="btn-spinner" *ngIf="pocSnapshotLoading()" aria-hidden="true"></span>
+          {{ pocSnapshotLoading() ? 'Guardando...' : 'Snapshot POC' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-warning btn-reset-seed"
+          *ngIf="enableSeedReset"
+          [disabled]="configOpLoading()"
+          (click)="openResetSeedDialog()"
+          title="Restaurar la configuracion de las ofertas semilla base a su estado inicial"
+        >
+          <span class="btn-spinner" *ngIf="configOpLoading()" aria-hidden="true"></span>
+          Restaurar configuracion semilla
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="configOpLoading() || publicarLoading()"
+          (click)="openPublicarDialog()"
+          title="Publicar configuración POC en Workflow"
+        >
+          <span class="btn-spinner" *ngIf="publicarLoading()" aria-hidden="true"></span>
+          Publicar en Workflow
+        </button>
+      </div>
+      <div class="import-banner" *ngIf="importedConfigSummary() as summary">
+        Configuracion importada: {{ summary }}. Pendiente de grabar en BD.
+      </div>
+      <p class="state success" *ngIf="configOpSuccess() as msg">{{ msg }}</p>
+      <p class="state error" *ngIf="configOpError() as msg">{{ msg }}</p>
     </div>
-    <div class="import-banner" *ngIf="importedConfigSummary() as summary">
-      Configuracion importada: {{ summary }}. Pendiente de grabar en BD.
-    </div>
-    <p class="state success" *ngIf="configOpSuccess() as msg">{{ msg }}</p>
-    <p class="state error" *ngIf="configOpError() as msg">{{ msg }}</p>
-  </div>
+  }
 
   <!-- =========================================================
        Panel: Ofertas en este período (FR-101 to FR-104)
@@ -199,7 +204,9 @@
         Seleccioná un período activo en <a routerLink="/offer-dates">Fechas de oferta</a> para ver las ofertas de este período.
       </p>
     } @else {
-      @if (isOfferEditorOpen()) {
+      <!-- permissive-config-readonly (ADR-CR6): offer editor is write-only
+           (saveOffer/cancelOfferEdit); gated as a whole. -->
+      @if (isOfferEditorOpen() && authService.isAdmin()) {
         <div class="crud-form offer-edit-form">
           <h3>{{ offerEditorTitle() }}</h3>
           <form [formGroup]="offerForm" (ngSubmit)="saveOffer()">
@@ -260,20 +267,22 @@
                 <td>{{ offer.oferta_id ?? "—" }}</td>
                 <td>{{ offer.enabled ? "Sí" : "No" }}</td>
                 <td class="row-actions">
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-edit-offer"
-                    [disabled]="isOfferCodePending(offer.offerCode)"
-                    (click)="editOffer(offer)"
-                    title="Editar entidad oferta"
-                  >Editar</button>
-                  <button
-                    type="button"
-                    class="btn btn-danger btn-delete-offer-period"
-                    [disabled]="isOfferCodePending(offer.offerCode)"
-                    (click)="deleteOfferInPeriod(offer)"
-                    title="Eliminar reglas y parámetros de esta oferta SOLO en el período activo"
-                  >Borrar</button>
+                  @if (authService.isAdmin()) {
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-edit-offer"
+                      [disabled]="isOfferCodePending(offer.offerCode)"
+                      (click)="editOffer(offer)"
+                      title="Editar entidad oferta"
+                    >Editar</button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-delete-offer-period"
+                      [disabled]="isOfferCodePending(offer.offerCode)"
+                      (click)="deleteOfferInPeriod(offer)"
+                      title="Eliminar reglas y parámetros de esta oferta SOLO en el período activo"
+                    >Borrar</button>
+                  }
                 </td>
               </tr>
             }
@@ -298,7 +307,9 @@
             (click)="resetRulesSort()"
             title="Ordenar por oferta, stage (INIT→PRE→FINAL) y prioridad descendente"
           >Orden ejecucion</button>
-          <button type="button" class="btn btn-success btn-create" [disabled]="!canCreateRule()" (click)="openCreateRuleEditor()">Crear</button>
+          @if (authService.isAdmin()) {
+            <button type="button" class="btn btn-success btn-create" [disabled]="!canCreateRule()" (click)="openCreateRuleEditor()">Crear</button>
+          }
         </div>
       </div>
 
@@ -307,7 +318,9 @@
         <a routerLink="/offer-dates">Fechas de oferta</a> para poder crear reglas.
       </div>
 
-      <form class="crud-form" [formGroup]="ruleForm" (ngSubmit)="saveRule()" *ngIf="isRuleEditorOpen()">
+      <!-- permissive-config-readonly (ADR-CR6): rule editor is write-only
+           (saveRule/validateRuleDraft/cancelRuleEdit); gated as a whole. -->
+      <form class="crud-form" [formGroup]="ruleForm" (ngSubmit)="saveRule()" *ngIf="isRuleEditorOpen() && authService.isAdmin()">
         <h3>{{ ruleEditorTitle() }}</h3>
         <div class="form-grid">
           <label>
@@ -443,95 +456,97 @@
               <td class="align-right">{{ rule.conditions.length }}</td>
               <td class="align-center">{{ rule.actions[0]?.action_type }}</td>
               <td class="ops-cell rules-ops-cell">
-                <div class="row-actions row-actions-icons">
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm"
-                    [disabled]="isRulePending(rule.rule_id)"
-                    (click)="editRule(rule)"
-                    aria-label="Editar regla"
-                    title="Editar"
-                  >
-                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
-                      <path d="m4 16 10-10 4 4-10 10H4v-4Zm11.4-11.4 1.4-1.4a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-1.4 1.4-3-3Z" />
-                    </svg>
-                    <span class="sr-only">Editar</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm"
-                    [disabled]="isRulePending(rule.rule_id)"
-                    (click)="duplicateRule(rule)"
-                    aria-label="Duplicar regla"
-                    title="Duplicar"
-                  >
-                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
-                      <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" />
-                    </svg>
-                    <span class="sr-only">Duplicar</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm"
-                    [disabled]="isRulePending(rule.rule_id)"
-                    (click)="toggleRule(rule)"
-                    [attr.aria-label]="rule.enabled ? 'Deshabilitar regla' : 'Habilitar regla'"
-                    [attr.title]="rule.enabled ? 'Deshabilitar' : 'Habilitar'"
-                  >
-                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id) && rule.enabled">
-                      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 5.7 13.6L6.4 6.3A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .8-3.5l10.7 10.7A8 8 0 0 1 4 12Z" />
-                    </svg>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id) && !rule.enabled">
-                      <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
-                    </svg>
-                    <span class="sr-only">{{ rule.enabled ? "Deshabilitar" : "Habilitar" }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm"
-                    [disabled]="isRulePending(rule.rule_id)"
-                    (click)="moveRule(rule, -1)"
-                    aria-label="Subir prioridad"
-                    title="Subir"
-                  >
-                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
-                      <path d="M12 5 5 12h4v7h6v-7h4l-7-7Z" />
-                    </svg>
-                    <span class="sr-only">Subir</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm"
-                    [disabled]="isRulePending(rule.rule_id)"
-                    (click)="moveRule(rule, 1)"
-                    aria-label="Bajar prioridad"
-                    title="Bajar"
-                  >
-                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
-                      <path d="m12 19 7-7h-4V5H9v7H5l7 7Z" />
-                    </svg>
-                    <span class="sr-only">Bajar</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm action-danger"
-                    [disabled]="isRulePending(rule.rule_id)"
-                    (click)="deleteRule(rule)"
-                    aria-label="Eliminar regla"
-                    title="Eliminar"
-                  >
-                    <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
-                      <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
-                    </svg>
-                    <span class="sr-only">Eliminar</span>
-                  </button>
-                </div>
+                @if (authService.isAdmin()) {
+                  <div class="row-actions row-actions-icons">
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm"
+                      [disabled]="isRulePending(rule.rule_id)"
+                      (click)="editRule(rule)"
+                      aria-label="Editar regla"
+                      title="Editar"
+                    >
+                      <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                        <path d="m4 16 10-10 4 4-10 10H4v-4Zm11.4-11.4 1.4-1.4a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-1.4 1.4-3-3Z" />
+                      </svg>
+                      <span class="sr-only">Editar</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm"
+                      [disabled]="isRulePending(rule.rule_id)"
+                      (click)="duplicateRule(rule)"
+                      aria-label="Duplicar regla"
+                      title="Duplicar"
+                    >
+                      <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                        <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z" />
+                      </svg>
+                      <span class="sr-only">Duplicar</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm"
+                      [disabled]="isRulePending(rule.rule_id)"
+                      (click)="toggleRule(rule)"
+                      [attr.aria-label]="rule.enabled ? 'Deshabilitar regla' : 'Habilitar regla'"
+                      [attr.title]="rule.enabled ? 'Deshabilitar' : 'Habilitar'"
+                    >
+                      <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id) && rule.enabled">
+                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 5.7 13.6L6.4 6.3A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .8-3.5l10.7 10.7A8 8 0 0 1 4 12Z" />
+                      </svg>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id) && !rule.enabled">
+                        <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
+                      </svg>
+                      <span class="sr-only">{{ rule.enabled ? "Deshabilitar" : "Habilitar" }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm"
+                      [disabled]="isRulePending(rule.rule_id)"
+                      (click)="moveRule(rule, -1)"
+                      aria-label="Subir prioridad"
+                      title="Subir"
+                    >
+                      <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                        <path d="M12 5 5 12h4v7h6v-7h4l-7-7Z" />
+                      </svg>
+                      <span class="sr-only">Subir</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm"
+                      [disabled]="isRulePending(rule.rule_id)"
+                      (click)="moveRule(rule, 1)"
+                      aria-label="Bajar prioridad"
+                      title="Bajar"
+                    >
+                      <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                        <path d="m12 19 7-7h-4V5H9v7H5l7 7Z" />
+                      </svg>
+                      <span class="sr-only">Bajar</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm action-danger"
+                      [disabled]="isRulePending(rule.rule_id)"
+                      (click)="deleteRule(rule)"
+                      aria-label="Eliminar regla"
+                      title="Eliminar"
+                    >
+                      <span class="btn-spinner" *ngIf="isRulePending(rule.rule_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isRulePending(rule.rule_id)">
+                        <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+                      </svg>
+                      <span class="sr-only">Eliminar</span>
+                    </button>
+                  </div>
+                }
               </td>
             </tr>
           </tbody>
@@ -567,7 +582,9 @@
             (click)="resetParamsSort()"
             title="Ordenar por oferta y clave"
           >Orden ejecucion</button>
-          <button type="button" class="btn btn-success btn-create" [disabled]="!canCreateParam()" (click)="openCreateParamEditor()">Crear</button>
+          @if (authService.isAdmin()) {
+            <button type="button" class="btn btn-success btn-create" [disabled]="!canCreateParam()" (click)="openCreateParamEditor()">Crear</button>
+          }
         </div>
       </div>
 
@@ -587,7 +604,9 @@
         />
       </label>
 
-      <form class="crud-form" [formGroup]="paramForm" (ngSubmit)="saveParam()" *ngIf="isParamEditorOpen()">
+      <!-- permissive-config-readonly (ADR-CR6): param editor is write-only
+           (saveParam/cancelParamEdit); gated as a whole. -->
+      <form class="crud-form" [formGroup]="paramForm" (ngSubmit)="saveParam()" *ngIf="isParamEditorOpen() && authService.isAdmin()">
         <h3>{{ paramEditorTitle() }}</h3>
         <p class="readonly-period-line">
           <span *ngIf="isParamCreateMode()">Período: {{ activeParamsPeriodLabel() }}</span>
@@ -665,36 +684,38 @@
               <td class="align-center"><span class="param-type">{{ row.param.value_type }}</span></td>
               <td class="param-value">{{ row.param.value }}</td>
               <td class="ops-cell">
-                <div class="row-actions row-actions-icons">
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm"
-                    [disabled]="isParamPending(row.param.param_id)"
-                    (click)="editParam(row)"
-                    aria-label="Editar parametro"
-                    title="Editar"
-                  >
-                    <span class="btn-spinner" *ngIf="isParamPending(row.param.param_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isParamPending(row.param.param_id)">
-                      <path d="m4 16 10-10 4 4-10 10H4v-4Zm11.4-11.4 1.4-1.4a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-1.4 1.4-3-3Z" />
-                    </svg>
-                    <span class="sr-only">Editar</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon-square btn-icon-sm action-danger"
-                    [disabled]="isParamPending(row.param.param_id)"
-                    (click)="deleteParam(row.param.param_id)"
-                    aria-label="Eliminar parametro"
-                    title="Eliminar"
-                  >
-                    <span class="btn-spinner" *ngIf="isParamPending(row.param.param_id)" aria-hidden="true"></span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isParamPending(row.param.param_id)">
-                      <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
-                    </svg>
-                    <span class="sr-only">Eliminar</span>
-                  </button>
-                </div>
+                @if (authService.isAdmin()) {
+                  <div class="row-actions row-actions-icons">
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm"
+                      [disabled]="isParamPending(row.param.param_id)"
+                      (click)="editParam(row)"
+                      aria-label="Editar parametro"
+                      title="Editar"
+                    >
+                      <span class="btn-spinner" *ngIf="isParamPending(row.param.param_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isParamPending(row.param.param_id)">
+                        <path d="m4 16 10-10 4 4-10 10H4v-4Zm11.4-11.4 1.4-1.4a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-1.4 1.4-3-3Z" />
+                      </svg>
+                      <span class="sr-only">Editar</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon-square btn-icon-sm action-danger"
+                      [disabled]="isParamPending(row.param.param_id)"
+                      (click)="deleteParam(row.param.param_id)"
+                      aria-label="Eliminar parametro"
+                      title="Eliminar"
+                    >
+                      <span class="btn-spinner" *ngIf="isParamPending(row.param.param_id)" aria-hidden="true"></span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" *ngIf="!isParamPending(row.param.param_id)">
+                        <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6-5.6 5.6L5 17.6 10.6 12 5 6.4 6.4 5Z" />
+                      </svg>
+                      <span class="sr-only">Eliminar</span>
+                    </button>
+                  </div>
+                }
               </td>
             </tr>
           </tbody>
@@ -717,6 +738,9 @@
     </article>
   </div>
 
+  <!-- permissive-config-readonly (ADR-CR6): confirm modal only ever opens
+       via a gated write trigger; gated here too as defense-in-depth. -->
+  @if (authService.isAdmin()) {
   <div class="confirm-backdrop" *ngIf="confirmDialog() as dialog" (click)="closeConfirmDialog()">
     <article class="confirm-modal" (click)="$event.stopPropagation()">
       <h3>{{ dialog.title }}</h3>
@@ -876,8 +900,12 @@
       </div>
     </article>
   </div>
+  }
 
-  <!-- Diálogo Snapshot POC -->
+  <!-- Diálogo Snapshot POC — permissive-config-readonly (ADR-CR6): only ever
+       opens via the gated "Snapshot POC" trigger; gated here too as
+       defense-in-depth. -->
+  @if (authService.isAdmin()) {
   <div class="confirm-backdrop" *ngIf="pocSnapshotDialog()" (click)="closePocSnapshotDialog()">
     <article class="confirm-modal" (click)="$event.stopPropagation()">
       <h3>Snapshot POC</h3>
@@ -911,4 +939,5 @@
       </div>
     </article>
   </div>
+  }
 </section>

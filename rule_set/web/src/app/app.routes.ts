@@ -29,11 +29,12 @@ export const routes: Routes = [
   // endpoint is used — the backend is the single source of truth.
   //
   // permissive-config-readonly (ADR-CR4): configurador and offer-dates moved
-  // here from the admin bucket above. Write actions inside these two pages
-  // are NOT YET template-gated (tracked for a follow-up PR) — they remain
-  // backend-enforced via requireRole("admin") on /api/admin/* in the
-  // meantime. This route guard removal only affects reachability of the
-  // read-only page shell.
+  // here from the admin bucket above. Write actions inside configurador are
+  // now template-gated too (PR 3, @if(authService.isAdmin()) in
+  // configurator-page.component.html). Write actions inside offer-dates are
+  // NOT YET template-gated (tracked for PR 4) — they remain backend-enforced
+  // via requireRole("admin") on /api/admin/* in the meantime. This route
+  // guard removal only affects reachability of the read-only page shell.
   { path: 'configurador',   component: ConfiguratorPageComponent },
   { path: 'offer-dates',    component: OfferDatesPageComponent },
   { path: 'configuracion',  component: ConfigPageComponent },
