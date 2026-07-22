@@ -30,6 +30,7 @@ import {
 import { normalizeRuleOperator } from "../shared/rule-operators";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminApiService } from "../services/admin-api.service";
+import { AuthService } from "../services/auth.service";
 import { PublicConfigApiService } from "../services/public-config-api.service";
 import { environment } from "../../environments/environment";
 import { RuleActionPayloadTableComponent } from "./configurator/rule-action-payload-table.component";
@@ -145,6 +146,10 @@ export class ConfiguratorPageComponent implements OnInit {
   // adminApiService intentionally (not in the design's explicit repoint list).
   private readonly publicConfigApi = inject(PublicConfigApiService);
   readonly activePeriodService = inject(ActivePeriodService);
+  // permissive-config-readonly (PR 3, ADR-CR6): every write-capable control in
+  // this component's template is wrapped in `@if (authService.isAdmin())`.
+  // Reads (above) are role-agnostic; only write affordances are gated here.
+  readonly authService = inject(AuthService);
 
   protected readonly filtersForm = this.fb.nonNullable.group({
     offerCode: "",
