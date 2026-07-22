@@ -15,6 +15,7 @@ import { of } from "rxjs";
 
 import { OfferDatesPageComponent } from "./offer-dates-page.component";
 import { AdminApiService } from "../services/admin-api.service";
+import { PublicConfigApiService } from "../services/public-config-api.service";
 import { ActivePeriodService } from "../services/active-period.service";
 import { AdminFechaItem } from "../models/admin.models";
 
@@ -41,11 +42,23 @@ function makeFecha(overrides: Partial<AdminFechaItem> = {}): AdminFechaItem {
 
 function buildAdminApiMock() {
   return {
-    getFechas: () => of({ items: [] }),
+    getFechas: jasmine.createSpy("adminApi.getFechas").and.returnValue(of({ items: [] })),
     createFecha: () => of({ offer_date_id: 1 }),
     updateFecha: () => of({ offer_date_id: 1, updated: true }),
     deleteFecha: () => of({ offer_date_id: 1, deleted: true }),
     duplicateFecha: () => of({ offer_date_id: 2 }),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// permissive-config-readonly (PR 2, frontend infra) — ADR-CR5: the READ call
+// (loadFechas) must go through the new public-adjacent PublicConfigApiService,
+// not AdminApiService. AdminApiService is retained for every WRITE method
+// above (createFecha/updateFecha/deleteFecha/duplicateFecha).
+// ---------------------------------------------------------------------------
+function buildPublicConfigApiMock() {
+  return {
+    getFechas: jasmine.createSpy("publicConfigApi.getFechas").and.returnValue(of({ items: [] })),
   };
 }
 
@@ -65,14 +78,20 @@ function buildActivePeriodMock() {
 // Setup
 // ---------------------------------------------------------------------------
 
+let mockAdminApi: ReturnType<typeof buildAdminApiMock>;
+let mockPublicConfigApi: ReturnType<typeof buildPublicConfigApiMock>;
+
 async function setupTestBed() {
   mockActivePeriodRules = signal<AdminFechaItem | null>(null);
   mockActivePeriodParams = signal<AdminFechaItem | null>(null);
+  mockAdminApi = buildAdminApiMock();
+  mockPublicConfigApi = buildPublicConfigApiMock();
 
   await TestBed.configureTestingModule({
     imports: [OfferDatesPageComponent],
     providers: [
-      { provide: AdminApiService, useValue: buildAdminApiMock() },
+      { provide: AdminApiService, useValue: mockAdminApi },
+      { provide: PublicConfigApiService, useValue: mockPublicConfigApi },
       { provide: ActivePeriodService, useValue: buildActivePeriodMock() },
     ],
   }).compileComponents();
@@ -96,6 +115,17 @@ describe("OfferDatesPageComponent", () => {
   it("WU-09 smoke: should create component without errors", () => {
     const fixture = createComponent();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  // ---------------------------------------------------------------------------
+  // permissive-config-readonly (PR 2, frontend infra) — ADR-CR5
+  // ---------------------------------------------------------------------------
+  describe("permissive-config-readonly: loadFechas reads via PublicConfigApiService", () => {
+    it("ngOnInit's loadFechas calls PublicConfigApiService.getFechas, not AdminApiService.getFechas", () => {
+      createComponent();
+      expect(mockPublicConfigApi.getFechas).toHaveBeenCalled();
+      expect(mockAdminApi.getFechas).not.toHaveBeenCalled();
+    });
   });
 
   describe("WU-09.1: toVigenciaString", () => {
