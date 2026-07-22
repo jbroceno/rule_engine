@@ -29,9 +29,11 @@
              these pages render normally for anonymous users.
 
              permissive-config-readonly (ADR-CR6): Periodos and Configurador
-             joined this always-visible bucket — their pages are read-only
-             for non-admin users, with every write affordance inside them
-             individually gated by @if(isAdmin()) in their own templates. -->
+             joined this always-visible bucket. Their pages are navigable by
+             non-admin users now; every write affordance inside them is still
+             backend-enforced only — template-level @if(isAdmin()) gating of
+             each write affordance is tracked for a follow-up PR, not done
+             yet. -->
         <a routerLink="/configuracion" routerLinkActive="active">Configuracion</a>
         <a routerLink="/simulador-init" routerLinkActive="active">Simulador INIT</a>
         <a routerLink="/simulador-pre" routerLinkActive="active">Simulador PRE</a>
