@@ -30,10 +30,11 @@
 
              permissive-config-readonly (ADR-CR6): Periodos and Configurador
              joined this always-visible bucket. Their pages are navigable by
-             non-admin users now; every write affordance inside them is still
-             backend-enforced only — template-level @if(isAdmin()) gating of
-             each write affordance is tracked for a follow-up PR, not done
-             yet. -->
+             non-admin users now. Periodos' write affordances are now
+             template-gated behind @if (authService.isAdmin()) (PR 4).
+             Configurador's write-action gating is tracked separately (a
+             parallel PR, not yet merged into this branch) — until it lands,
+             its write controls remain backend-enforced only. -->
         <a routerLink="/configuracion" routerLinkActive="active">Configuracion</a>
         <a routerLink="/simulador-init" routerLinkActive="active">Simulador INIT</a>
         <a routerLink="/simulador-pre" routerLinkActive="active">Simulador PRE</a>
