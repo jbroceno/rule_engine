@@ -20,15 +20,21 @@ export const routes: Routes = [
   // Admin routes — always require authentication, in both auth modes
   // (backed up server-side by requireRole("admin") regardless).
   { path: 'ofertas',        component: OfertasPageComponent,          canActivate: [authGuard] },
-  { path: 'configurador',   component: ConfiguratorPageComponent,      canActivate: [authGuard] },
   { path: 'snapshots',      component: SnapshotsPageComponent,         canActivate: [authGuard] },
-  { path: 'offer-dates',    component: OfferDatesPageComponent,        canActivate: [authGuard] },
 
   // Read-only routes — no client-side guard. Anonymous access is allowed
   // when the backend runs AUTH_MODE=permissive; when the backend runs in
   // (default) secure mode, the page's data call 401s and the existing
   // authInterceptor logs out + redirects to /login. No mode-discovery
   // endpoint is used — the backend is the single source of truth.
+  //
+  // permissive-config-readonly (ADR-CR4): configurador and offer-dates moved
+  // here from the admin bucket above. Write actions inside these two pages
+  // remain gated in-template (@if isAdmin()) and are always backend-enforced
+  // via requireRole("admin") on /api/admin/* — the route guard removal only
+  // affects reachability of the read-only page shell.
+  { path: 'configurador',   component: ConfiguratorPageComponent },
+  { path: 'offer-dates',    component: OfferDatesPageComponent },
   { path: 'configuracion',  component: ConfigPageComponent },
   { path: 'simulador-init', component: InitSimulatorPageComponent },
   { path: 'simulador-pre',  component: PreSimulatorPageComponent },
