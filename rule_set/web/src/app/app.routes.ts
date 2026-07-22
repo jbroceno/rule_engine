@@ -33,7 +33,7 @@ export const routes: Routes = [
   // (PR 3) and offer-dates (PR 4) are now template-gated behind
   // @if (authService.isAdmin()), on top of the always-enforced backend
   // requireRole("admin") gate on /api/admin/*. This route guard removal only
-  // affects reachability of the read-only page shell in both cases. main
+  // affects reachability of the read-only page shell in both cases.
   { path: 'configurador',   component: ConfiguratorPageComponent },
   { path: 'offer-dates',    component: OfferDatesPageComponent },
   { path: 'configuracion',  component: ConfigPageComponent },
