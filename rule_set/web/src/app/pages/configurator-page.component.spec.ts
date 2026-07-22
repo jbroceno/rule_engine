@@ -7,7 +7,8 @@ import { ConfiguratorPageComponent } from "./configurator-page.component";
 import { AdminApiService } from "../services/admin-api.service";
 import { PublicConfigApiService } from "../services/public-config-api.service";
 import { ActivePeriodService } from "../services/active-period.service";
-import { AdminFechaItem, AdminRuleItem, ApplyImpact } from "../models/admin.models";
+import { AuthService } from "../services/auth.service";
+import { AdminFechaItem, AdminParamsItem, AdminRuleItem, ApplyImpact } from "../models/admin.models";
 import { environment } from "../../environments/environment";
 
 // ---------------------------------------------------------------------------
@@ -119,12 +120,30 @@ function buildActivePeriodMock() {
 }
 
 // ---------------------------------------------------------------------------
+// permissive-config-readonly (PR 3) — AuthService mock. Defaults to
+// isAdmin()=true so every pre-existing test (written before this PR, none of
+// which reference auth state) keeps passing unchanged; tests that exercise
+// the new gating explicitly flip `mockIsAdmin.set(false)`.
+// ---------------------------------------------------------------------------
+let mockIsAdmin = signal<boolean>(true);
+let mockIsAuthenticated = signal<boolean>(true);
+
+function buildAuthServiceMock() {
+  return {
+    isAdmin: mockIsAdmin,
+    isAuthenticated: mockIsAuthenticated,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
 
 async function setupTestBed() {
   mockActivePeriodRules = signal<AdminFechaItem | null>(null);
   mockActivePeriodParams = signal<AdminFechaItem | null>(null);
+  mockIsAdmin = signal<boolean>(true);
+  mockIsAuthenticated = signal<boolean>(true);
 
   await TestBed.configureTestingModule({
     imports: [ConfiguratorPageComponent],
@@ -133,6 +152,7 @@ async function setupTestBed() {
       { provide: AdminApiService, useValue: buildAdminApiMock() },
       { provide: PublicConfigApiService, useValue: buildPublicConfigApiMock() },
       { provide: ActivePeriodService, useValue: buildActivePeriodMock() },
+      { provide: AuthService, useValue: buildAuthServiceMock() },
     ],
   }).compileComponents();
 }
@@ -1187,6 +1207,229 @@ describe("ConfiguratorPageComponent", () => {
       fixture.detectChanges();
 
       expect(component["applyImpactPreview"]()).toEqual(impactB);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // permissive-config-readonly (PR 3) — write-action gating: every write
+  // control identified in the write-action inventory (engram
+  // sdd/permissive-config-readonly/write-action-inventory) must be absent
+  // from the DOM when authService.isAdmin() is false (anonymous AND
+  // authenticated-viewer are both represented by isAdmin()=false — the
+  // component only reads the isAdmin() signal, it does not distinguish the
+  // two), and present when isAdmin() is true. Read-only controls (filters,
+  // sort, pagination, "Recargar") must remain visible regardless of role.
+  // ---------------------------------------------------------------------------
+  describe("PR3: write-action gating with @if (authService.isAdmin())", () => {
+    function fakeRule(offerCode = "OFERTA_A"): AdminRuleItem {
+      return {
+        rule_id: 1,
+        offerCode,
+        stage: "PRE",
+        rule_name: "Regla de prueba",
+        priority: 900,
+        enabled: true,
+        stop_processing: false,
+        offer_date_id: null,
+        actions: [{ action_type: "SET", action_payload: { field: "preRejected", value_type: "BOOL", value: "false" } }],
+        conditions: [{ group_id: 0, left_operand: "stage", operator: "EQ", right_operand: "PRE", value_type: "STRING" }],
+      };
+    }
+
+    function fakeParamsItem(): AdminParamsItem {
+      return {
+        offerCode: "OFERTA_A",
+        paramValues: [{ param_id: 1, key: "MAX_LTV", value: "0.8", value_type: "NUMBER", offer_date_id: null }],
+      };
+    }
+
+    it("keeps filters, active-period banner, and the 'Ofertas en este periodo' panel visible when isAdmin() is false", () => {
+      mockIsAdmin.set(false);
+      const fixture = createComponent();
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector(".filters")).not.toBeNull();
+      expect(root.querySelector(".active-period-banner")).not.toBeNull();
+      expect(root.querySelector(".panel-period-offers")).not.toBeNull();
+    });
+
+    describe("config ops bar (export/import/apply/clear/poc-snapshot/reset-seed/publicar)", () => {
+      it("is absent when isAdmin() is false", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector(".config-ops-bar")).toBeNull();
+      });
+
+      it("is present when isAdmin() is true", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        fixture.detectChanges();
+        const bar = fixture.nativeElement.querySelector(".config-ops-bar");
+        expect(bar).not.toBeNull();
+        expect(bar!.querySelector("button")).not.toBeNull();
+      });
+    });
+
+    describe("offers panel — Editar/Borrar buttons and the offer editor form", () => {
+      beforeEach(() => {
+        mockActivePeriodRules.set(makePeriod(3));
+      });
+
+      it("are absent when isAdmin() is false, even if the editor is forced open", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["periodOffers"].set([makeOffer("OFERTA_A")]);
+        component["offerEditorMode"].set("edit");
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".btn-edit-offer")).toBeNull();
+        expect(fixture.nativeElement.querySelector(".btn-delete-offer-period")).toBeNull();
+        expect(fixture.nativeElement.querySelector(".offer-edit-form")).toBeNull();
+      });
+
+      it("are present when isAdmin() is true", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["periodOffers"].set([makeOffer("OFERTA_A")]);
+        component["offerEditorMode"].set("edit");
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".btn-edit-offer")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".btn-delete-offer-period")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".offer-edit-form")).not.toBeNull();
+      });
+
+      it("keeps the read-only 'Recargar' button visible regardless of role", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        fixture.detectChanges();
+        const buttons = Array.from(
+          fixture.nativeElement.querySelectorAll(".panel-period-offers button"),
+        ) as HTMLButtonElement[];
+        expect(buttons.some((b) => b.textContent?.includes("Recargar"))).toBeTrue();
+      });
+    });
+
+    describe("rules panel — Crear button, rule editor form, and row op-buttons", () => {
+      beforeEach(() => {
+        mockActivePeriodRules.set(makePeriod(3));
+      });
+
+      it("are absent when isAdmin() is false, even if the editor is forced open", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["rules"].set([fakeRule()]);
+        component["ruleEditorMode"].set("edit");
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".panel-rules .btn-create")).toBeNull();
+        expect(fixture.nativeElement.querySelector(".panel-rules .crud-form")).toBeNull();
+        expect(fixture.nativeElement.querySelector(".rules-table .row-actions-icons")).toBeNull();
+      });
+
+      it("are present when isAdmin() is true", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["rules"].set([fakeRule()]);
+        component["ruleEditorMode"].set("edit");
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".panel-rules .btn-create")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".panel-rules .crud-form")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".rules-table .row-actions-icons")).not.toBeNull();
+      });
+
+      it("keeps sort buttons, the table, and pagination visible regardless of role", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["rules"].set([fakeRule()]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".rules-table")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".rules-table .sort-btn")).not.toBeNull();
+      });
+    });
+
+    describe("params panel — Crear button, param editor form, and row op-buttons", () => {
+      beforeEach(() => {
+        mockActivePeriodParams.set(makePeriod(5, "PARAMS"));
+      });
+
+      it("are absent when isAdmin() is false, even if the editor is forced open", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["params"].set([fakeParamsItem()]);
+        component["paramEditorMode"].set("edit");
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".panel-params .btn-create")).toBeNull();
+        expect(fixture.nativeElement.querySelector(".panel-params .crud-form")).toBeNull();
+        expect(fixture.nativeElement.querySelector(".params-table .row-actions-icons")).toBeNull();
+      });
+
+      it("are present when isAdmin() is true", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["params"].set([fakeParamsItem()]);
+        component["paramEditorMode"].set("edit");
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".panel-params .btn-create")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".panel-params .crud-form")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".params-table .row-actions-icons")).not.toBeNull();
+      });
+
+      it("keeps the search box, the table, and pagination visible regardless of role", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["params"].set([fakeParamsItem()]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector(".panel-params .inline-search")).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(".params-table")).not.toBeNull();
+      });
+    });
+
+    describe("dialogs — confirm modal and POC snapshot modal (defense-in-depth)", () => {
+      it("are absent when isAdmin() is false, even if their state signals are forced open", () => {
+        mockIsAdmin.set(false);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["confirmDialog"].set({ type: "reset-seed", title: "t", message: "m" });
+        component["pocSnapshotDialog"].set(true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBe(0);
+      });
+
+      it("the confirm modal renders when isAdmin() is true and confirmDialog is open", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["confirmDialog"].set({ type: "reset-seed", title: "t", message: "m" });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBeGreaterThan(0);
+      });
+
+      it("the POC snapshot modal renders when isAdmin() is true and pocSnapshotDialog is open", () => {
+        mockIsAdmin.set(true);
+        const fixture = createComponent();
+        const component = fixture.componentInstance;
+        component["pocSnapshotDialog"].set(true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll(".confirm-backdrop").length).toBeGreaterThan(0);
+      });
     });
   });
 });
