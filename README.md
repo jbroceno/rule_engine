@@ -213,9 +213,10 @@ make clean          # limpieza total: para el stack y elimina contenedores, vol�
 ```
 rule_engine/
 ├── README.md                  # este documento
-├── doc/                       # documentación de negocio (análisis funcional, diagramas, plan de pruebas)
+├── docs/                       # documentación de negocio (análisis funcional, diagramas, plan de pruebas)
 │   ├── 01 - spec.md           # especificación funcional completa (origen de las reglas)
 │   ├── 03 - workflow_deployment.md
+│   ├── 04 - config-cache.md   # Sistema de caché de configuración
 │   └── *.png                  # diagramas de alta/modificación de expediente
 ├── prompts/                   # prompts de IA para el análisis funcional
 ├── .opencode/prompts/         # prompts de IA para el diseño y revisión del motor DNF
