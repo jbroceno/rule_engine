@@ -38,7 +38,7 @@ Para resolverlo se construye un **motor de reglas** que, dada una configuración
 | Fase | Qué decide | Con qué datos |
 |------|------------|---------------|
 | **INIT** | Elegibilidad inicial (edad, cliente, domiciliación, tipo de alta, finalidad, etc.) | Datos mínimos del expediente y el bien a hipotecar|
-| **PRE** | Pre-elegibilidad + límites que restringen el simulador | Datos de la simulación inicial, información de edad e ingresos de los titulares|
+| **PRE** | Pre-elegibilidad + límites que restringen el simulador | información de edad e ingresos de los titulares|
 | **FINAL** | Oferta ganadora sobre las pre-elegibles | Datos definitivos del préstamo (importe, plazo, LTV) |
 
 El sistema permite **administrar reglas, parámetros y ofertas** desde una web, **simular** los tres estadios para validar el comportamiento, **historificar** la configuración por vigencias y **publicarla contra el sistema de workflow** del banco para contrastar el resultado del motor local con el del sistema real.
@@ -52,8 +52,10 @@ y dónde **no** la IA:
 - **La IA se ha usado como herramienta de ingeniería durante todo el ciclo de construcción:**
   - **Análisis funcional** de los requisitos a partir de la documentación de negocio (ver `prompts/prompts.md`, el rol de analista funcional usado).
   - **Diseño del motor** de reglas DNF, su contrato y su modelo de datos (ver `.opencode/prompts/dnf-engine.md` y `dnf-review.md`).
+  - **Diseño de un sistema de caché** de configuración para aumentar el rendimiento.
   - **Generación de las reglas y parámetros** (`rules.json`) traduciendo las condiciones de elegibilidad del documento funcional al formato del motor, incluida la aplicación sistemática del **patrón de inversión** (De Morgan) que se describe más abajo.
   - **Construcción del frontend de configuración** (la parte compleja) a partir de la documentación y del modelo de datos SQL.
+  - Añadir **utilidades para tomar snapshots** de configuración y **publicarlos entre entornos**.
   - **Generación de la batería de pruebas** y del modelo de evidencias dirigido por escenarios.
 
 En resumen: **la IA ha construido y probado el sistema; el sistema funciona sin IA.**
