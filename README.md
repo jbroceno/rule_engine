@@ -14,7 +14,7 @@ El valor del proyecto no está en la complejidad algorítmica del motor —que e
 |---------|--------|
 | 📦 Repositorio (GitHub) | `git@github.com:jbroceno/rule_engine.git` <!-- TODO: confirmar que el repo es público o conceder acceso a mouredev@gmail.com --> |
 | 🚀 Despliegue / demo | https://tfm-bigschool.broceno.com |
-| 🖼️ Slides de presentación | https://github.com/jbroceno/rule_engine/raw/main/doc/PRESENTACION-SLIDES.pptx |
+| 🖼️ Slides de presentación | https://github.com/jbroceno/rule_engine/raw/main/docs/PRESENTACION-SLIDES.pptx |
 | 🎥 Vídeo explicativo | <!-- TODO: añadir URL pública del vídeo --> _pendiente_ |
 
 > **Fecha de entrega del TFM:** 20/07/2026.
