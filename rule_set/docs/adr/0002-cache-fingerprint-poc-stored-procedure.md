@@ -1,4 +1,4 @@
-# ADR-0001: Fingerprint/TTL cache for the POC config-loading stored procedure
+# ADR-0002: Fingerprint/TTL cache for the POC config-loading stored procedure
 
 ## Status
 

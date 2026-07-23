@@ -1,4 +1,4 @@
-# ADR 0002 — Excepción de cifrado en la conexión SQL para el entorno POC del TFM
+# ADR 0003 — Excepción de cifrado en la conexión SQL para el entorno POC del TFM
 
 **Estado**: Aceptado
 **Fecha**: 2026-07-10

@@ -93,7 +93,7 @@ Los 2 hallazgos **críticos** —control de acceso roto (el rol venía en el JWT
 - **Salvaguarda del reemplazo total de configuración** (OWASP-02): confirmación explícita (`confirmReplaceAll: true`) más un endpoint de previsualización de impacto en modo *dry-run* (`POST /admin/config/apply/preview`) antes de aplicar ningún cambio.
 - **Integridad de *snapshots*** (OWASP-10): *checksum* HMAC-SHA256 calculado al crear cada *snapshot* y verificado antes de restaurar; si el contenido fue alterado la restauración se bloquea (409) sin llegar a mutar nada.
 
-El resto de hallazgos queda como backlog priorizado o, en el caso del cifrado de la conexión a SQL Server, aceptado como **excepción explícita y documentada** para el alcance de este TFM (ver ADR [`rule_set/docs/adr/0001-excepcion-cifrado-sql-poc-tfm.md`](rule_set/docs/adr/0001-excepcion-cifrado-sql-poc-tfm.md)). El propio cambio de seguridad se verificó de forma independiente (fase `sdd-verify`, con un juicio adversarial separado del `apply`) antes de archivarse: **PASS, 0 hallazgos CRITICAL**.
+El resto de hallazgos queda como backlog priorizado o, en el caso del cifrado de la conexión a SQL Server, aceptado como **excepción explícita y documentada** para el alcance de este TFM (ver ADR [`rule_set/docs/adr/0002-excepcion-cifrado-sql-poc-tfm.md`](rule_set/docs/adr/0002-excepcion-cifrado-sql-poc-tfm.md)). El propio cambio de seguridad se verificó de forma independiente (fase `sdd-verify`, con un juicio adversarial separado del `apply`) antes de archivarse: **PASS, 0 hallazgos CRITICAL**.
 
 ---
 
@@ -227,6 +227,10 @@ rule_engine/
     ├── rule_engine.js         # núcleo del motor (funciones puras, sin I/O)
     ├── rules.json             # configuración de ofertas + reglas + parámetros (fixture local)
     ├── offer_rule_engine.js   # demo por CLI
+    ├── docs/                  # documentación de la aplicación
+    │   ├── adr/               # registro de decisiones de arquitectura
+    │   ├── seguridad/         # informes de seguridad
+    │   └── *.md               # documentación de configuración de reglas y API
     ├── api/                   # API REST (Express)
     │   ├── routes/ controllers/ services/ validators/ utils/ db/
     │   └── .env.example

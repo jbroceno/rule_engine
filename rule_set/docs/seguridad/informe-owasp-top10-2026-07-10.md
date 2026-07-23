@@ -12,7 +12,7 @@ Este informe es la fuente de verdad para los cambios que se aborden vía SDD. Ca
 |----|-----------|-----------|--------|
 | OWASP-01 | A01 Broken Access Control | Critical | Abierto |
 | OWASP-02 | A04 Insecure Design | Critical | Abierto |
-| OWASP-03 | A02 Cryptographic Failures (SQL sin cifrar) | Alto → **Aceptado (excepción)** | Excepcionado — ver [ADR 0001](../adr/0001-excepcion-cifrado-sql-poc-tfm.md) |
+| OWASP-03 | A02 Cryptographic Failures (SQL sin cifrar) | Alto → **Aceptado (excepción)** | Excepcionado — ver [ADR 0002](../adr/0002-excepcion-cifrado-sql-poc-tfm.md) |
 | OWASP-04 | A02 Cryptographic Failures (JWT_SECRET débil) | Alto | Abierto |
 | OWASP-05 | A05 Security Misconfiguration (sin cabeceras HTTP) | Alto | Abierto |
 | OWASP-06 | A07 Authentication Failures (sin rate limiting) | Alto | Abierto |
@@ -57,7 +57,7 @@ Este informe es la fuente de verdad para los cambios que se aborden vía SDD. Ca
 
 - **Evidencia**: `api/config/env.js:32-33`, `docker-compose.yml:83-84,117-118`.
 - **Escenario**: un atacante con acceso a la red interna de Docker (contenedor comprometido, sidecar malicioso) podría interceptar el tráfico SQL en texto plano. SQL Server solo publica en `127.0.0.1` (no accesible desde Internet), por lo que el riesgo real queda acotado al propio host Docker.
-- **Decisión**: **aceptado como excepción documentada** para el alcance de este TFM. Ver [ADR 0001 — Excepción de cifrado SQL para el entorno POC del TFM](../adr/0001-excepcion-cifrado-sql-poc-tfm.md).
+- **Decisión**: **aceptado como excepción documentada** para el alcance de este TFM. Ver [ADR 0002 — Excepción de cifrado SQL para el entorno POC del TFM](../adr/0002-excepcion-cifrado-sql-poc-tfm.md).
 - **Severidad original**: Alto. **Estado**: Excepcionado, no se abordará en los cambios SDD derivados de este informe.
 
 ### OWASP-04 — A02: Cryptographic Failures — `JWT_SECRET` sin validación de fuerza

@@ -7,7 +7,7 @@
 -- (rule_set/sql/workflow_deploy/wf_sp_cfg_rules_cache.sql) contra el
 -- esquema propio de POC (cfg_offer_ruleset / cfg_offer_dates /
 -- cfg_offer_rule / cfg_offer_param). Ver ADR:
--- docs/adr/0001-cache-fingerprint-poc-stored-procedure.md
+-- docs/adr/0003-cache-fingerprint-poc-stored-procedure.md
 --
 -- Objetos creados/reemplazados:
 --   1. DROP INDEX  IX_cfg_rules_cache_evict (si existe, de un deploy previo)
@@ -265,7 +265,7 @@ CREATE OR ALTER PROCEDURE dbo.cfg_get_offers_and_params_json_cached
   @offer_codes      NVARCHAR(MAX) = NULL,
   @DATE             DATETIME      = NULL,
   @max_history_size INT           = 50,   -- "maximo de entradas de cache por offer_codes_key"
-  @ttl_days         INT           = 14    -- gestion de almacenamiento, no de correccion (ver ADR-0001)
+  @ttl_days         INT           = 14    -- gestion de almacenamiento, no de correccion (ver ADR-0003)
 AS
 BEGIN
   SET NOCOUNT ON;
