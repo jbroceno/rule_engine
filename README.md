@@ -12,12 +12,12 @@ El valor del proyecto no está en la complejidad algorítmica del motor —que e
 
 | Recurso | Enlace |
 |---------|--------|
-| 📦 Repositorio (GitHub) | `git@github.com:jbroceno/rule_engine.git` <!-- TODO: confirmar que el repo es público o conceder acceso a mouredev@gmail.com --> |
+| 📦 Repositorio (GitHub) | `git@github.com:jbroceno/rule_engine.git`
 | 🚀 Despliegue / demo | https://tfm-bigschool.broceno.com |
 | 🖼️ Slides de presentación | https://github.com/jbroceno/rule_engine/raw/main/docs/PRESENTACION-SLIDES.pptx |
-| 🎥 Vídeo explicativo | <!-- TODO: añadir URL pública del vídeo --> _pendiente_ |
+| 🎥 Vídeo explicativo | https://youtu.be/zWv7JGDRRlg <br/>Contenido: <br/> <br/>00:00 - Introducción<br/>01:30 - Valor del proyecto<br/>04:20 - Metodología<br/>04:45 - OWASP<br/>05:25 - Aprendizaje<br/>07:40 - DEMO<br/>29:52 FIN
 
-> **Fecha de entrega del TFM:** 20/07/2026.
+> **Fecha de entrega del TFM:** 26/07/2026.
 
 ---
 
